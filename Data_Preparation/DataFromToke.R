@@ -57,12 +57,16 @@ file_path <- "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversi
     # rm(BBR_Bygning)
 load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/BBR_Bygning.Rdata")
     # BBR_Bygning_Head <- head(BBR_Bygning)
-    addWorksheet(wb, sheetName = "BBR_Bygning_Head")
-    writeData(wb, sheet = "BBR_Bygning_Head", x = head(BBR_Bygning))
-    # BBB_Bygning_Summary <- as.data.frame(summary(BBR_Bygning))
-    addWorksheet(wb, sheetName = "BBR_Bygning_Summary")
-    writeData(wb, sheet = "BBR_Bygning_Summary", x = summary(BBR_Bygning))
-    rm(BBR_Bygning)
+    # addWorksheet(wb, sheetName = "BBR_Bygning_Head")
+    # writeData(wb, sheet = "BBR_Bygning_Head", x = head(BBR_Bygning))
+    # # BBB_Bygning_Summary <- as.data.frame(summary(BBR_Bygning))
+    # addWorksheet(wb, sheetName = "BBR_Bygning_Summary")
+    # writeData(wb, sheet = "BBR_Bygning_Summary", x = summary(BBR_Bygning))
+rm(BBR_Bygning)
+                        ###### Statistics on this
+                        # How many unique obs? 
+i_Unique_Building <- length(unique(BBR_Bygning$bygning_id))
+                            # Answer = 4.869.043
 
   #Enhed
     # BBR_Enhed <- read.csv("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/BBR_Enhed.csv")
@@ -167,15 +171,20 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/EJF_Ejerskifte.R
     # save(EJF_Handelsoplysning, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/EJF_Handelsoplysning.Rdata" )
     # rm(EJF_Handelsoplysning)
 load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/EJF_Handelsoplysning.Rdata")
-    addWorksheet(wb, sheetName = "EJF_Handelsoplysning_Head")
-    writeData(wb, sheet = "EJF_Handelsoplysning_Head", x = head(EJF_Handelsoplysning))
-    # BBB_Bygning_Summary <- as.data.frame(summary(BBR_Bygning))
-    addWorksheet(wb, sheetName = "EJF_Handelsoplysning_Summary")
-    writeData(wb, sheet = "EJF_Handelsoplysning_Summary", x = summary(EJF_Handelsoplysning))
-    rm(EJF_Handelsoplysning)
-      
+    # addWorksheet(wb, sheetName = "EJF_Handelsoplysning_Head")
+    # writeData(wb, sheet = "EJF_Handelsoplysning_Head", x = head(EJF_Handelsoplysning))
+    # # BBB_Bygning_Summary <- as.data.frame(summary(BBR_Bygning))
+    # addWorksheet(wb, sheetName = "EJF_Handelsoplysning_Summary")
+    # writeData(wb, sheet = "EJF_Handelsoplysning_Summary", x = summary(EJF_Handelsoplysning))
+    # rm(EJF_Handelsoplysning)
+                                  ###### Statistics on this
+                                  # How many unique lokalid and therefor transactions? 
+                                  iTransactions <- length(unique(EJF_Handelsoplysning$id_lokalId))
+                                  # Answer = 6.792.861
+                                  # When is the first transaction and last?
+                                  iTransactionDate <- as.Date.character(EJF_Handelsoplysning$afstaaelsesdato)
     
-saveWorkbook(wb, file_path, overwrite = TRUE)
+# saveWorkbook(wb, file_path, overwrite = TRUE)
 
 wb <- createWorkbook()
 file_path <- "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Overbliks_Skader.xlsx"
@@ -184,12 +193,12 @@ file_path <- "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversi
     # save(Data_til_KU_Toke_Emil_Panduro, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/Stormrådsskader.Rdata")
     # rm(Data_til_KU_Toke_Emil_Panduro)
 load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/Stormrådsskader.Rdata")
-    addWorksheet(wb, sheetName = "Skaderåd_Head")
-    writeData(wb, sheet = "Skaderåd_Head", x = head(Data_til_KU_Toke_Emil_Panduro))
-    # BBB_Bygning_Summary <- as.data.frame(summary(BBR_Bygning))
-    addWorksheet(wb, sheetName = "Skaderåd_Summary")
-    writeData(wb, sheet = "Skaderåd_Summary", x = summary(Data_til_KU_Toke_Emil_Panduro))
-    rm(Data_til_KU_Toke_Emil_Panduro)
+    # addWorksheet(wb, sheetName = "Skaderåd_Head")
+    # writeData(wb, sheet = "Skaderåd_Head", x = head(Data_til_KU_Toke_Emil_Panduro))
+    # # BBB_Bygning_Summary <- as.data.frame(summary(BBR_Bygning))
+    # addWorksheet(wb, sheetName = "Skaderåd_Summary")
+    # writeData(wb, sheet = "Skaderåd_Summary", x = summary(Data_til_KU_Toke_Emil_Panduro))
+    # rm(Data_til_KU_Toke_Emil_Panduro)
 
 saveWorkbook(wb, file_path, overwrite = TRUE)
     
