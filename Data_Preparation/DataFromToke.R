@@ -200,5 +200,7 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/Stormrådsskader
     # writeData(wb, sheet = "Skaderåd_Summary", x = summary(Data_til_KU_Toke_Emil_Panduro))
     # rm(Data_til_KU_Toke_Emil_Panduro)
 
+
+
 saveWorkbook(wb, file_path, overwrite = TRUE)
     
