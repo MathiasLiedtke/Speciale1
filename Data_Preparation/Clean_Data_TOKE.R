@@ -123,12 +123,43 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
                                                  `Renovated_1960-1970` = ifelse(is.na(`Renovated_1960-1970`), 0, `Renovated_1960-1970`),
                                                  `Renovated_1970-1980` = ifelse(is.na(`Renovated_1970-1980`), 0, `Renovated_1970-1980`),
                                                  `Renovated_1980-1990` = ifelse(is.na(`Renovated_1980-1990`), 0, `Renovated_1980-1990`))
+              #save(CLEAN_DATA, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/CLEAN_DATA.Rdata")  
               
-      
+              Var_to_keep3 <- c("")
               
               
               
-          {
+    ## Hente GEO data ----
+              API_GEO <- "https://api.dataforsyningen.dk/GeoDanmark_60_NOHIST_DAF?service=WMS&request=GetCapabilities&token="
+              token <- readline(prompt="Please enter token: ")
+              url <- paste0(API_GEO,token)
+              response <- httr::GET(url)
+              httr::status_code(response)
+  
+    
+        ### To handle spatial data, load library ----
+              library("sf")
+              library("leaflet")
+              library("sp")
+              
+              # Requires "brew install gdal"
+
+              parameters <- list(service = "WMS", 
+                             version = "2.0.0", 
+                             request = "GetFeature", 
+                             typename = "layername", 
+                             outputFormat = "json")
+              GEO_DATA <- sf::st_read(url)
+
+              # Create the full URL by pasting the base URL and parameters together
+              url <- paste(base_url, paste(names(params), parameters, sep = "=", collapse = "&"), sep = "?")
+              
+              # Make the request
+              GEO_DATA <- sf::st_read(url)
+              
+              
+
+ {
           Handel_BFE_Adresse <- merge(EJF_Handelsoplysning, DAWA_Adresse, by.x = "objectid", by.y = "Jordstykke_Bfenummer")
            #### Remove unneccesary variables ----
                 Var_to_keep <- c("objectid", "id_lokalId", "registreringFra", "registreringTil", "afstaaelsesdato", "koebsaftaleDato", 
