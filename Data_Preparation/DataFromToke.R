@@ -189,8 +189,9 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/EJF_Handelsoplys
 wb <- createWorkbook()
 file_path <- "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Overbliks_Skader.xlsx"
 
-    # Data_til_KU_Toke_Emil_Panduro <- read_excel("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/Data til KU - Toke Emil Panduro.xlsx")   
-    # save(Data_til_KU_Toke_Emil_Panduro, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/Stormrådsskader.Rdata")
+    Data_til_KU_Toke_Emil_Panduro <- read_excel("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/Data til KU - Toke Emil Panduro.xlsx")
+    save(Skader, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
+    # save(EJF_Handelsoplysning, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/EJF_Handelsoplysning.Rdata" )
     # rm(Data_til_KU_Toke_Emil_Panduro)
 load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/Stormrådsskader.Rdata")
     # addWorksheet(wb, sheetName = "Skaderåd_Head")
