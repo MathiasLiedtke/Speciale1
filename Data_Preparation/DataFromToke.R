@@ -274,6 +274,9 @@ saveWorkbook(wb, file_path, overwrite = TRUE)
                          "flooded", "Rain")
   
   Precipitation_subset <- subset(Precipitation, select = variables_to_keep)
+  Precipitation_subset$Geometri_EPSG_25832 <- paste0(Precipitation_subset$x, " ", Precipitation_subset$y)
+  Precipitation_subset$Geometri_EPSG_25832 <- sf::st_as_sfc(Precipitation_subset$Geometri_EPSG_25832, crs = 25832)
+  
   
   save(Precipitation_subset, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_Subset.Rdata")
   
