@@ -204,4 +204,82 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/mathias/Stormrådsskader
 
 
 saveWorkbook(wb, file_path, overwrite = TRUE)
-    
+
+
+# Heavy pricipitation  ----
+  ## Load the data ----
+  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev1_Koebenhavn.rdata")
+  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev1_StorKoebenhavn.rdata")
+  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev7_aarhus.Rdata")
+  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev8_Trekanstomraade.Rdata")
+  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev6_Aalborg.Rdata")    
+
+
+  ## Binding the data frames ----
+  Precipitation <- rbind(ev1_Koebenhavn, ev1_StorKoebenhavn)
+  # combining with less variables, using dplyr
+  Precipitation <- dplyr::bind_rows(Precipitation, ev6_Aalborg)
+  Precipitation <- dplyr::bind_rows(Precipitation, ev7_aarhus)
+  Precipitation <- dplyr::bind_rows(Precipitation, ev8_Trekanstomraade)
+  # Add variable to show it is precipitation
+  Precipitation$Rain <- 1
+  
+  # save dataset 
+  save(Precipitation, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_precipitation.Rdata")
+  
+  ## Reducing the dataframe of variables ----
+  # variables of interest 
+      # From other data set, clean 
+      # [1] "vejnavn"                          "husnr"                            "bygning_id"                      
+      #"Size"                             "Bygninganvendelse"                "Outbuilding"                     
+      #"Opførelsesår"                     "Ydervægge_Materiale"              "Tagdækning_Materiale"            
+      # "Varmeinstallation"                "Ombygning"                        "grund"                           
+      # "husnummer"                        "Geometri_EPSG_25832"              "adr_etrs89_oest"                 
+      # "adr_etrs89_nord"                  "Car_Park"                         "Garage"                          
+      # "TerracedHouse"                    "<1940"                            "1940-1950"                       
+      # "1950-1960"                        "1960-1970"                        "1970-1980"                       
+      # "1980-1990"                        "1990-2000"                        "2000-2010"                       
+      # "2010"                             "Brick"                            "Lightweightconcrete"             
+      # "Wood"                             "Tile"                             "Thatched"                        
+      # "Fiberasbetos"                     "Electricheating"                  "Centralheating"                  
+      # "Districtheating"                  "Renovated_1940-1950"              "Renovated_1950-1960"             
+      # "Renovated_1960-1970"              "Renovated_1970-1980"              "Renovated_1980-1990"             
+      # "adresseIdentificerer"             "enhed_id"                         "kommunekode"                     
+      # "enh020EnhedensAnvendelse"         "enh023Boligtype"                  "enh031AntalVærelser"             
+      # "enh032Toiletforhold"              "etage"                            "opgang"                          
+      # "vejnavn.1"                        "husnr.1"                          "postnr"                          
+      # "m2"                               "dato"                             "entryAddressID"                  
+      # "nominal_price"                    "year"                             "SagsID"                          
+      # "Kommune"                          "Ejendomsnr"                       "Postnummer"                      
+      # "Adresse"                          "Oplyst bygningskategori"          "Hændelsesdato"                   
+      # "Hændelsesnavn"                    "Sagsfase"                         "Dagsværdi Løsøre"                
+      # "Dagsværdi bygning"                "Dagsværdi afgrøder"               "Selvrisiko"                      
+      # "Tidligere udbetalt byg/løs/afgrd" "Udbetalt genhusning"              "adresse1"                        
+  
+  
+  variables_to_keep <- c("Enhed_id", "x", "y", "kommunekode", "husnr", "etage", "doer", "vejnavn", 
+                         "postnr", "kommunenavn", "height", "unit_type_code", "size", "rooms", "bath", 
+                         "toilets", "floor", "car_park", "car_park_dobble", "outhouse", "brick", 
+                         "lightweight_concrete", "timbered", "wood", "concrete", 
+                         "Builtup_roof", "fibercement_asbestos_roof", "cement_roof", "thatch_roof",
+                         "district_heating", "central_heating", "heatpump_heating", "electric_heating", 
+                         "year_of_built", "major_renovations", "Renovation70s", "Renovation80s", 
+                         "Renovation90s", "Renovation00s", "Renovation10s", "Energy_code", "urban_size", 
+                         "forest_distance", "forest_size", "coastline_distance", "habour_distance", 
+                         "highway_distance", "powerline_distance", "railway_distance", "trainstation_distance", 
+                         "lake_distance", "windturbine_distance", "windturbine_height", "market_name", "price",
+                         "sales_date", "Bluespot_0cm", "Bluespot_10cm", "Bluespot_20cm", "event_dates_1", 
+                         "tab_1", "event_dates_2","tab_2", "event_dates_9", "tab_9", "f_sold_after",
+                         "flood_0_05yr", "flood_05_1yr", "flood_1yr", "flood_2yr", "flood_3yr", "total_payout",
+                         "flooded", "Rain")
+  
+  Precipitation_subset <- subset(Precipitation, select = variables_to_keep)
+  
+  save(Precipitation_subset, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_Subset.Rdata")
+  
+  
+  
+  
+  
+  
+  
