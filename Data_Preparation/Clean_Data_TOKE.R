@@ -1,5 +1,6 @@
 #### Library
 library(dplyr)
+library(tidyr)
 
 ####
 # Generate 'cleaned dataset' ----
@@ -8,7 +9,7 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
   ## Select variables of interest ----
       Var <- c("bygning_id","byg039BygningensSamledeBoligAreal", "byg021BygningensAnvendelse", "byg044ArealIndbyggetUdhus", "byg026Opførelsesår", 
          "byg032YdervæggensMateriale", "byg033Tagdækningsmateriale", "byg056Varmeinstallation", "byg027OmTilbygningsår",
-         "grund", "husnummer")
+         "grund", "husnummer","Geometri_EPSG_25832", "adr_etrs89_oest", "adr_etrs89_nord")
 
       BBR_Bygning_Subset <- subset(BBR_Bygning, select = Var)
   
@@ -100,13 +101,14 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
           
       ### Try to merge by 'adresse' for BBR_Enhed and Handel_BFE_Adresse ----
           load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Carsten Bertram/SpecialeTrades_1992-2021.RData")
+          load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed.rdata")
           BBR_Enhed_Trade <- merge(BBR_Enhed, trades_1992_2021, by.x = "adresseIdentificerer", by.y = "addressID")
           #Truncate data to sales from 2010
           BBR_Enhed_Trade <- subset(BBR_Enhed_Trade, BBR_Enhed_Trade$dato > "2010-01-01")
            # save(BBR_Enhed_Trade, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed_Trade.Rdata")
         
               ##### Keep useful variables ----
-              Var_to_keep_Enhed_Trade <- c("adresseIdentificerer", "enhed_id", "kommunekode", "enh020EnhedensAnvendelse",  
+              Var_to_keep_Enhed_Trade <- c("vejnavn", "husnr","adresseIdentificerer", "enhed_id", "kommunekode", "enh020EnhedensAnvendelse",  
                                            "enh023Boligtype", "enh031AntalVærelser", "enh032Toiletforhold", "etage", "opgang",
                                            "bygning", "vejnavn", "husnr", "postnr", "m2", "dato", "entryAddressID", "nominal_price", 
                                            "year")
@@ -118,45 +120,92 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
             # save(CLEAN_DATA, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/CLEAN_DATA.Rdata")
             
           # Assumption: Variables as when it has been renovated, NA changed to '0'
-              CLEAN_DATA <- CLEAN_DATA %>% mutate(`Renovated_1940-1950` = ifelse(is.na(`Renovated_1940-1950`), 0, `Renovated_1940-1950`),
+              CLEAN_DATA <- CLEAN_DATA %>% dplyr::mutate(`Renovated_1940-1950` = ifelse(is.na(`Renovated_1940-1950`), 0, `Renovated_1940-1950`),
                                                  `Renovated_1950-1960` = ifelse(is.na(`Renovated_1950-1960`), 0, `Renovated_1950-1960`),
                                                  `Renovated_1960-1970` = ifelse(is.na(`Renovated_1960-1970`), 0, `Renovated_1960-1970`),
                                                  `Renovated_1970-1980` = ifelse(is.na(`Renovated_1970-1980`), 0, `Renovated_1970-1980`),
                                                  `Renovated_1980-1990` = ifelse(is.na(`Renovated_1980-1990`), 0, `Renovated_1980-1990`))
               #save(CLEAN_DATA, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/CLEAN_DATA.Rdata")  
+              load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/CLEAN_DATA.Rdata")
               
-              Var_to_keep3 <- c("")
+          # Reduce dimensions in clean data by merging flooded houses and keeping neighbors. But zip codes with no flooing are removed. 
+            load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
+            # Adresse need to be parsed to be merged later (only identification)
+            Skader$adresse1 <- gsub(",.*", "", Skader$Adresse)
+            Skader$Vejnr <- stringr::str_extract(Skader$adresse1, "\\d+[A-Za-z]*(-\\d+)?")
+            Skader$Vejnavn <- stringr::str_extract(Skader$adresse1, ".*(?=\\s\\d+[A-Za-z]*(-\\d+)?)")
+
+            
+          # Assume entities in in building are all affected by flooding, so only merged by housenumber
+          Clean_Flood_Data <- merge(CLEAN_DATA, Skader, by.x = c("vejnavn", "husnr"), by.y = c("Vejnavn", "Vejnr"), all.x = TRUE)
+          # Assuming df_big is your larger data frame and df_small is your smaller data frame
+          # It is assumed that entities within a building is affected on price, such as apartments. 
+          
+          
+          save(Clean_Flood_Data, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
+          load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
+         
+          
+          ## Merge rain data and flooding due to streams ----
+          
+              ### rename variables from both data frames to be common ----
+                  # load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Clean_Flood_Data.Rdata")
+                  Clean_Flood_Data <- dplyr::rename(Clean_Flood_Data, size = Size, 
+                                                    outhouse = Outbuilding, year_of_built = Opførelsesår, 
+                                                    fibercement_asbestos_roof = Fiberasbetos, thatch_roof = Thatched,
+                                                    electric_heating = Electricheating, central_heating = Centralheating, 
+                                                    toilets = enh032Toiletforhold, rooms = enh031AntalVærelser, sales_date = dato)
+                  save(Clean_Flood_Data, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/CLEAN_FLOOD_DATA_RENAMED_VARIABLES.Rdata")
+                                                    
               
-              
+                  # load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_Subset.Rdata")
+                  Precipitation_subset <- dplyr::rename(Precipitation_subset, adr_etrs89_oest = x, adr_etrs89_nord = y,
+                                                        Car_Park = car_park, Wood = wood)
+                  
+                  save(Precipitation_subset, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset_RENAMED_VARIABLES.Rdata")
+                  
+                  
+            ### Merge on common variables 
+                  #load enheder to map on buildings
+                  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed.Rdata")
+                  BBR_Enhed <- subset(BBR_Enhed, select = c("enhed_id", "bygning"))
+                  Precipitation_subset <- merge(BBR_Enhed, Precipitation_subset, by.x = "enhed_id", by.y = "Enhed_id")
+                  ALL_DATA_COMBINED <- merge(Clean_Flood_Data, Precipitation_subset, by = "bygning_id", all.x = TRUE)
+                  ALL_DATA_COMBINED <- merge(Clean_Flood_Data, Precipitation_subset, by.x = "bygning_id", by.y = "bygning", all.x = TRUE, all.y = TRUE)
+                  
+                  
+  # Cleaning data ----
+      # This script is made for cleaning the data received from Toke. I imagine to delete columns, outliers, etc. 
+      # How to clean data # https://www.r-bloggers.com/2021/04/how-to-clean-the-datasets-in-r/
+                  
               
     ## Hente GEO data ----
-              API_GEO <- "https://api.dataforsyningen.dk/GeoDanmark_60_NOHIST_DAF?service=WMS&request=GetCapabilities&token="
-              token <- readline(prompt="Please enter token: ")
-              url <- paste0(API_GEO,token)
-              response <- httr::GET(url)
-              httr::status_code(response)
-  
     
         ### To handle spatial data, load library ----
               library("sf")
               library("leaflet")
               library("sp")
               
-              # Requires "brew install gdal"
-
-              parameters <- list(service = "WMS", 
-                             version = "2.0.0", 
-                             request = "GetFeature", 
-                             typename = "layername", 
-                             outputFormat = "json")
-              GEO_DATA <- sf::st_read(url)
-
-              # Create the full URL by pasting the base URL and parameters together
-              url <- paste(base_url, paste(names(params), parameters, sep = "=", collapse = "&"), sep = "?")
-              
-              # Make the request
-              GEO_DATA <- sf::st_read(url)
-              
+{              # Requires "brew install gdal"
+  API_GEO <- "https://api.dataforsyningen.dk/GeoDanmark_60_NOHIST_DAF?service=WMS&request=GetCapabilities&token="
+  token <- readline(prompt="Please enter token: ")
+  url <- paste0(API_GEO,token)
+  response <- httr::GET(url)
+  httr::status_code(response)
+  
+  parameters <- list(service = "WMS", 
+                     version = "2.0.0", 
+                     request = "GetFeature", 
+                     typename = "layername", 
+                     outputFormat = "json")
+  GEO_DATA <- sf::st_read(url)
+  
+  # Create the full URL by pasting the base URL and parameters together
+  url <- paste(base_url, paste(names(params), parameters, sep = "=", collapse = "&"), sep = "?")
+  
+  # Make the request
+  GEO_DATA <- sf::st_read(url)
+              } # Delete later if not useful
               
               # Load the shapefile
                 # Højspænding
@@ -230,17 +279,47 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
                                  "Vejnavn", "Husnr", "Etage", "Doer", "Postnr", "Postdistrikt", "Jordstykke_SfeEjendomsnr","Jordstykke_EsrEjendomsnr",
                                  "Jordstykke_Matrikelnr", "ETRS89_Oest", "ETRS89_Nord", "Geometri_EPSG_25832")
                 Handel_BFE_Adresse <- subset(Handel_BFE_Adresse, select = Var_to_keep)
+                
           } #To delete later if not useful 
+                
 
+        ## Calc distance
+          library(sf)
+          library(geosphere)
+                geosphere::distGeo(Vindmoelle$geometry, CLEAN_DATA$Geometri_EPSG_25832)   
+                # First change the column to a spatial variable column instead of character
+                CLEAN_DATA$Geometri_EPSG_25832 <- sf::st_as_sfc(CLEAN_DATA$Geometri_EPSG_25832)
+                # Calculate distances (in meters) between linestrings and nearest points
+                nearest_distances <- lapply(Vindmoelle$geometry, function(obj_geom) {
+                  min(st_distance(CLEAN_DATA[1,12], obj_geom, by_element = TRUE))
+                })
+
+                
+                # Initialize a new column in CLEAN_DATA to store the nearest geometries
+                CLEAN_DATA$nearest_geometry <- vector("list", nrow(CLEAN_DATA))
+                
+                # For each observation in CLEAN_DATA
+                for (i in seq_len(nrow(CLEAN_DATA))) {
+                  # Calculate all distances
+                  distances <- sapply(Vindmoelle$geometry, function(obj_geom) {
+                    st_distance(CLEAN_DATA[i,12], obj_geom, by_element = TRUE)
+                  })
+                  
+                  # Find the index of the minimum distance
+                  nearest_index <- which.min(distances)
+                  
+                  # Get the nearest geometry and add it to the observation
+                  CLEAN_DATA$nearest_geometry[[i]] <- Vindmoelle$geometry[[nearest_index]]
+                }
+                
           
   load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/DAWA_Adresse.Rdata")        
   load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed.Rdata")        
   load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/EJF_Handelsoplysning.Rdata")
           
                     
-# Cleaning data ----
-# This script is made for cleaning the data received from Toke. I imagine to delete columns, outliers, etc. 
-# How to clean data # https://www.r-bloggers.com/2021/04/how-to-clean-the-datasets-in-r/
 
+
+  
 
   
