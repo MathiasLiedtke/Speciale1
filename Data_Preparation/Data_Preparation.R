@@ -232,7 +232,33 @@ library(dplyr)
                                  "entryAddressID", "district_heating", "central_heating", "electric_heating",
                                  "Tile", "Thatched", "Fiberasbetos", "roofing")
     `Trades_1992_2021_Subset` <- subset(trades_1992_2021, select = `Var_Trades_1992-2021`)
-    rm(`Var_Trades_1992-2021`)     
+    save(`Trades_1992_2021_Subset`, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Trades_1992_2021_Subset.Rdata")
+    rm(`Var_Trades_1992-2021`)
+    
+# Skader, a df that contains damage of flooding ---- 
+    ## load data ----
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
+    
+    ## Reduce 'Skader' of variables
+    Var_Skader <- c("vejnavn", "husnr", "bygning_id", "Outbuilding", "Opførelsesår", 
+                    "grund", "husnummer", "Geometri_EPSG_25832", "adr_etrs89_oest",
+                    "adr_etrs89_nord", "Car_Park", "Garage", "TerracedHouse", "<1940",
+                    "1940-1950", "1950-1960", "1960-1970", "1980-1990", "1990-2000",
+                    "2000-2010", "2010", "Brick", "Lightweightconcrete", "Wood",
+                    "Renovated_1940-1950", "Renovated_1950-1960", "Renovated_1960-1970",
+                    "Renovated_1970-1980", "Renovated_1980-1990", "adresseIdentificerer",
+                    "enhed_id", "enh031AntalVærelser", "enh032Toiletforhold", "etage",
+                    "opgang", "dato", "entryAddressID", "Hændelsesdato", "Selvrisiko",
+                    "Tidligere udbetalt byg/løs/afgrd")
+    Skader_subset <- subset(Skader, select = Var_Skader)
+    save(Skader_subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader_Subset.Rdata")
+    rm(Skader)
+    
+    
+
+# Merging ----
+    ## Merge Trade (Carsten) and Skader (Toke) by addressID and husnummer, respectively
+    Trade_Skader <- merge(Trades_1992_2021_Subset, Skader_subset, by.x = "addressID", by.y = "husnummer")
     
     
     
