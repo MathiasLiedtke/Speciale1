@@ -149,7 +149,7 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
           ## Merge rain data and flooding due to streams ----
           
               ### rename variables from both data frames to be common ----
-                  # load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Clean_Flood_Data.Rdata")
+                  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Clean_Flood_Data.Rdata")
                   Clean_Flood_Data <- dplyr::rename(Clean_Flood_Data, size = Size, 
                                                     outhouse = Outbuilding, year_of_built = Opførelsesår, 
                                                     fibercement_asbestos_roof = Fiberasbetos, thatch_roof = Thatched,
@@ -160,7 +160,7 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
               
                   # load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_Subset.Rdata")
                   Precipitation_subset <- dplyr::rename(Precipitation_subset, adr_etrs89_oest = x, adr_etrs89_nord = y,
-                                                        Car_Park = car_park, Wood = wood)
+                                                        Car_Park = car_park, Wood = wood, bygning_id = bygning)
                   
                   save(Precipitation_subset, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset_RENAMED_VARIABLES.Rdata")
                   
@@ -170,16 +170,145 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
                   load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed.Rdata")
                   BBR_Enhed <- subset(BBR_Enhed, select = c("enhed_id", "bygning"))
                   Precipitation_subset <- merge(BBR_Enhed, Precipitation_subset, by.x = "enhed_id", by.y = "Enhed_id")
+                  
                   ALL_DATA_COMBINED <- merge(Clean_Flood_Data, Precipitation_subset, by = "bygning_id", all.x = TRUE)
-                  ALL_DATA_COMBINED <- merge(Clean_Flood_Data, Precipitation_subset, by.x = "bygning_id", by.y = "bygning", all.x = TRUE, all.y = TRUE)
+                  # Unfortunately i have to clean up variables again due to duplicates
+                  # vejnavn.x
+                  ALL_DATA_COMBINED$vejnavn <- ifelse(is.na(ALL_DATA_COMBINED$vejnavn.x), 
+                                              ALL_DATA_COMBINED$vejnavn.y, ALL_DATA_COMBINED$vejnavn.x)
+                  # husnr
+                  ALL_DATA_COMBINED$husnr <- ifelse(is.na(ALL_DATA_COMBINED$husnr.x), 
+                                              ALL_DATA_COMBINED$husnr.y, ALL_DATA_COMBINED$husnr.x)
+                  # size
+                  ALL_DATA_COMBINED$size <- ifelse(is.na(ALL_DATA_COMBINED$size.x), 
+                                              ALL_DATA_COMBINED$size.y, ALL_DATA_COMBINED$size.x)
+                  # outhouse
+                  ALL_DATA_COMBINED$outhouse <- ifelse(is.na(ALL_DATA_COMBINED$outhouse.x), 
+                                              ALL_DATA_COMBINED$outhouse.y, ALL_DATA_COMBINED$outhouse.x)
+                  # terraced
+                  ALL_DATA_COMBINED$TerracedHouse <- ifelse(is.na(ALL_DATA_COMBINED$TerracedHouse.x), 
+                                                       ALL_DATA_COMBINED$TerracedHouse.y, ALL_DATA_COMBINED$TerracedHouse.x)
+                  # year_of_built
+                  ALL_DATA_COMBINED$year_of_built <- ifelse(is.na(ALL_DATA_COMBINED$year_of_built.x), 
+                                              ALL_DATA_COMBINED$year_of_built.y, ALL_DATA_COMBINED$year_of_built.x)
+                  # Geometri_EPSG_25832
+                  ALL_DATA_COMBINED$Geometri_EPSG_25832 <- ifelse(is.na(ALL_DATA_COMBINED$Geometri_EPSG_25832.x), 
+                                              ALL_DATA_COMBINED$Geometri_EPSG_25832.y, ALL_DATA_COMBINED$Geometri_EPSG_25832.x)
+                  # adr_etrs89_oest
+                  ALL_DATA_COMBINED$adr_etrs89_oest <- ifelse(is.na(ALL_DATA_COMBINED$adr_etrs89_oest.x), 
+                                              ALL_DATA_COMBINED$adr_etrs89_oest.y, ALL_DATA_COMBINED$adr_etrs89_oest.x)
+                  # adr_etrs89_nord
+                  ALL_DATA_COMBINED$adr_etrs89_nord <- ifelse(is.na(ALL_DATA_COMBINED$adr_etrs89_nord.x), 
+                                                                ALL_DATA_COMBINED$adr_etrs89_nord.y, ALL_DATA_COMBINED$adr_etrs89_nord.x)
+                  # Car_Park
+                  ALL_DATA_COMBINED$Car_Park <- ifelse(is.na(ALL_DATA_COMBINED$Car_Park.x), 
+                                                                ALL_DATA_COMBINED$Car_Park.y, ALL_DATA_COMBINED$Car_Park.x) 
+                  # <1940
+                  ALL_DATA_COMBINED$`<1940` <- ifelse(is.na(ALL_DATA_COMBINED$`<1940.x`), 
+                                                         ALL_DATA_COMBINED$`<1940.y`, ALL_DATA_COMBINED$`<1940.x`) 
+                  # 1950-1960
+                  ALL_DATA_COMBINED$`1950-1960` <- ifelse(is.na(ALL_DATA_COMBINED$`1950-1960.x`), 
+                                                        ALL_DATA_COMBINED$`1950-1960.y`, ALL_DATA_COMBINED$`1950-1960.x`)
+                  # 1960-1970
+                  ALL_DATA_COMBINED$`1960-1970` <- ifelse(is.na(ALL_DATA_COMBINED$`1960-1970.x`), 
+                                                          ALL_DATA_COMBINED$`1960-1970.y`, ALL_DATA_COMBINED$`1960-1970.x`)
+                  # 1970-1980
+                  ALL_DATA_COMBINED$`1970-1980` <- ifelse(is.na(ALL_DATA_COMBINED$`1970-1980.x`), 
+                                                          ALL_DATA_COMBINED$`1970-1980.y`, ALL_DATA_COMBINED$`1970-1980.x`)
+                  # 1980-1990
+                  ALL_DATA_COMBINED$`1980-1990` <- ifelse(is.na(ALL_DATA_COMBINED$`1980-1990.x`), 
+                                                          ALL_DATA_COMBINED$`1980-1990.y`, ALL_DATA_COMBINED$`1980-1990.x`)
+                  # 1990-2000
+                  ALL_DATA_COMBINED$`1990-2000` <- ifelse(is.na(ALL_DATA_COMBINED$`1990-2000.x`), 
+                                                          ALL_DATA_COMBINED$`1990-2000.y`, ALL_DATA_COMBINED$`1990-2000.x`)
+                  # 2000-2010
+                  ALL_DATA_COMBINED$`2000-2010` <- ifelse(is.na(ALL_DATA_COMBINED$`2000-2010.x`), 
+                                                          ALL_DATA_COMBINED$`2000-2010.y`, ALL_DATA_COMBINED$`2000-2010.x`)
+                  # 2010
+                  ALL_DATA_COMBINED$`2010` <- ifelse(is.na(ALL_DATA_COMBINED$`2010.x`), 
+                                                          ALL_DATA_COMBINED$`2010.y`, ALL_DATA_COMBINED$`2010.x`)
+                  # Wood
+                  ALL_DATA_COMBINED$Wood <- ifelse(is.na(ALL_DATA_COMBINED$Wood.x), 
+                                                       ALL_DATA_COMBINED$Wood.y, ALL_DATA_COMBINED$Wood.y)
+                  # Thach roof 
+                  ALL_DATA_COMBINED$thatch_roof <- ifelse(is.na(ALL_DATA_COMBINED$thatch_roof.x), 
+                                                     ALL_DATA_COMBINED$thatch_roof.y, ALL_DATA_COMBINED$thatch_roof.y)
+                  # fibercement_asbestos_roof 
+                  ALL_DATA_COMBINED$fibercement_asbestos_roof <- ifelse(is.na(ALL_DATA_COMBINED$fibercement_asbestos_roof.x), 
+                                                            ALL_DATA_COMBINED$fibercement_asbestos_roof.y, ALL_DATA_COMBINED$fibercement_asbestos_roof.y)
+                  # electric_heating 
+                  ALL_DATA_COMBINED$electric_heating <- ifelse(is.na(ALL_DATA_COMBINED$electric_heating.x), 
+                                                                          ALL_DATA_COMBINED$electric_heating.y, ALL_DATA_COMBINED$electric_heating.y)
+                  # central_heating 
+                  ALL_DATA_COMBINED$central_heating <- ifelse(is.na(ALL_DATA_COMBINED$central_heating.x), 
+                                                                 ALL_DATA_COMBINED$central_heating.y, ALL_DATA_COMBINED$central_heating.y)
+                  # <1940
+                  ALL_DATA_COMBINED$`Renovated_1940-1950` <- ifelse(is.na(ALL_DATA_COMBINED$`Renovated_1940-1950.x`), 
+                                                        ALL_DATA_COMBINED$`Renovated_1940-1950.y`, ALL_DATA_COMBINED$`Renovated_1940-1950.x`) 
+                  # 1950-1960
+                  ALL_DATA_COMBINED$`Renovated_1950-1960` <- ifelse(is.na(ALL_DATA_COMBINED$`Renovated_1950-1960.x`), 
+                                                          ALL_DATA_COMBINED$`Renovated_1950-1960.y`, ALL_DATA_COMBINED$`Renovated_1950-1960.x`)
+                  # 1960-1970
+                  ALL_DATA_COMBINED$`Renovated_1960-1970` <- ifelse(is.na(ALL_DATA_COMBINED$`Renovated_1960-1970.x`), 
+                                                          ALL_DATA_COMBINED$`Renovated_1960-1970.y`, ALL_DATA_COMBINED$`Renovated_1960-1970.x`)
+                  # 1970-1980
+                  ALL_DATA_COMBINED$`Renovated_1970-1980` <- ifelse(is.na(ALL_DATA_COMBINED$`Renovated_1970-1980.x`), 
+                                                          ALL_DATA_COMBINED$`Renovated_1970-1980.y`, ALL_DATA_COMBINED$`Renovated_1970-1980.x`)
+                  # 1980-1990
+                  ALL_DATA_COMBINED$`Renovated_1980-1990` <- ifelse(is.na(ALL_DATA_COMBINED$`Renovated_1980-1990.x`), 
+                                                          ALL_DATA_COMBINED$`Renovated_1980-1990.y`, ALL_DATA_COMBINED$`Renovated_1980-1990.x`)
+                  # enhed_id
+                  ALL_DATA_COMBINED$enhed_id <- ifelse(is.na(ALL_DATA_COMBINED$enhed_id.x), 
+                                                          ALL_DATA_COMBINED$enhed_id.y, ALL_DATA_COMBINED$enhed_id.x)
+                  # rooms
+                  ALL_DATA_COMBINED$rooms <- ifelse(is.na(ALL_DATA_COMBINED$rooms.x), 
+                                                         ALL_DATA_COMBINED$rooms.y, ALL_DATA_COMBINED$rooms.x)
+                  # toilets
+                  ALL_DATA_COMBINED$toilets <- ifelse(is.na(ALL_DATA_COMBINED$toilets.x), 
+                                                      ALL_DATA_COMBINED$toilets.y, ALL_DATA_COMBINED$toilets.x)
+                  # etage
+                  ALL_DATA_COMBINED$etage <- ifelse(is.na(ALL_DATA_COMBINED$etage.x), 
+                                                        ALL_DATA_COMBINED$etage.y, ALL_DATA_COMBINED$etage.x)
+                  # postnr
+                  ALL_DATA_COMBINED$postnr <- ifelse(is.na(ALL_DATA_COMBINED$postnr.x), 
+                                                      ALL_DATA_COMBINED$postnr.y, ALL_DATA_COMBINED$postnr.x)
+                  # sales_date
+                  ALL_DATA_COMBINED$sales_date <- ifelse(is.na(ALL_DATA_COMBINED$sales_date.x), 
+                                                       ALL_DATA_COMBINED$sales_date.y, ALL_DATA_COMBINED$sales_date.x)
+                  # nominal_price
+                  ALL_DATA_COMBINED$nominal_price <- ifelse(is.na(ALL_DATA_COMBINED$nominal_price), 
+                                            ALL_DATA_COMBINED$price, ALL_DATA_COMBINED$nominal_price)
+                  # lightweight_concrete
+                  ALL_DATA_COMBINED$lightweight_concrete <- ifelse(is.na(ALL_DATA_COMBINED$lightweight_concrete), 
+                                            ALL_DATA_COMBINED$Lightweightconcrete, ALL_DATA_COMBINED$lightweight_concrete)
+                  # Tegl
+                  ALL_DATA_COMBINED$Tile <- ifelse(is.na(ALL_DATA_COMBINED$Tile), 
+                                            ifelse(ALL_DATA_COMBINED$Tagdækning_Materiale == 5, 1, NA), 
+                                            ALL_DATA_COMBINED$Tile)
+                  
+                  
+                  ALL_Var_To_Keep <- c("vejnavn", "husnr", "size", "outhouse", "TerracedHouse", "year_of_built", "Geometri_EPSG_25832", 
+                                       "adr_etrs89_oest", "adr_etrs89_nord", "Car_Park", "<1940", "1950-1960", "1950-1960",
+                                       "1960-1970", "1970-1980", "1980-1990", "1990-2000", "2000-2010", "2010", "Wood", "Brick",
+                                       "Lightweightconcrete","Tile","thatch_roof", "fibercement_asbestos_roof", "electric_heating", 
+                                       "central_heating", "district_heating","Renovated_1940-1950", "Renovated_1950-1960", "Renovated_1960-1970", "Renovated_1970-1980",
+                                       "Renovated_1980-1990", "enhed_id", "rooms", "toilets", "etage", "postnr", "sales_date",
+                                       "nominal_price", "Rain", "flooded", "event_dates_1", "tab_1", "event_dates_2", "tab_2", 
+                                       "event_dates_9", "tab_9")
+                  
+                  ALL_DATA_COMBINED <- subset(ALL_DATA_COMBINED, select = ALL_Var_To_Keep)
+                  save(ALL_DATA_COMBINED, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ALL_DATA_COMBINED.Rdata")
                   
                   
   # Cleaning data ----
       # This script is made for cleaning the data received from Toke. I imagine to delete columns, outliers, etc. 
       # How to clean data # https://www.r-bloggers.com/2021/04/how-to-clean-the-datasets-in-r/
+
+  summary(ALL_DATA_COMBINED)
                   
+                                                      
               
-    ## Hente GEO data ----
+  # Hente GEO data ----
     
         ### To handle spatial data, load library ----
               library("sf")

@@ -269,13 +269,51 @@ saveWorkbook(wb, file_path, overwrite = TRUE)
                          "highway_distance", "powerline_distance", "railway_distance", "trainstation_distance", 
                          "lake_distance", "windturbine_distance", "windturbine_height", "market_name", "price",
                          "sales_date", "Bluespot_0cm", "Bluespot_10cm", "Bluespot_20cm", "event_dates_1", 
-                         "tab_1", "event_dates_2","tab_2", "event_dates_9", "tab_9", "f_sold_after",
+                         "tab_1", "event_dates_2","tab_2", "event_dates_9", "tab_9", "event_dates_6", "tab_6" ,
+                         "event_dates_7", "tab_7","f_sold_after",
                          "flood_0_05yr", "flood_05_1yr", "flood_1yr", "flood_2yr", "flood_3yr", "total_payout",
                          "flooded", "Rain")
   
   Precipitation_subset <- subset(Precipitation, select = variables_to_keep)
   Precipitation_subset$Geometri_EPSG_25832 <- paste0(Precipitation_subset$x, " ", Precipitation_subset$y)
-  Precipitation_subset$Geometri_EPSG_25832 <- sf::st_as_sfc(Precipitation_subset$Geometri_EPSG_25832, crs = 25832)
+  #Precipitation_subset$Geometri_EPSG_25832 <- sf::st_as_sfc(Precipitation_subset$Geometri_EPSG_25832, crs = 25832)
+  
+  # Build of some variable to merge with other data frame 
+  Precipitation_subset$TerracedHouse <- ifelse(Precipitation_subset$unit_type_code == 131, 1, 0) 
+  
+  
+  # Built year
+  Precipitation_subset$'<1940' <- ifelse(Precipitation_subset$year_of_built < 1940, 1, 0)
+  Precipitation_subset$'1940-1950' <- ifelse(Precipitation_subset$year_of_built < 1950 & 
+                                               Precipitation_subset$year_of_built > 1940 , 1, 0)
+  Precipitation_subset$'1950-1960' <- ifelse(Precipitation_subset$year_of_built < 1960 & 
+                                               Precipitation_subset$year_of_built > 1950 , 1, 0)
+  Precipitation_subset$'1960-1970' <- ifelse(Precipitation_subset$year_of_built < 1970 & 
+                           Precipitation_subset$year_of_built > 1960 , 1, 0)
+  Precipitation_subset$'1970-1980' <- ifelse(Precipitation_subset$year_of_built < 1980 & 
+                           Precipitation_subset$year_of_built > 1970 , 1, 0)
+  Precipitation_subset$'1980-1990' <- ifelse(Precipitation_subset$year_of_built < 1990 & 
+                           Precipitation_subset$year_of_built > 1980 , 1, 0)
+  Precipitation_subset$'1990-2000' <- ifelse(Precipitation_subset$year_of_built < 2000 & 
+                           Precipitation_subset$year_of_built > 1990 , 1, 0)
+  Precipitation_subset$'2000-2010' <- ifelse(Precipitation_subset$year_of_built < 2010 & 
+                           Precipitation_subset$year_of_built > 2000 , 1, 0)
+  Precipitation_subset$'2010' <- ifelse(Precipitation_subset$year_of_built > 2010, 1, 0)
+  
+  # Renovated
+  ### Renovation ----
+  Precipitation_subset$'Renovated_1940-1950' <- ifelse(Precipitation_subset$major_renovations < 1950 & 
+                                                       Precipitation_subset$major_renovations > 1940 , 1, 0)
+  Precipitation_subset$'Renovated_1950-1960' <- ifelse(Precipitation_subset$major_renovations < 1960 & 
+                                                       Precipitation_subset$major_renovations > 1950 , 1, 0)
+  Precipitation_subset$'Renovated_1960-1970' <- ifelse(Precipitation_subset$major_renovations < 1970 & 
+                                                       Precipitation_subset$major_renovations > 1960 , 1, 0)
+  Precipitation_subset$'Renovated_1970-1980' <- ifelse(Precipitation_subset$major_renovations < 1980 & 
+                                                       Precipitation_subset$major_renovations > 1970 , 1, 0)
+  Precipitation_subset$'Renovated_1980-1990' <- ifelse(Precipitation_subset$major_renovations < 1990 & 
+                                                       Precipitation_subset$major_renovations > 1980 , 1, 0)
+  
+  
   
   
   save(Precipitation_subset, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_Subset.Rdata")
