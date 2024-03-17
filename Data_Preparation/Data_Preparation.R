@@ -84,6 +84,11 @@ library(dplyr)
         ### Building variables ----
         # Spatial variable
         Precipitation_subset$Geometri_EPSG_25832 <- paste0(Precipitation_subset$x, " ", Precipitation_subset$y)
+        Precipitation_subset$Geometri_EPSG_25832 <- sf::st_as_sf(Precipitation_subset$Geometri_EPSG_25832)
+        Precipitation_subset$Geometri_EPSG_25832 <- sf::st_as_sfc(Precipitation_subset, "Geometri_EPSG_25832")
+        my_sf <- st_as_sf(my_data, coords = c("longitude", "latitude"), crs = 4326)
+        
+        CLEAN_DATA$Geometri_EPSG_25832 <- sf::st_as_sfc(CLEAN_DATA$Geometri_EPSG_25832)
         # Terraced House (rækkehus)
         Precipitation_subset$TerracedHouse <- ifelse(Precipitation_subset$unit_type_code == 131, 1, 0)
         
@@ -118,7 +123,8 @@ library(dplyr)
                                                       Precipitation_subset$major_renovations > 1980 , 1, 0)
     ### Save Precipitation ----
     save(Precipitation_subset, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")    
-        
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")
+            
     ## Id for data frame = Enhed_id, adresse (husnr, vejnavn, postnr)
         
 # BBR Bygning ----
@@ -207,9 +213,18 @@ library(dplyr)
     BBR_Bygning_Subset$'Renovated_1980-1990' <- ifelse(BBR_Bygning_Subset$Ombygning < 1990 & 
                                                          BBR_Bygning_Subset$Ombygning > 1980 , 1, 0)
     
+    ## Save and load BBR_Bygning_Subset ----
     save(BBR_Bygning_Subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Subset.Rdata")    
-        
-        
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Subset.Rdata")        
+    
+#BBR_Enhed 
+    ## Load data to see if possible mapping between Precipitation and Trade_Skader ----
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed.Rdata")        
+    Var_BBR_Enhed <- c("enhed_id", "adresseIdentificerer", "etage", "opgang", "bygning")
+    BBR_Enhed_Subset <- subset(BBR_Enhed, select = Var_BBR_Enhed)
+    save(BBR_Enhed_Subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed_Subset.Rdata")    
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed_Subset.Rdata")
+    
 # Trades 1991-2021 from Carsten ----
     
     ## Load data ----
@@ -233,6 +248,7 @@ library(dplyr)
                                  "Tile", "Thatched", "Fiberasbetos", "roofing")
     `Trades_1992_2021_Subset` <- subset(trades_1992_2021, select = `Var_Trades_1992-2021`)
     save(`Trades_1992_2021_Subset`, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Trades_1992_2021_Subset.Rdata")
+    # load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Trades_1992_2021_Subset.Rdata")
     rm(`Var_Trades_1992-2021`)
     
 # Skader, a df that contains damage of flooding ---- 
@@ -254,14 +270,38 @@ library(dplyr)
     save(Skader_subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader_Subset.Rdata")
     rm(Skader)
     
+    # load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader_Subset.Rdata")
     
 
 # Merging ----
     ## Merge Trade (Carsten) and Skader (Toke) by addressID and husnummer, respectively
-    Trade_Skader <- merge(Trades_1992_2021_Subset, Skader_subset, by.x = "addressID", by.y = "husnummer")
+    Trade_Skader <- merge(Trades_1992_2021_Subset, Skader_subset, by.x = "addressID", by.y = "adresseIdentificerer")
+    #
+    # Assumption to be on building level. Problem with merging on unique address
+    # So far no reason to merge with BBR_Bygning, as it does not add any missing variable. Only maybe to add something BBR_Enhed.
     
+        ### Narrow down variables ----
+        Var_Trade_Skader <- c("vejnavn.y", "husnr.y")
+        Trade_Skader <- Trade_Skader[, !names(Trade_Skader) %in% Var_Trade_Skader]
+
     
+    ## Merge Precipitation on merged data  ----
+    # Precipitation only unique identifier is 'Enhed' that maps onto BBR_Enhed_Subset enhed_id
+    Precipitation_subset <- merge(Precipitation_subset, BBR_Enhed_Subset, by.x = "Enhed_id", by.y = "enhed_id")
+    ## Keep only subset of variables ----
+    Var_Precipitation_subset <- c("bygning", "urban_size", "forest_distance", "forest_size", "coastline_distance",
+                                  "habour_distance", "highway_distance", "powerline_distance", "railway_distance",
+                                  "trainstation_distance", "lake_distance", "windturbine_distance", 
+                                  "windturbine_height", "market_name", "Bluespot_0cm", "Bluespot_10cm", 
+                                  "Bluespot_20cm", "event_dates_1", "tab_1", "event_dates_2", "tab_2",
+                                  "event_dates_9", "tab_9", "event_dates_6", "tab_6", "event_dates_7",
+                                  "tab_7", "f_sold_after", "flood_0_05yr", "flood_05_1yr", "flood_1yr",
+                                  "flood_2yr", "flood_3yr", "total_payout", "flooded")  
+    Precipitation_subset <- subset(Precipitation_subset, select = Var_Precipitation_subset)    
+        
     
+    ## Merge of Precipitation and Trade_Skader ----
+    Total_df <- merge(Trade_Skader, Precipitation_subset, by.x = "bygning_id", by.y = "bygning")
     
     
     
