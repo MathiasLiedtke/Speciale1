@@ -43,7 +43,7 @@ library(dplyr)
         Precipitation <- dplyr::bind_rows(fp_events, ev1_Koebenhavn, ev1_StorKoebenhavn, 
                                            ev6_Aalborg, ev7_aarhus, ev8_Trekanstomraade)
         # Remove duplicates
-        Precipitation <- Precipitation %>% distinct(.keep_all = TRUE)
+        Precipitation <- Precipitation %>% dplyr::distinct(.keep_all = TRUE)
         
         # Remove first data frames 
         rm(ev1_Koebenhavn, ev1_StorKoebenhavn, ev6_Aalborg, ev7_aarhus, ev8_Trekanstomraade, fp_events)
@@ -62,11 +62,12 @@ library(dplyr)
             # Answer = 7331
 
     ## Reducing dimension of data frame 
-      variables_to_keep <- c("Enhed_id", "x", "y", "kommunekode", "husnr", "etage", "doer", "vejnavn", 
+      # variables_to_keep <- c("Enhed_id","vejnavn", "husnr", "postnr", "x", "y", "kommunekode", 
+                             "husnr", "etage", "doer", "vejnavn", 
                     "postnr", "kommunenavn", "height", "unit_type_code", "size", "rooms", "bath", 
                     "toilets", "floor", "car_park", "car_park_dobble", "outhouse", "brick", 
                     "lightweight_concrete", "timbered", "wood", "concrete", 
-                    "Builtup_roof", "fibercement_asbestos_roof", "cement_roof", "thatch_roof",
+                    "Builtup_roof", "tile_roof","fibercement_asbestos_roof", "cement_roof", "thatch_roof",
                     "district_heating", "central_heating", "heatpump_heating", "electric_heating", 
                     "year_of_built", "major_renovations", "Renovation70s", "Renovation80s", 
                     "Renovation90s", "Renovation00s", "Renovation10s", "Energy_code", "urban_size", 
@@ -77,18 +78,32 @@ library(dplyr)
                     "tab_1", "event_dates_2","tab_2", "event_dates_9", "tab_9", "event_dates_6", "tab_6" ,
                     "event_dates_7", "tab_7","f_sold_after",
                     "flood_0_05yr", "flood_05_1yr", "flood_1yr", "flood_2yr", "flood_3yr", "total_payout",
-                    "flooded")      
-      Precipitation_subset <- subset(Precipitation, select = variables_to_keep) 
+                    "flooded")
+      Var_Precipitation_subset <- c("Enhed_id","vejnavn", "husnr", "postnr","x","y", "bygning", 
+                                    "unit_type_code","urban_size", "district_heating", 
+                                    "central_heating", "heatpump_heating", "year_of_built", 
+                                    "major_renovations", "electric_heating", "tile_roof", "thatch_roof", 
+                                    "fibercement_asbestos_roof", "outhouse", "year_of_built", "car_park", 
+                                    "car_park_dobble", "unit_type_code","brick", "lightweight_concrete", 
+                                    "wood", "rooms", "toilets", "forest_distance", "forest_size", 
+                                    "coastline_distance","habour_distance", "highway_distance", 
+                                    "powerline_distance", "railway_distance","trainstation_distance",
+                                    "lake_distance", "windturbine_distance", "windturbine_height", 
+                                    "market_name", "Bluespot_0cm", "Bluespot_10cm", "price", 
+                                    "Bluespot_20cm", "event_dates","event_dates_1", "tab_1", "event_dates_2", 
+                                    "tab_2","event_dates_9", "tab_9", "event_dates_6", "tab_6", "event_dates_7",
+                                    "tab_7", "f_sold_after", "flood_0_05yr", "flood_05_1yr", "flood_1yr",
+                                    "flood_2yr", "flood_3yr", "total_payout", "flooded")  
+      Precipitation_subset <- subset(Precipitation, select = Var_Precipitation_subset) 
       rm(Precipitation)
       
         ### Building variables ----
         # Spatial variable
         Precipitation_subset$Geometri_EPSG_25832 <- paste0(Precipitation_subset$x, " ", Precipitation_subset$y)
-        Precipitation_subset$Geometri_EPSG_25832 <- sf::st_as_sf(Precipitation_subset$Geometri_EPSG_25832)
-        Precipitation_subset$Geometri_EPSG_25832 <- sf::st_as_sfc(Precipitation_subset, "Geometri_EPSG_25832")
-        my_sf <- st_as_sf(my_data, coords = c("longitude", "latitude"), crs = 4326)
-        
-        CLEAN_DATA$Geometri_EPSG_25832 <- sf::st_as_sfc(CLEAN_DATA$Geometri_EPSG_25832)
+        #Precipitation_subset$Geometri_EPSG_25832 <- sf::st_as_sf(Precipitation_subset$Geometri_EPSG_25832)
+        #Precipitation_subset$Geometri_EPSG_25832 <- sf::st_as_sfc(Precipitation_subset, "Geometri_EPSG_25832")
+        #my_sf <- st_as_sf(my_data, coords = c("longitude", "latitude"), crs = 4326)
+      
         # Terraced House (rækkehus)
         Precipitation_subset$TerracedHouse <- ifelse(Precipitation_subset$unit_type_code == 131, 1, 0)
         
@@ -121,6 +136,9 @@ library(dplyr)
                                                       Precipitation_subset$major_renovations > 1970 , 1, 0)
         Precipitation_subset$'Renovated_1980-1990' <- ifelse(Precipitation_subset$major_renovations < 1990 & 
                                                       Precipitation_subset$major_renovations > 1980 , 1, 0)
+        
+      
+        
     ### Save Precipitation ----
     save(Precipitation_subset, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")    
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")
@@ -287,21 +305,34 @@ library(dplyr)
     
     ## Merge Precipitation on merged data  ----
     # Precipitation only unique identifier is 'Enhed' that maps onto BBR_Enhed_Subset enhed_id
-    Precipitation_subset <- merge(Precipitation_subset, BBR_Enhed_Subset, by.x = "Enhed_id", by.y = "enhed_id")
-    ## Keep only subset of variables ----
-    Var_Precipitation_subset <- c("bygning", "urban_size", "forest_distance", "forest_size", "coastline_distance",
-                                  "habour_distance", "highway_distance", "powerline_distance", "railway_distance",
-                                  "trainstation_distance", "lake_distance", "windturbine_distance", 
-                                  "windturbine_height", "market_name", "Bluespot_0cm", "Bluespot_10cm", 
-                                  "Bluespot_20cm", "event_dates_1", "tab_1", "event_dates_2", "tab_2",
-                                  "event_dates_9", "tab_9", "event_dates_6", "tab_6", "event_dates_7",
-                                  "tab_7", "f_sold_after", "flood_0_05yr", "flood_05_1yr", "flood_1yr",
-                                  "flood_2yr", "flood_3yr", "total_payout", "flooded")  
-    Precipitation_subset <- subset(Precipitation_subset, select = Var_Precipitation_subset)    
+        load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")
+        # Precipitation_subset <- merge(Precipitation_subset, BBR_Enhed_Subset, by.x = "Enhed_id", by.y = "enhed_id")
+    ## Rename variables to fit to Trade_Skader ----
+        ### Trade_Skader
+        Trade_Skader <- dplyr::rename(Trade_Skader, vejnavn = vejnavn.x, husnr = husnr.x, year_of_built = Opførelsesår,
+                                      tile_roof = Tile, thatch_roof = Thatched, fibercement_asbestos_roof = Fiberasbetos,
+                                      lightweight_concrete = Lightweightconcrete, wood = Wood, rooms = enh031AntalVærelser,
+                                      toilets = enh032Toiletforhold)
+        
+        
+        ### Precipitation
+        Precipitation_subset <- dplyr::rename(Precipitation_subset, latitude = x, longitude = y, 
+                                              nominal_price = price, Brick = brick, Outbuilding = outhouse, 
+                                              Garage = car_park_dobble)
+        
+        # Toilet from Trade_Skader is not number of toilets like Precitipation
+        Trade_Skader$toilets <- NA
+        
         
     
     ## Merge of Precipitation and Trade_Skader ----
     Total_df <- merge(Trade_Skader, Precipitation_subset, by.x = "bygning_id", by.y = "bygning")
+    Total_df <- bind_rows(Trade_Skader, Precipitation_subset)
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df.Rdata")
+
+# Finalizing data frame Total_df ----
+    ## Remove unneccesary variables ----
+    
     
     
     
