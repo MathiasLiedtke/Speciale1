@@ -6,6 +6,7 @@
 # Library ----
 library(openxlsx)
 library(dplyr)
+library(tidyr)
 
 
 
@@ -286,6 +287,7 @@ library(dplyr)
                     "Tidligere udbetalt byg/løs/afgrd")
     Skader_subset <- subset(Skader, select = Var_Skader)
     save(Skader_subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader_Subset.Rdata")
+    
     rm(Skader)
     
     # load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader_Subset.Rdata")
@@ -301,7 +303,9 @@ library(dplyr)
         ### Narrow down variables ----
         Var_Trade_Skader <- c("vejnavn.y", "husnr.y")
         Trade_Skader <- Trade_Skader[, !names(Trade_Skader) %in% Var_Trade_Skader]
-
+        
+        ### Skader variable to be able to distinguish between flood and precipitation
+        Trade_Skader$flooded <- ifelse(!is.na(Trade_Skader$Hændelsesdato) | !is.na(Trade_Skader$`Tidligere udbetalt byg/løs/afgrd`), 2, 0)
     
     ## Merge Precipitation on merged data  ----
     # Precipitation only unique identifier is 'Enhed' that maps onto BBR_Enhed_Subset enhed_id
@@ -326,14 +330,94 @@ library(dplyr)
         
     
     ## Merge of Precipitation and Trade_Skader ----
-    Total_df <- merge(Trade_Skader, Precipitation_subset, by.x = "bygning_id", by.y = "bygning")
+    #Total_df <- merge(Trade_Skader, Precipitation_subset, by.x = "bygning_id", by.y = "bygning")
     Total_df <- bind_rows(Trade_Skader, Precipitation_subset)
     save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df.Rdata")
-
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df.Rdata")
 # Finalizing data frame Total_df ----
-    ## Remove unneccesary variables ----
+    ## Remove unnecessary variables ----
+    Var_Total_df <- c("vejnavn.y", "husnr.y")
+    Total_df <- Total_df[, !names(Total_df) %in% Var_Total_df]
+    
+    ## display only latest occasion ----
+        ### Redefine class for hændelsesdato 
+        Total_df$Hændelsesdato <- as.Date(Total_df$Hændelsesdato)
+    
+    # Take dates to common variable
+    # Ifelse command does not keep date format, instead use case_when from dplyr
+    Total_df$Hændelsesdato <- dplyr::case_when(
+      is.na(Total_df$Hændelsesdato) ~ case_when(
+        !is.na(Total_df$event_dates_9) & Total_df$event_dates_9 < Total_df$dato.x ~ Total_df$event_dates_9,
+        !is.na(Total_df$event_dates_7) & Total_df$event_dates_7 < Total_df$dato.x ~ Total_df$event_dates_7,
+        !is.na(Total_df$event_dates_6) & Total_df$event_dates_6 < Total_df$dato.x ~ Total_df$event_dates_6,
+        !is.na(Total_df$event_dates_2) & Total_df$event_dates_2 < Total_df$dato.x ~ Total_df$event_dates_2,
+        !is.na(Total_df$event_dates_1) & Total_df$event_dates_1 < Total_df$dato.x ~ Total_df$event_dates_1,
+        TRUE ~ as.Date(NA)
+      ),
+      TRUE ~ Total_df$Hændelsesdato
+    )
+    
+    ### Reduce observations ----
+    # if no date of occurances in given zip code then drop all observations with zipcode
+    Total_df <- Total_df %>%
+      group_by(postnr) %>%
+      filter(!all(is.na(Hændelsesdato))) %>%
+      ungroup()
+    
+    # Total_df <- Total_df %>%
+    #   group_by(postnr) %>%
+    #   filter(sum(!is.na(Hændelsesdato)) >= 150) %>%
+    #   ungroup()
+    
+    # Delete if no observations in district_heating, central heating, roof, etc. 
+    Total_df <- Total_df %>% tidyr::drop_na(district_heating, central_heating, electric_heating,
+                                            tile_roof, thatch_roof, fibercement_asbestos_roof)
+    
+    
+    # Add to TotalPay if the condition is met
+    Total_df$Total_tab <- ifelse (!is.na(Total_df$event_dates_1) & Total_df$event_dates_1 < Total_df$dato.x,
+            Total_df$Total_tab <- Total_df$Total_tab + Total_df$tab_1, Total_df$Total_tab <- Total_df$Total_tab) 
+    
+    Total_df$Total_tab <- ifelse (!is.na(Total_df$event_dates_2) & Total_df$event_dates_2 < Total_df$dato.x,
+            Total_df$Total_tab <- Total_df$Total_tab + Total_df$tab_2, Total_df$Total_tab <- Total_df$Total_tab) 
+    
+    Total_df$Total_tab <- ifelse (!is.na(Total_df$event_dates_6) & Total_df$event_dates_6 < Total_df$dato.x,
+            Total_df$Total_tab <- Total_df$Total_tab + Total_df$tab_6, Total_df$Total_tab <- Total_df$Total_tab) 
+    
+    Total_df$Total_tab <- ifelse (!is.na(Total_df$event_dates_7) & Total_df$event_dates_7 < Total_df$dato.x,
+            Total_df$Total_tab <- Total_df$Total_tab + Total_df$tab_7, Total_df$Total_tab <- Total_df$Total_tab)     
+    
+    Total_df$Total_tab <- ifelse (!is.na(Total_df$event_dates_9) & Total_df$event_dates_9 < Total_df$dato.x,
+            Total_df$Total_tab <- Total_df$Total_tab + Total_df$tab_9, Total_df$Total_tab <- Total_df$Total_tab)
+    
+    ## Add Total_tab to Udbetaling if NA ----
+    Total_df$`Tidligere udbetalt byg/løs/afgrd` <- ifelse(is.na(Total_df$`Tidligere udbetalt byg/løs/afgrd`), 
+                                                      Total_df$Total_tab, Total_df$`Tidligere udbetalt byg/løs/afgrd`)
+
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df2.Rdata")
+    
+    ## Reduce to predictor variables ----
+    Var_Total_df <- c("year", "hustype", "year_of_built", "bygning_id", "grund", "husnummer",
+                      "Geometri_EPSG_25832", "adr_etrs89_oest", "adr_etrs89_nord", "etage", 
+                      "opgang", "dato.y", "entryAddressID.y", "Selvrisiko", "Enhed_id",
+                      "bygning", "unit_type_code", "major_renovations", "year_of_built.1", 
+                      "unit_type_code.1", "event_dates", "event_dates_1", "tab_1",
+                      "event_dates_2", "tab_2", "event_dates_9", "tab_9", "event_dates_6",
+                      "tab_6", "event_dates_7", "tab_7", "f_sold_after", "flood_0_05yr", 
+                      "flood_05_1yr", "flood_1yr", "flood_2yr", "flood_3yr", "total_payout",
+                      "TotalPay", "Total_tab")
+    Total_df <- Total_df[, !names(Total_df) %in% Var_Total_df]
+    
+    Total_df <- dplyr::distinct(Total_df)
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df3.Rdata")
+
+
+# Clean data of outliers  ---- 
     
     
     
     
-        
+    
+    
+    
