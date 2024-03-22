@@ -7,6 +7,10 @@
 library(openxlsx)
 library(dplyr)
 library(tidyr)
+library(sf)
+library(sp)
+library(rgdal)
+library(geos)
 
 
 
@@ -395,10 +399,11 @@ library(tidyr)
                                                       Total_df$Total_tab, Total_df$`Tidligere udbetalt byg/løs/afgrd`)
 
     save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df2.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df2.Rdata")
     
     ## Reduce to predictor variables ----
     Var_Total_df <- c("year", "hustype", "year_of_built", "bygning_id", "grund", "husnummer",
-                      "Geometri_EPSG_25832", "adr_etrs89_oest", "adr_etrs89_nord", "etage", 
+                       "etage", "car_park",
                       "opgang", "dato.y", "entryAddressID.y", "Selvrisiko", "Enhed_id",
                       "bygning", "unit_type_code", "major_renovations", "year_of_built.1", 
                       "unit_type_code.1", "event_dates", "event_dates_1", "tab_1",
@@ -406,11 +411,158 @@ library(tidyr)
                       "tab_6", "event_dates_7", "tab_7", "f_sold_after", "flood_0_05yr", 
                       "flood_05_1yr", "flood_1yr", "flood_2yr", "flood_3yr", "total_payout",
                       "TotalPay", "Total_tab")
-    Total_df <- Total_df[, !names(Total_df) %in% Var_Total_df]
+    # "Geometri_EPSG_25832", "adr_etrs89_oest", "adr_etrs89_nord",
     
+    Total_df <- Total_df[, !names(Total_df) %in% Var_Total_df]
+    rm(Var_Total_df)
+    
+    #Keep only unique observations
     Total_df <- dplyr::distinct(Total_df)
     
     save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df3.Rdata")
+    
+
+# Change geographical point variable to spatial variable ----
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df3.Rdata")
+
+    ## Convert latitude and longitude to EPSG system. 
+        ## Extract EPSG: 
+        # Check data
+        filtered_strings <- Total_df$Geometri_EPSG_25832[!grepl("^POINT", Total_df$Geometri_EPSG_25832)]
+        # notice not all obs in Geometri_EPSG_25832 start with POINT ()
+        # Use gsub to remove POINT from obs and adding at end 
+        # Remove "POINT" and parentheses
+        Total_df$EPSG <- gsub("POINT|\\(|\\)", "", Total_df$Geometri_EPSG_25832)
+        # Retrieve coordinates in each column 
+        Total_df$x_coord <- as.numeric(stringr::str_extract(Total_df$EPSG, "[^ ]+"))
+        Total_df$y_coord <- as.numeric(stringr::str_extract(Total_df$EPSG, "(?<=\\s)\\d+\\.?\\d*$"))
+        # Paste it together with Point in every obs 
+        Total_df$Coor <- paste0("POINT (",Total_df$x_coord," ", Total_df$y_coord, ")")
+        # Check data again 
+        head(Total_df$Coor)
+        class(Total_df$Coor)
+        filtered_strings2 <- Total_df$Coor[!grepl("^POINT", Total_df$Coor)]
+        st_as_sf(Total_df, wkt="Coor", crs = 25832)
+        Total_df$Coor <- sf::st_as_sfc(Total_df$Coor)
+    
+       
+    
+    ## Save date ----
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df4.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df4.Rdata")
+
+
+# Load in geographical variables ----
+    
+    # Højspænding
+    powerline_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/hoejspaendingsledning/hoejspaendingsledning.shp")
+    
+    # Jernbane
+    Jernbane1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/jernbane/jernbane_0001/jernbane.shp")
+    Jernbane <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/jernbane/jernbane_0000/jernbane.shp")
+    railway_distance <- rbind(Jernbane, Jernbane1)
+    rm(Jernbane1)
+    
+    # Kyst 
+    Kyst0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/kyst/kyst_0000/kyst.shp")
+    Kyst1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/kyst/kyst_0001/kyst.shp")
+    coastline_distance <- rbind(Kyst0, Kyst1)
+    rm(Kyst0, Kyst1)
+    
+    # skov 
+    Skov0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0000/skov.shp")
+    Skov1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0001/skov.shp")
+    Skov2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0002/skov.shp")
+    Skov3 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0003/skov.shp")
+    Skov4 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0004/skov.shp")
+    Skov5 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0005/skov.shp")
+    Skov6 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0006/skov.shp")
+    Skov7 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0007/skov.shp")
+    Skov8 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0008/skov.shp")
+    Skov9 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0009/skov.shp")
+    Skov10 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0010/skov.shp")
+    forest_distance <- rbind(Skov0, Skov1, Skov2, Skov3, Skov4, Skov5, Skov6, Skov7, Skov8, Skov9, Skov10)
+    rm(Skov0, Skov1, Skov2, Skov3, Skov4, Skov5, Skov6, Skov7, Skov8, Skov9, Skov10)
+    
+    
+    
+    # Soe 
+    Soe0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0000/soe.shp")
+    Soe1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0001/soe.shp")
+    Soe2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0002/soe.shp")
+    Soe3 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0003/soe.shp")
+    Soe4 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0004/soe.shp")
+    Soe5 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0005/soe.shp")
+    Soe6 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0006/soe.shp")
+    Soe7 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0007/soe.shp")
+    Soe8 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0008/soe.shp")
+    Soe9 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0009/soe.shp")
+    Soe10 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0010/soe.shp")
+    Soe11 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0011/soe.shp")
+    Soe12 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0012/soe.shp")
+    Soe13 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0013/soe.shp")
+    Soe14 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0014/soe.shp")
+    Soe15 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0015/soe.shp")
+    Soe16 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0016/soe.shp")
+    Soe17 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0017/soe.shp")
+    Soe18 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0018/soe.shp")
+    lake_distance <- rbind(Soe0, Soe1, Soe2, Soe3, Soe4, Soe5, Soe6, Soe7, Soe8, Soe9, 
+                 Soe10, Soe11, Soe12, Soe13, Soe14, Soe15, Soe16, Soe17, Soe18)
+    rm(Soe0, Soe1, Soe2, Soe3, Soe4, Soe5, Soe6, Soe7, Soe8, Soe9, 
+       Soe10, Soe11, Soe12, Soe13, Soe14, Soe15, Soe16, Soe17, Soe18)
+    
+    # Togstation
+    trainstation_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/togstation/togstation.shp")
+    
+    # Vaadområde 
+    Vaadområde0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0000/vaadomraade.shp")
+    Vaadområde1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0001/vaadomraade.shp")
+    Vaadområde2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0002/vaadomraade.shp")
+    Vandområde <- rbind(Vaadområde0, Vaadområde1,Vaadområde2)
+    rm(Vaadområde0, Vaadområde1,Vaadområde2)
+    
+    # Mangler vejkant pga. 160
+    # vejkant0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vejkant/vejkant_0000/vejkant.shp")
+    
+    
+    # Vindmølle
+    windturbine_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vindmoelle/vindmoelle.shp")
+    
+    
+    
+# Add missing geographical variables ----
+    
+    # Change data frame to spatial object 
+    Total_df <- st_as_sf(Total_df)
+    # Set crs of Total_df
+    Total_df <- sf::st_set_crs(Total_df, sf::st_crs(powerline_distance))
+    print(sf::st_crs(Total_df))
+    
+    # Define column vector of postnr
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    # Loop through Total_df to calculate distances and only if NA
+    for (i in kommune_nr) {
+      cat(i, "\n")
+      start_time <- Sys.time()
+      
+      # Subset the data
+      subset_df <- Total_df[Total_df$postnr == i & is.na(Total_df$powerline_distance), ]
+      
+      if(nrow(subset_df) > 0) {
+        # Calculate distances
+        distances <- sf::st_distance(subset_df, powerline_distance)
+        
+        # Define the 'miin' function, or replace it with an appropriate function
+        miin <- function(x) min(x, na.rm = TRUE)
+        
+        # Assign distances back to the correct rows in Total_df
+        Total_df$powerline_distance[Total_df$postnr == i & is.na(Total_df$powerline_distance)] <- apply(distances, 1, miin)
+      }
+      
+      
+      cat("Time for municipality", i, ": ", Sys.time() - start_time, "\n")
+    }
 
 
 # Clean data of outliers  ---- 
