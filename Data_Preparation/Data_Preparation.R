@@ -11,6 +11,8 @@ library(sf)
 library(sp)
 library(rgdal)
 library(geos)
+library(foreach)
+library(doParallel)
 
 
 
@@ -532,6 +534,7 @@ library(geos)
     
 # Add missing geographical variables ----
     
+    
     # Change data frame to spatial object 
     Total_df <- st_as_sf(Total_df)
     # Set crs of Total_df
@@ -541,7 +544,7 @@ library(geos)
     # Define column vector of postnr
     kommune_nr <- sort(unique(Total_df$postnr))
     
-    # Loop through Total_df to calculate distances and only if NA
+    ## Powerline distance loop ----
     for (i in kommune_nr) {
       cat(i, "\n")
       start_time <- Sys.time()
@@ -564,8 +567,114 @@ library(geos)
       cat("Time for municipality", i, ": ", Sys.time() - start_time, "\n")
     }
 
+        ## Railway_distance loop ----
+        for (i in kommune_nr) {
+          cat(i, "\n")
+          start_time <- Sys.time()
+          
+          # Subset the data
+          subset_df <- Total_df[Total_df$postnr == i & is.na(Total_df$railway_distance), ]
+          
+          if(nrow(subset_df) > 0) {
+            # Calculate distances
+            distances <- sf::st_distance(subset_df, railway_distance)
+            
+            # Define the 'miin' function, or replace it with an appropriate function
+            miin <- function(x) min(x, na.rm = TRUE)
+            
+            # Assign distances back to the correct rows in Total_df
+            Total_df$railway_distance[Total_df$postnr == i & is.na(Total_df$railway_distance)] <- apply(distances, 1, miin)
+          }
+          
+          
+          cat("Time for municipality", i, ": ", Sys.time() - start_time, "\n")
+        }
 
+    ## coastline_distance loop ----
+    for (i in kommune_nr) {
+      cat(i, "\n")
+      start_time <- Sys.time()
+      
+      # Subset the data
+      subset_df <- Total_df[Total_df$postnr == i & is.na(Total_df$coastline_distance), ]
+      
+      if(nrow(subset_df) > 0) {
+        # Calculate distances
+        distances <- sf::st_distance(subset_df, coastline_distance)
+        
+        # Define the 'miin' function, or replace it with an appropriate function
+        miin <- function(x) min(x, na.rm = TRUE)
+        
+        # Assign distances back to the correct rows in Total_df
+        Total_df$coastline_distance[Total_df$postnr == i & is.na(Total_df$coastline_distance)] <- apply(distances, 1, miin)
+      }
+      
+      
+      cat("Time for municipality coastline", i, ": ", Sys.time() - start_time, "\n")
+    }
+    
+
+    ## forest_distance loop ----
+    for (i in kommune_nr) {
+      cat(i, "\n")
+      start_time <- Sys.time()
+      
+      # Subset the data
+      subset_df <- Total_df[Total_df$postnr == i & is.na(Total_df$forest_distance), ]
+      
+      if(nrow(subset_df) > 0) {
+        # Calculate distances
+        distances <- sf::st_distance(subset_df, forest_distance)
+        
+        # Define the 'miin' function, or replace it with an appropriate function
+        miin <- function(x) min(x, na.rm = TRUE)
+        
+        # Assign distances back to the correct rows in Total_df
+        Total_df$forest_distance[Total_df$postnr == i & is.na(Total_df$forest_distance)] <- apply(distances, 1, miin)
+      }
+      
+      
+      cat("Time for municipality Forest", i, ": ", Sys.time() - start_time, "\n")
+    }
+    
+    
+    
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    ## forest_distance loop ----
+    for (i in kommune_nr) {
+      cat(i, "\n")
+      start_time <- Sys.time()
+      
+      # Define 'id' values for the current 'kommune_nr'
+      addressID <- sort(unique(Total_df$addressID[Total_df$postnr == i]))
+      
+      for (j in addressID) {
+        # Subset the data
+        subset_df <- Total_df[Total_df$postnr == i & Total_df$addressID == j & is.na(Total_df$forest_distance), ]
+        
+        if(nrow(subset_df) > 0) {
+          # Calculate distances
+          distances <- sf::st_distance(subset_df, forest_distance)
+          
+          # Define the 'miin' function, or replace it with an appropriate function
+          miin <- function(x) min(x, na.rm = TRUE)
+          
+          # Assign distances back to the correct rows in Total_df
+          Total_df$forest_distance[Total_df$postnr == i & Total_df$addressID == j & is.na(Total_df$forest_distance)] <- apply(distances, 1, miin)
+        }
+        cat("Time for adressID", j, ": ", Sys.time() - start_time, "\n")
+        }
+      
+      cat("Time for municipality Forest", i, ": ", Sys.time() - start_time, "\n")
+    }
+    
+    
+save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")        
+load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")
 # Clean data of outliers  ---- 
+    
+    
     
     
     
