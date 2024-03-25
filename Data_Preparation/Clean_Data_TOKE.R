@@ -36,7 +36,7 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
           ### Carport ----
           BBR_Bygning_Subset$Car_Park <- ifelse(BBR_Bygning_Subset$Bygninganvendelse == 920, 1, 0)
           
-          ### Car garage double ----
+          ### Car garage ----
           BBR_Bygning_Subset$Garage <- ifelse(BBR_Bygning_Subset$Bygninganvendelse == 910, 1, 0)
           
           ### Terraced House 
@@ -88,6 +88,7 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
                                                             BBR_Bygning_Subset$Ombygning > 1970 , 1, 0)
           BBR_Bygning_Subset$'Renovated_1980-1990' <- ifelse(BBR_Bygning_Subset$Ombygning < 1990 & 
                                                             BBR_Bygning_Subset$Ombygning > 1980 , 1, 0)
+          save(BBR_Bygning_Subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Subset.Rdata")
           
     ## Identification variable merging ----
        # Find the key to merge between data sets for achieving the variables of interest.
@@ -106,10 +107,12 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
           #Truncate data to sales from 2010
           BBR_Enhed_Trade <- subset(BBR_Enhed_Trade, BBR_Enhed_Trade$dato > "2010-01-01")
            # save(BBR_Enhed_Trade, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed_Trade.Rdata")
+          load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed_Trade.Rdata")
         
               ##### Keep useful variables ----
               Var_to_keep_Enhed_Trade <- c("vejnavn", "husnr","adresseIdentificerer", "enhed_id", "kommunekode", "enh020EnhedensAnvendelse",  
-                                           "enh023Boligtype", "enh031AntalVærelser", "enh032Toiletforhold", "etage", "opgang",
+                                           "enh023Boligtype", "enh031AntalVærelser", "enh032Toiletforhold", 
+                                           "Heating1","Heating2", "Heating3", "Roof1", "Roof2", "Roof3", "etage", "opgang",
                                            "bygning", "vejnavn", "husnr", "postnr", "m2", "dato", "entryAddressID", "nominal_price", 
                                            "year")
               
@@ -125,11 +128,13 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
                                                  `Renovated_1960-1970` = ifelse(is.na(`Renovated_1960-1970`), 0, `Renovated_1960-1970`),
                                                  `Renovated_1970-1980` = ifelse(is.na(`Renovated_1970-1980`), 0, `Renovated_1970-1980`),
                                                  `Renovated_1980-1990` = ifelse(is.na(`Renovated_1980-1990`), 0, `Renovated_1980-1990`))
-              #save(CLEAN_DATA, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/CLEAN_DATA.Rdata")  
+              # save(CLEAN_DATA, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/CLEAN_DATA.Rdata")  
               load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/CLEAN_DATA.Rdata")
               
-          # Reduce dimensions in clean data by merging flooded houses and keeping neighbors. But zip codes with no flooing are removed. 
+          # Reduce dimensions in clean data by merging flooded houses and keeping neighbors. But zip codes with no flooding are removed. 
             load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
+            Skader <- Clean_Flood_Data
+            rm(Clean_Flood_Data)
             # Adresse need to be parsed to be merged later (only identification)
             Skader$adresse1 <- gsub(",.*", "", Skader$Adresse)
             Skader$Vejnr <- stringr::str_extract(Skader$adresse1, "\\d+[A-Za-z]*(-\\d+)?")
@@ -142,14 +147,14 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
           # It is assumed that entities within a building is affected on price, such as apartments. 
           
           
-          save(Clean_Flood_Data, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
+          save(Clean_Flood_Data, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Clean_Flood_Data.Rdata")
           load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
          
           
           ## Merge rain data and flooding due to streams ----
           
               ### rename variables from both data frames to be common ----
-                  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Clean_Flood_Data.Rdata")
+          load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
                   Clean_Flood_Data <- dplyr::rename(Clean_Flood_Data, size = Size, 
                                                     outhouse = Outbuilding, year_of_built = Opførelsesår, 
                                                     fibercement_asbestos_roof = Fiberasbetos, thatch_roof = Thatched,
@@ -158,7 +163,7 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
                   save(Clean_Flood_Data, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/CLEAN_FLOOD_DATA_RENAMED_VARIABLES.Rdata")
                                                     
               
-                  # load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_Subset.Rdata")
+                  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_Subset.Rdata")
                   Precipitation_subset <- dplyr::rename(Precipitation_subset, adr_etrs89_oest = x, adr_etrs89_nord = y,
                                                         Car_Park = car_park, Wood = wood, bygning_id = bygning)
                   
@@ -298,8 +303,12 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
                   
                   ALL_DATA_COMBINED <- subset(ALL_DATA_COMBINED, select = ALL_Var_To_Keep)
                   save(ALL_DATA_COMBINED, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ALL_DATA_COMBINED.Rdata")
-                  
-                  
+                  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ALL_DATA_COMBINED.Rdata")
+                  # I merge some variable with a lot of missing observations by taking. This is a temporary merge
+                  load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Carsten Bertram/SpecialeTrades_1992-2021.RData")
+                              var <- c("vejnavn", "husnr", "postnr", "Heating1", "Heating2", "Heating3", "Roof1", "Roof2", "Roof3") 
+                              trades_1992_2021 <-  subset(trades_1992_2021, select = var)
+                              ALL_DATA_COMBINED <- merge(ALL_DATA_COMBINED, trades_1992_2021, by.x = c("vejnavn", "husnr", "postnr"), by.y = c("vejnavn", "husnr", "postnr"), all.x = TRUE)
   # Cleaning data ----
       # This script is made for cleaning the data received from Toke. I imagine to delete columns, outliers, etc. 
       # How to clean data # https://www.r-bloggers.com/2021/04/how-to-clean-the-datasets-in-r/
@@ -339,7 +348,6 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
               # Load the shapefile
                 # Højspænding
                 Hoejspænding <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/hoejspaendingsledning/hoejspaendingsledning.shp")
-                
                 # Jernbane
                 Jernbane1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/jernbane/jernbane_0001/jernbane.shp")
                 Jernbane <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/jernbane/jernbane_0000/jernbane.shp")

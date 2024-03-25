@@ -1,16 +1,12 @@
-### LOAD JSON file (200 gb)
-
-# Library load ----
-library(jsonlite) 
-
 #
-con <- file("/Volumes/Filer_Backup/Speciale/BBR_2023_2024/BBR_2023_2024.json", "r")
+# Load in XML 
+#
 
-# Læs den første linje
-first_line <- readLines(con, n = 1)
+# Package
+library("XML")
 
-# Konverter den første linje til en liste
-data <- fromJSON(first_line)
+# Load data
+BBR <- xmlParse("/Volumes/Filer_Backup/Speciale/BBR_07_Gaeldende_20240305204506/BBR_07_Gaeldende_20240305204506.xml")
 
-# Luk filen
-close(con)
+# Convert 
+xml_data <- xmlToList(BBR)
