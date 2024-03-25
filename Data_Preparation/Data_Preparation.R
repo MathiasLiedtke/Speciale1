@@ -13,6 +13,9 @@ library(rgdal)
 library(geos)
 library(foreach)
 library(doParallel)
+library(units)
+library(Kendall)
+library(doSNOW)
 
 
 
@@ -70,22 +73,22 @@ library(doParallel)
 
     ## Reducing dimension of data frame 
       # variables_to_keep <- c("Enhed_id","vejnavn", "husnr", "postnr", "x", "y", "kommunekode", 
-                             "husnr", "etage", "doer", "vejnavn", 
-                    "postnr", "kommunenavn", "height", "unit_type_code", "size", "rooms", "bath", 
-                    "toilets", "floor", "car_park", "car_park_dobble", "outhouse", "brick", 
-                    "lightweight_concrete", "timbered", "wood", "concrete", 
-                    "Builtup_roof", "tile_roof","fibercement_asbestos_roof", "cement_roof", "thatch_roof",
-                    "district_heating", "central_heating", "heatpump_heating", "electric_heating", 
-                    "year_of_built", "major_renovations", "Renovation70s", "Renovation80s", 
-                    "Renovation90s", "Renovation00s", "Renovation10s", "Energy_code", "urban_size", 
-                    "forest_distance", "forest_size", "coastline_distance", "habour_distance", 
-                    "highway_distance", "powerline_distance", "railway_distance", "trainstation_distance", 
-                    "lake_distance", "windturbine_distance", "windturbine_height", "market_name", "price",
-                    "sales_date", "Bluespot_0cm", "Bluespot_10cm", "Bluespot_20cm", "event_dates_1", 
-                    "tab_1", "event_dates_2","tab_2", "event_dates_9", "tab_9", "event_dates_6", "tab_6" ,
-                    "event_dates_7", "tab_7","f_sold_after",
-                    "flood_0_05yr", "flood_05_1yr", "flood_1yr", "flood_2yr", "flood_3yr", "total_payout",
-                    "flooded")
+                    #          "husnr", "etage", "doer", "vejnavn", 
+                    # "postnr", "kommunenavn", "height", "unit_type_code", "size", "rooms", "bath", 
+                    # "toilets", "floor", "car_park", "car_park_dobble", "outhouse", "brick", 
+                    # "lightweight_concrete", "timbered", "wood", "concrete", 
+                    # "Builtup_roof", "tile_roof","fibercement_asbestos_roof", "cement_roof", "thatch_roof",
+                    # "district_heating", "central_heating", "heatpump_heating", "electric_heating", 
+                    # "year_of_built", "major_renovations", "Renovation70s", "Renovation80s", 
+                    # "Renovation90s", "Renovation00s", "Renovation10s", "Energy_code", "urban_size", 
+                    # "forest_distance", "forest_size", "coastline_distance", "habour_distance", 
+                    # "highway_distance", "powerline_distance", "railway_distance", "trainstation_distance", 
+                    # "lake_distance", "windturbine_distance", "windturbine_height", "market_name", "price",
+                    # "sales_date", "Bluespot_0cm", "Bluespot_10cm", "Bluespot_20cm", "event_dates_1", 
+                    # "tab_1", "event_dates_2","tab_2", "event_dates_9", "tab_9", "event_dates_6", "tab_6" ,
+                    # "event_dates_7", "tab_7","f_sold_after",
+                    # "flood_0_05yr", "flood_05_1yr", "flood_1yr", "flood_2yr", "flood_3yr", "total_payout",
+                    # "flooded")
       Var_Precipitation_subset <- c("Enhed_id","vejnavn", "husnr", "postnr","x","y", "bygning", 
                                     "unit_type_code","urban_size", "district_heating", 
                                     "central_heating", "heatpump_heating", "year_of_built", 
@@ -456,22 +459,22 @@ library(doParallel)
 
 # Load in geographical variables ----
     
-    # Højspænding
+    ## Højspænding ----
     powerline_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/hoejspaendingsledning/hoejspaendingsledning.shp")
     
-    # Jernbane
+    ## Jernbane ----
     Jernbane1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/jernbane/jernbane_0001/jernbane.shp")
     Jernbane <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/jernbane/jernbane_0000/jernbane.shp")
     railway_distance <- rbind(Jernbane, Jernbane1)
     rm(Jernbane1)
     
-    # Kyst 
+    ## Kyst ----
     Kyst0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/kyst/kyst_0000/kyst.shp")
     Kyst1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/kyst/kyst_0001/kyst.shp")
     coastline_distance <- rbind(Kyst0, Kyst1)
     rm(Kyst0, Kyst1)
     
-    # skov 
+    ## skov ----
     Skov0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0000/skov.shp")
     Skov1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0001/skov.shp")
     Skov2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0002/skov.shp")
@@ -485,7 +488,75 @@ library(doParallel)
     Skov10 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0010/skov.shp")
     forest_distance <- rbind(Skov0, Skov1, Skov2, Skov3, Skov4, Skov5, Skov6, Skov7, Skov8, Skov9, Skov10)
     rm(Skov0, Skov1, Skov2, Skov3, Skov4, Skov5, Skov6, Skov7, Skov8, Skov9, Skov10)
+    forest_distance$area <- st_area(forest_distance)
+    forest_distance$area <- as.numeric(forest_distance$area)
+    # Subset based on area > 5000 m2 according to forest definition of FN
+    forest_distance <- subset(forest_distance, forest_distance$area > 5000)
+    summary(forest_distance$area)
+    # Min <- units::set_units(5000, m^2)
+    forest_distance_1 <- subset(forest_distance, forest_distance$area < 
+                                  quantile(forest_distance$area, probs = 0.1))
+    forest_distance_1 <- sf::st_set_crs(forest_distance_1, sf::st_crs(Total_df))
+                                  
+    forest_distance_2 <- subset(forest_distance, forest_distance$area > 
+                                  quantile(forest_distance$area, probs = 0.1) & 
+                                  forest_distance$area < 
+                                  quantile(forest_distance$area, probs = 0.2))
+    forest_distance_2 <- sf::st_set_crs(forest_distance_2, sf::st_crs(Total_df))
     
+    forest_distance_3 <- subset(forest_distance, forest_distance$area > 
+                                  quantile(forest_distance$area, probs = 0.2) & 
+                                  forest_distance$area < 
+                                  quantile(forest_distance$area, probs = 0.3))
+    forest_distance_3 <- sf::st_set_crs(forest_distance_3, sf::st_crs(Total_df))
+    
+    forest_distance_4 <- subset(forest_distance, forest_distance$area > 
+                                  quantile(forest_distance$area, probs = 0.3) & 
+                                  forest_distance$area < 
+                                  quantile(forest_distance$area, probs = 0.4))
+    forest_distance_4 <- sf::st_set_crs(forest_distance_4, sf::st_crs(Total_df))
+    
+    forest_distance_5 <- subset(forest_distance, forest_distance$area > 
+                                  quantile(forest_distance$area, probs = 0.4) & 
+                                  forest_distance$area < 
+                                  quantile(forest_distance$area, probs = 0.5))
+    forest_distance_5 <- sf::st_set_crs(forest_distance_5, sf::st_crs(Total_df))
+    
+    forest_distance_6 <- subset(forest_distance, forest_distance$area > 
+                                  quantile(forest_distance$area, probs = 0.5) & 
+                                  forest_distance$area < 
+                                  quantile(forest_distance$area, probs = 0.6))
+    forest_distance_6 <- sf::st_set_crs(forest_distance_6, sf::st_crs(Total_df))
+    
+    forest_distance_7 <- subset(forest_distance, forest_distance$area > 
+                                  quantile(forest_distance$area, probs = 0.6) & 
+                                  forest_distance$area < 
+                                  quantile(forest_distance$area, probs = 0.7))
+    forest_distance_7 <- sf::st_set_crs(forest_distance_7, sf::st_crs(Total_df))
+    
+    forest_distance_8 <- subset(forest_distance, forest_distance$area > 
+                                  quantile(forest_distance$area, probs = 0.7) & 
+                                  forest_distance$area < 
+                                  quantile(forest_distance$area, probs = 0.8))
+    forest_distance_8 <- sf::st_set_crs(forest_distance_8, sf::st_crs(Total_df))
+    
+    forest_distance_9 <- subset(forest_distance, forest_distance$area > 
+                                  quantile(forest_distance$area, probs = 0.8) & 
+                                  forest_distance$area < 
+                                  quantile(forest_distance$area, probs = 0.9))
+    forest_distance_9 <- sf::st_set_crs(forest_distance_9, sf::st_crs(Total_df))
+    
+    forest_distance_10 <- subset(forest_distance, forest_distance$area > 
+                                  quantile(forest_distance$area, probs = 0.9) & 
+                                  forest_distance$area < 
+                                  quantile(forest_distance$area, probs = 1))
+    forest_distance_10 <- sf::st_set_crs(forest_distance_10, sf::st_crs(Total_df))
+    rm(forest_distance)
+    list.dfs <- list(forest_distance_1,forest_distance_2, forest_distance_3, forest_distance_4,
+                     forest_distance_5, forest_distance_6, forest_distance_7, forest_distance_8,
+                     forest_distance_9, forest_distance_10)
+    rm(forest_distance_1, forest_distance_2, forest_distance_3, forest_distance_4, forest_distance_5,
+       forest_distance_6, forest_distance_7, forest_distance_8, forest_distance_9, forest_distance_10)
     
     
     # Soe 
@@ -613,62 +684,92 @@ library(doParallel)
       cat("Time for municipality coastline", i, ": ", Sys.time() - start_time, "\n")
     }
     
-
-    ## forest_distance loop ----
-    for (i in kommune_nr) {
-      cat(i, "\n")
-      start_time <- Sys.time()
-      
-      # Subset the data
-      subset_df <- Total_df[Total_df$postnr == i & is.na(Total_df$forest_distance), ]
-      
-      if(nrow(subset_df) > 0) {
-        # Calculate distances
-        distances <- sf::st_distance(subset_df, forest_distance)
-        
-        # Define the 'miin' function, or replace it with an appropriate function
-        miin <- function(x) min(x, na.rm = TRUE)
-        
-        # Assign distances back to the correct rows in Total_df
-        Total_df$forest_distance[Total_df$postnr == i & is.na(Total_df$forest_distance)] <- apply(distances, 1, miin)
-      }
-      
-      
-      cat("Time for municipality Forest", i, ": ", Sys.time() - start_time, "\n")
-    }
     
-    
-    
+    ## forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
     
-    ## forest_distance loop ----
-    for (i in kommune_nr) {
-      cat(i, "\n")
-      start_time <- Sys.time()
+    
+    for (d in 1:length(list.dfs)) {
+      # Get the data frame at position 'd' in the list
+      df <- list.dfs[[d]]
       
-      # Define 'id' values for the current 'kommune_nr'
-      addressID <- sort(unique(Total_df$addressID[Total_df$postnr == i]))
-      
-      for (j in addressID) {
+      for (i in kommune_nr) {
+        cat(i, "\n")
+        start_time <- Sys.time()
+        
         # Subset the data
-        subset_df <- Total_df[Total_df$postnr == i & Total_df$addressID == j & is.na(Total_df$forest_distance), ]
+        subset_df <- Total_df[Total_df$postnr == i, ]
         
         if(nrow(subset_df) > 0) {
           # Calculate distances
-          distances <- sf::st_distance(subset_df, forest_distance)
+          distances <- sf::st_distance(subset_df, df)
           
           # Define the 'miin' function, or replace it with an appropriate function
           miin <- function(x) min(x, na.rm = TRUE)
           
-          # Assign distances back to the correct rows in Total_df
-          Total_df$forest_distance[Total_df$postnr == i & Total_df$addressID == j & is.na(Total_df$forest_distance)] <- apply(distances, 1, miin)
+          # Calculate minimum distances
+          min_distances <- apply(distances, 1, miin)
+          
+          # Replace values in Total_df$forest_distance if min_distances is less
+          Total_df$forest_distance[Total_df$postnr == i] <- ifelse(min_distances < Total_df$forest_distance[Total_df$postnr == i], min_distances, Total_df$forest_distance[Total_df$postnr == i])
         }
-        cat("Time for adressID", j, ": ", Sys.time() - start_time, "\n")
-        }
-      
-      cat("Time for municipality Forest", i, ": ", Sys.time() - start_time, "\n")
+        
+        cat("Time for municipality Forest", i, ": ", Sys.time() - start_time, "\n")
+      }
     }
     
+    registerDoParallel(cores = 6)
+    
+    
+
+# Use foreach to loop over list.dfs in parallel
+grand_list <- foreach(d = 1:length(list.dfs), .packages = "sf", .combine = 'c') %dopar% {
+  # Get the data frame at position 'd' in the list
+  df <- list.dfs[[d]]
+  
+  # Initialize an empty list to store the results of the inner loop
+  inner_results <- list()
+  
+  # Kommune 
+  kommune_nr <- sort(unique(Total_df$postnr))
+  
+  # Use a regular for loop to iterate over kommune_nr
+  for(i in kommune_nr) {
+    cat(i, "\n")
+    start_time <- Sys.time()
+    
+    # Subset the data
+    subset_df <- Total_df[Total_df$postnr == i, ]
+    
+    if(nrow(subset_df) > 0) {
+      # Calculate distances
+      distances <- sf::st_distance(subset_df, df)
+      
+      # Define the 'miin' function, or replace it with an appropriate function
+      miin <- function(x) min(x, na.rm = TRUE)
+      
+      # Calculate minimum distances
+      min_distances <- apply(distances, 1, miin)
+      
+      # Store minimum distances in a new column
+      subset_df$min_distances <- min_distances
+    }
+    
+    end_time <- Sys.time()
+    print(paste("Time for municipality Forest", i, ": ", end_time - start_time))
+    
+    # Store the updated subset_df in the inner_results list
+    inner_results[[i]] <- subset_df
+  }
+  
+  
+}
+
+
+    
+    save(Total_df_updated, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_updated.Rdata")            
+    
+
     
 save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")        
 load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")
