@@ -490,10 +490,15 @@ library(doSNOW)
     rm(Skov0, Skov1, Skov2, Skov3, Skov4, Skov5, Skov6, Skov7, Skov8, Skov9, Skov10)
     forest_distance$area <- st_area(forest_distance)
     forest_distance$area <- as.numeric(forest_distance$area)
+    
+    # Save time by calculating centroid 
+    forest_distance$geometry <- centroid <- sf::st_centroid(forest_distance$geometry)
+    
     # Subset based on area > 5000 m2 according to forest definition of FN
     forest_distance <- subset(forest_distance, forest_distance$area > 5000)
     summary(forest_distance$area)
-    # Min <- units::set_units(5000, m^2)
+    
+    # Subdivide 
     seq <- seq(0.00, 0.95, by = 0.05)
     
     #save in list
@@ -517,7 +522,7 @@ library(doSNOW)
     rm(forest_distance, df)
 
     
-    # Soe 
+    ## Soe ----
     Soe0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0000/soe.shp")
     Soe1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0001/soe.shp")
     Soe2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0002/soe.shp")
@@ -542,10 +547,34 @@ library(doSNOW)
     rm(Soe0, Soe1, Soe2, Soe3, Soe4, Soe5, Soe6, Soe7, Soe8, Soe9, 
        Soe10, Soe11, Soe12, Soe13, Soe14, Soe15, Soe16, Soe17, Soe18)
     
-    # Togstation
+    lake_distance$Centroid <- centroid_points <- st_centroid(lake_distance$geometry)
+    
+    seq <- seq(0.00, 0.95, by = 0.05)
+    
+    #save in list
+    list.dfs <- list()
+    
+    for (i in seq) {
+      # Create variable name
+      df_name <- paste0("lake_distance_", (i+0.05))
+      
+      # Subset data 
+      df <- subset(lake_distance, 
+                   area > quantile(lake_distance$area, probs = i) & 
+                     area < quantile(lake_distance$area, probs = (i + 0.05)))
+      
+      # Set CRS for the subset
+      df <- sf::st_set_crs(df, sf::st_crs(Total_df))
+      
+      # Save data frame in list
+      list.dfs[[df_name]] <- df
+    }
+    rm(lake_distance, df)
+    
+    ## Togstation ----
     trainstation_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/togstation/togstation.shp")
     
-    # Vaadområde 
+    ## Vaadområde ----
     Vaadområde0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0000/vaadomraade.shp")
     Vaadområde1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0001/vaadomraade.shp")
     Vaadområde2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0002/vaadomraade.shp")
@@ -556,7 +585,7 @@ library(doSNOW)
     # vejkant0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vejkant/vejkant_0000/vejkant.shp")
     
     
-    # Vindmølle
+    ## Vindmølle ----
     windturbine_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vindmoelle/vindmoelle.shp")
     
     
@@ -645,8 +674,7 @@ library(doSNOW)
     
     ## forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
-    
-    
+  
     for (d in 1:length(list.dfs)) {
       # Get the data frame at position 'd' in the list
       df <- list.dfs[[d]]
@@ -725,7 +753,7 @@ library(doSNOW)
     }
     
     
-    save(Total_df_updated, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_updated.Rdata")            
+    save(grand_list, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/grand_list.Rdata")            
     
 
     
