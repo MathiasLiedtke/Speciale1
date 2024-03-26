@@ -494,70 +494,28 @@ library(doSNOW)
     forest_distance <- subset(forest_distance, forest_distance$area > 5000)
     summary(forest_distance$area)
     # Min <- units::set_units(5000, m^2)
-    forest_distance_1 <- subset(forest_distance, forest_distance$area < 
-                                  quantile(forest_distance$area, probs = 0.1))
-    forest_distance_1 <- sf::st_set_crs(forest_distance_1, sf::st_crs(Total_df))
-                                  
-    forest_distance_2 <- subset(forest_distance, forest_distance$area > 
-                                  quantile(forest_distance$area, probs = 0.1) & 
-                                  forest_distance$area < 
-                                  quantile(forest_distance$area, probs = 0.2))
-    forest_distance_2 <- sf::st_set_crs(forest_distance_2, sf::st_crs(Total_df))
+    seq <- seq(0.00, 0.95, by = 0.05)
     
-    forest_distance_3 <- subset(forest_distance, forest_distance$area > 
-                                  quantile(forest_distance$area, probs = 0.2) & 
-                                  forest_distance$area < 
-                                  quantile(forest_distance$area, probs = 0.3))
-    forest_distance_3 <- sf::st_set_crs(forest_distance_3, sf::st_crs(Total_df))
+    #save in list
+    list.dfs <- list()
     
-    forest_distance_4 <- subset(forest_distance, forest_distance$area > 
-                                  quantile(forest_distance$area, probs = 0.3) & 
-                                  forest_distance$area < 
-                                  quantile(forest_distance$area, probs = 0.4))
-    forest_distance_4 <- sf::st_set_crs(forest_distance_4, sf::st_crs(Total_df))
-    
-    forest_distance_5 <- subset(forest_distance, forest_distance$area > 
-                                  quantile(forest_distance$area, probs = 0.4) & 
-                                  forest_distance$area < 
-                                  quantile(forest_distance$area, probs = 0.5))
-    forest_distance_5 <- sf::st_set_crs(forest_distance_5, sf::st_crs(Total_df))
-    
-    forest_distance_6 <- subset(forest_distance, forest_distance$area > 
-                                  quantile(forest_distance$area, probs = 0.5) & 
-                                  forest_distance$area < 
-                                  quantile(forest_distance$area, probs = 0.6))
-    forest_distance_6 <- sf::st_set_crs(forest_distance_6, sf::st_crs(Total_df))
-    
-    forest_distance_7 <- subset(forest_distance, forest_distance$area > 
-                                  quantile(forest_distance$area, probs = 0.6) & 
-                                  forest_distance$area < 
-                                  quantile(forest_distance$area, probs = 0.7))
-    forest_distance_7 <- sf::st_set_crs(forest_distance_7, sf::st_crs(Total_df))
-    
-    forest_distance_8 <- subset(forest_distance, forest_distance$area > 
-                                  quantile(forest_distance$area, probs = 0.7) & 
-                                  forest_distance$area < 
-                                  quantile(forest_distance$area, probs = 0.8))
-    forest_distance_8 <- sf::st_set_crs(forest_distance_8, sf::st_crs(Total_df))
-    
-    forest_distance_9 <- subset(forest_distance, forest_distance$area > 
-                                  quantile(forest_distance$area, probs = 0.8) & 
-                                  forest_distance$area < 
-                                  quantile(forest_distance$area, probs = 0.9))
-    forest_distance_9 <- sf::st_set_crs(forest_distance_9, sf::st_crs(Total_df))
-    
-    forest_distance_10 <- subset(forest_distance, forest_distance$area > 
-                                  quantile(forest_distance$area, probs = 0.9) & 
-                                  forest_distance$area < 
-                                  quantile(forest_distance$area, probs = 1))
-    forest_distance_10 <- sf::st_set_crs(forest_distance_10, sf::st_crs(Total_df))
-    rm(forest_distance)
-    list.dfs <- list(forest_distance_1,forest_distance_2, forest_distance_3, forest_distance_4,
-                     forest_distance_5, forest_distance_6, forest_distance_7, forest_distance_8,
-                     forest_distance_9, forest_distance_10)
-    rm(forest_distance_1, forest_distance_2, forest_distance_3, forest_distance_4, forest_distance_5,
-       forest_distance_6, forest_distance_7, forest_distance_8, forest_distance_9, forest_distance_10)
-    
+    for (i in seq) {
+      # Create variable name
+      df_name <- paste0("forest_distance_", (i+0.05))
+      
+      # Subset data 
+      df <- subset(forest_distance, 
+                   area > quantile(forest_distance$area, probs = i) & 
+                     area < quantile(forest_distance$area, probs = (i + 0.05)))
+      
+      # Set CRS for the subset
+      df <- sf::st_set_crs(df, sf::st_crs(Total_df))
+      
+      # Save data frame in list
+      list.dfs[[df_name]] <- df
+    }
+    rm(forest_distance, df)
+
     
     # Soe 
     Soe0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0000/soe.shp")
@@ -718,54 +676,54 @@ library(doSNOW)
       }
     }
     
+    
+
     registerDoParallel(cores = 6)
     
-    
-
-# Use foreach to loop over list.dfs in parallel
-grand_list <- foreach(d = 1:length(list.dfs), .packages = "sf", .combine = 'c') %dopar% {
-  # Get the data frame at position 'd' in the list
-  df <- list.dfs[[d]]
-  
-  # Initialize an empty list to store the results of the inner loop
-  inner_results <- list()
-  
-  # Kommune 
-  kommune_nr <- sort(unique(Total_df$postnr))
-  
-  # Use a regular for loop to iterate over kommune_nr
-  for(i in kommune_nr) {
-    cat(i, "\n")
-    start_time <- Sys.time()
-    
-    # Subset the data
-    subset_df <- Total_df[Total_df$postnr == i, ]
-    
-    if(nrow(subset_df) > 0) {
-      # Calculate distances
-      distances <- sf::st_distance(subset_df, df)
+    # Use foreach to loop over list.dfs in parallel
+    grand_list <- foreach(df = list.dfs, .packages = "sf") %dopar% {
       
-      # Define the 'miin' function, or replace it with an appropriate function
-      miin <- function(x) min(x, na.rm = TRUE)
+      # Initialize an empty list to store the results of the inner loop
+      inner_results <- list()
       
-      # Calculate minimum distances
-      min_distances <- apply(distances, 1, miin)
+      # zip_code
+      postnr <- sort(unique(Total_df$postnr))
       
-      # Store minimum distances in a new column
-      subset_df$min_distances <- min_distances
+      
+      # Use a regular for loop to iterate over postnr
+      for(i in postnr) {
+        cat(i, "\n")
+        start_time <- Sys.time()
+        
+        # Subset the data
+        subset_df <- Total_df[Total_df$postnr == i, ]
+        
+        if(nrow(subset_df) > 0) {
+          # Calculate distances
+          distances <- sf::st_distance(subset_df, df)
+          
+          # Define the 'miin' function, or replace it with an appropriate function
+          miin <- function(x) min(x, na.rm = TRUE)
+          
+          # Calculate minimum distances
+          min_distances <- apply(distances, 1, miin)
+          
+          # Store minimum distances in a new column
+          subset_df$min_distances <- min_distances
+        }
+        
+        end_time <- Sys.time()
+        print(paste("Time for municipality Forest", i, ": ", end_time - start_time))
+        
+        # Store the updated subset_df in the inner_results list
+        inner_results[[i]] <- subset_df
+      }
+      
+      # Combine the results of the inner loop using do.call
+      do.call(rbind, inner_results)
+      
     }
     
-    end_time <- Sys.time()
-    print(paste("Time for municipality Forest", i, ": ", end_time - start_time))
-    
-    # Store the updated subset_df in the inner_results list
-    inner_results[[i]] <- subset_df
-  }
-  
-  
-}
-
-
     
     save(Total_df_updated, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_updated.Rdata")            
     
