@@ -547,27 +547,30 @@ library(doSNOW)
     rm(Soe0, Soe1, Soe2, Soe3, Soe4, Soe5, Soe6, Soe7, Soe8, Soe9, 
        Soe10, Soe11, Soe12, Soe13, Soe14, Soe15, Soe16, Soe17, Soe18)
     
-    lake_distance$Centroid <- centroid_points <- st_centroid(lake_distance$geometry)
+    lake_distance$area <- st_area(lake_distance)
+    lake_distance$area <- as.numeric(lake_distance$area)
+    
+    lake_distance$geometry <- centroid_points <- st_centroid(lake_distance$geometry)
     
     seq <- seq(0.00, 0.95, by = 0.05)
     
     #save in list
-    list.dfs <- list()
+    list.dfs_soe <- list()
     
     for (i in seq) {
       # Create variable name
-      df_name <- paste0("lake_distance_", (i+0.05))
+      df_name <- paste0("lake_distance_", (i+0.025))
       
       # Subset data 
       df <- subset(lake_distance, 
-                   area > quantile(lake_distance$area, probs = i) & 
-                     area < quantile(lake_distance$area, probs = (i + 0.05)))
+                   lake_distance$area > quantile(lake_distance$area, probs = i) & 
+                     lake_distance$area < quantile(lake_distance$area, probs = (i + 0.025)))
       
       # Set CRS for the subset
       df <- sf::st_set_crs(df, sf::st_crs(Total_df))
       
       # Save data frame in list
-      list.dfs[[df_name]] <- df
+      list.dfs_soe[[df_name]] <- df
     }
     rm(lake_distance, df)
     
@@ -704,22 +707,17 @@ library(doSNOW)
       }
     }
     
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df6.Rdata")                
+  
+    ## lake_distance ----
+    kommune_nr <- sort(unique(Total_df$postnr))
     
-
-    registerDoParallel(cores = 6)
-    
-    # Use foreach to loop over list.dfs in parallel
-    grand_list <- foreach(df = list.dfs, .packages = "sf") %dopar% {
+    for (d in 1:length(list.dfs_soe)) {
+      # Get the data frame at position 'd' in the list
+      df <- list.dfs_soe[[d]]
+      d_start_time <- Sys.time()
       
-      # Initialize an empty list to store the results of the inner loop
-      inner_results <- list()
-      
-      # zip_code
-      postnr <- sort(unique(Total_df$postnr))
-      
-      
-      # Use a regular for loop to iterate over postnr
-      for(i in postnr) {
+      for (i in kommune_nr) {
         cat(i, "\n")
         start_time <- Sys.time()
         
@@ -728,7 +726,7 @@ library(doSNOW)
         
         if(nrow(subset_df) > 0) {
           # Calculate distances
-          distances <- sf::st_distance(subset_df, df)
+          distances <- sf::st_distance(subset_df$Coor, df)
           
           # Define the 'miin' function, or replace it with an appropriate function
           miin <- function(x) min(x, na.rm = TRUE)
@@ -736,24 +734,16 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
-          # Store minimum distances in a new column
-          subset_df$min_distances <- min_distances
+          # Replace values in Total_df$lake_distance if min_distances is less
+          Total_df$lake_distance[Total_df$postnr == i] <- ifelse(min_distances < Total_df$lake_distance[Total_df$postnr == i], min_distances, Total_df$lake_distance[Total_df$postnr == i])
         }
         
-        end_time <- Sys.time()
-        print(paste("Time for municipality Forest", i, ": ", end_time - start_time))
-        
-        # Store the updated subset_df in the inner_results list
-        inner_results[[i]] <- subset_df
+        cat("Time for municipality lake", i, "&", d,": ", Sys.time() - start_time, "\n")
       }
-      
-      # Combine the results of the inner loop using do.call
-      do.call(rbind, inner_results)
-      
+      cat("Time for", d, "=", Sys.time() - d_start_time )
     }
-    
-    
-    save(grand_list, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/grand_list.Rdata")            
+
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df7.Rdata")                
     
 
     
