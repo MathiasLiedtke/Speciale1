@@ -488,7 +488,7 @@ library(doSNOW)
     Skov10 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0010/skov.shp")
     forest_distance <- rbind(Skov0, Skov1, Skov2, Skov3, Skov4, Skov5, Skov6, Skov7, Skov8, Skov9, Skov10)
     rm(Skov0, Skov1, Skov2, Skov3, Skov4, Skov5, Skov6, Skov7, Skov8, Skov9, Skov10)
-    forest_distance$area <- st_area(forest_distance)
+    forest_distance$area <- sf::st_area(forest_distance)
     forest_distance$area <- as.numeric(forest_distance$area)
     
     # Save time by calculating centroid 
@@ -496,13 +496,12 @@ library(doSNOW)
     
     # Subset based on area > 5000 m2 according to forest definition of FN
     forest_distance <- subset(forest_distance, forest_distance$area > 5000)
-    summary(forest_distance$area)
     
     # Subdivide 
     seq <- seq(0.00, 0.95, by = 0.05)
     
     #save in list
-    list.dfs <- list()
+    list.dfs_forest <- list()
     
     for (i in seq) {
       # Create variable name
@@ -510,14 +509,14 @@ library(doSNOW)
       
       # Subset data 
       df <- subset(forest_distance, 
-                   area > quantile(forest_distance$area, probs = i) & 
-                     area < quantile(forest_distance$area, probs = (i + 0.05)))
+                   forest_distance$area > quantile(forest_distance$area, probs = i) & 
+                     forest_distance$area < quantile(forest_distance$area, probs = (i + 0.05)))
       
       # Set CRS for the subset
       df <- sf::st_set_crs(df, sf::st_crs(Total_df))
       
       # Save data frame in list
-      list.dfs[[df_name]] <- df
+      list.dfs_forest[[df_name]] <- df
     }
     rm(forest_distance, df)
 
@@ -678,16 +677,18 @@ library(doSNOW)
     ## forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
   
-    for (d in 1:length(list.dfs)) {
+    for (d in 1:length(list.dfs_forest)) {
       # Get the data frame at position 'd' in the list
-      df <- list.dfs[[d]]
+      df <- list.dfs_forest[[d]]
+      d_start_time <- Sys.time()
       
       for (i in kommune_nr) {
         cat(i, "\n")
         start_time <- Sys.time()
         
         # Subset the data
-        subset_df <- Total_df[Total_df$postnr == i, ]
+        subset_df <- subset(Total_df, postnr == i) 
+        
         
         if(nrow(subset_df) > 0) {
           # Calculate distances
@@ -699,12 +700,15 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
+          f_d <- paste0("forest_distance_", d)
+          
           # Replace values in Total_df$forest_distance if min_distances is less
-          Total_df$forest_distance[Total_df$postnr == i] <- ifelse(min_distances < Total_df$forest_distance[Total_df$postnr == i], min_distances, Total_df$forest_distance[Total_df$postnr == i])
+          Total_df$f_d[Total_df$postnr == i] <- min_distances
         }
         
-        cat("Time for municipality Forest", i, ": ", Sys.time() - start_time, "\n")
+        cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
       }
+      cat("Time for", d, "=", Sys.time() - d_start_time )
     }
     
     save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df6.Rdata")                
