@@ -679,10 +679,16 @@ library(doSNOW)
     ### 1_5 forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
   
-    for (d in 2:5) {
+    for (d in 1:5) {
       # Get the data frame at position 'd' in the list
       df <- list.dfs_forest[[d]]
       d_start_time <- Sys.time()
+      
+      # Add new column to frame
+      Total_df[, ncol(Total_df) + 1] <- NA
+      #edit name of column
+      colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
+      
       
       for (i in kommune_nr) {
         cat(i, "\n")
@@ -703,10 +709,7 @@ library(doSNOW)
           min_distances <- apply(distances, 1, miin)
           
           # put in existign data frame
-          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
-          
-          #edit name of column
-          colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
+          Total_df[Total_df$postnr == i, ncol(Total_df)] <- min_distances
           
         }
         
