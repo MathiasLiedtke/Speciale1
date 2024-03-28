@@ -679,7 +679,7 @@ library(doSNOW)
     ### 1_5 forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
   
-    for (d in 1:5) {
+    for (d in 2:5) {
       # Get the data frame at position 'd' in the list
       df <- list.dfs_forest[[d]]
       d_start_time <- Sys.time()
@@ -702,10 +702,12 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
-          f_d <- paste0("forest_distance_", d)
+          # put in existign data frame
+          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
           
-          # Replace values in Total_df$forest_distance if min_distances is less
-          Total_df$f_d[Total_df$postnr == i] <- min_distances
+          #edit name of column
+          colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
+          
         }
         
         cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -741,10 +743,11 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
-          f_d <- paste0("forest_distance_", d)
+          # put in existign data frame
+          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
           
-          # Replace values in Total_df$forest_distance if min_distances is less
-          Total_df$f_d[Total_df$postnr == i] <- min_distances
+          #edit name of column
+          colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
         }
         
         cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -757,7 +760,7 @@ library(doSNOW)
     ### 11_15 forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
     
-    for (d in 6:10) {
+    for (d in 11:15) {
       # Get the data frame at position 'd' in the list
       df <- list.dfs_forest[[d]]
       d_start_time <- Sys.time()
@@ -780,10 +783,11 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
-          f_d <- paste0("forest_distance_", d)
+          # put in existign data frame
+          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
           
-          # Replace values in Total_df$forest_distance if min_distances is less
-          Total_df$f_d[Total_df$postnr == i] <- min_distances
+          #edit name of column
+          colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
         }
         
         cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -819,10 +823,11 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
-          f_d <- paste0("forest_distance_", d)
+          # put in existign data frame
+          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
           
-          # Replace values in Total_df$forest_distance if min_distances is less
-          Total_df$f_d[Total_df$postnr == i] <- min_distances
+          #edit name of column
+          colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
         }
         
         cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -860,10 +865,11 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
-          f_d <- paste0("lake_distance_", d)
+          # put in existign data frame
+          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
           
-          # Replace values in Total_df$lake_distance if min_distances is less
-          Total_df$f_d[Total_df$postnr == i] <- min_distances
+          #edit name of column
+          colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
         }
         
         cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -899,10 +905,11 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
-          f_d <- paste0("lake_distance_", d)
+          # put in existign data frame
+          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
           
-          # Replace values in Total_df$lake_distance if min_distances is less
-          Total_df$f_d[Total_df$postnr == i] <- min_distances
+          #edit name of column
+          colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
         }
         
         cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -938,10 +945,11 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
-          f_d <- paste0("lake_distance_", d)
+          # put in existign data frame
+          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
           
-          # Replace values in Total_df$lake_distance if min_distances is less
-          Total_df$f_d[Total_df$postnr == i] <- min_distances
+          #edit name of column
+          colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
         }
         
         cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -954,7 +962,7 @@ library(doSNOW)
     ### 16_20 lake_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
     
-    for (d in 6:10) {
+    for (d in 16:20) {
       # Get the data frame at position 'd' in the list
       df <- list.dfs_lake[[d]]
       d_start_time <- Sys.time()
@@ -977,10 +985,11 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
-          f_d <- paste0("lake_distance_", d)
+          # put in existign data frame
+          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
           
-          # Replace values in Total_df$lake_distance if min_distances is less
-          Total_df$f_d[Total_df$postnr == i] <- min_distances
+          #edit name of column
+          colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
         }
         
         cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
