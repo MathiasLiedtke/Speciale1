@@ -554,7 +554,7 @@ library(doSNOW)
     seq <- seq(0.00, 0.95, by = 0.05)
     
     #save in list
-    list.dfs_soe <- list()
+    list.dfs_lake <- list()
     
     for (i in seq) {
       # Create variable name
@@ -569,7 +569,7 @@ library(doSNOW)
       df <- sf::st_set_crs(df, sf::st_crs(Total_df))
       
       # Save data frame in list
-      list.dfs_soe[[df_name]] <- df
+      list.dfs_lake[[df_name]] <- df
     }
     rm(lake_distance, df)
     
@@ -675,9 +675,11 @@ library(doSNOW)
     
     
     ## forest_distance ----
+    
+    ### 1_5 forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
   
-    for (d in 1:length(list.dfs_forest)) {
+    for (d in 1:5) {
       # Get the data frame at position 'd' in the list
       df <- list.dfs_forest[[d]]
       d_start_time <- Sys.time()
@@ -711,14 +713,14 @@ library(doSNOW)
       cat("Time for", d, "=", Sys.time() - d_start_time )
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df6.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_1_5.Rdata")                
   
-    ## lake_distance ----
+    ### 6_10 forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
     
-    for (d in 1:length(list.dfs_soe)) {
+    for (d in 6:10) {
       # Get the data frame at position 'd' in the list
-      df <- list.dfs_soe[[d]]
+      df <- list.dfs_forest[[d]]
       d_start_time <- Sys.time()
       
       for (i in kommune_nr) {
@@ -726,11 +728,12 @@ library(doSNOW)
         start_time <- Sys.time()
         
         # Subset the data
-        subset_df <- Total_df[Total_df$postnr == i, ]
+        subset_df <- subset(Total_df, postnr == i) 
+        
         
         if(nrow(subset_df) > 0) {
           # Calculate distances
-          distances <- sf::st_distance(subset_df$Coor, df)
+          distances <- sf::st_distance(subset_df, df)
           
           # Define the 'miin' function, or replace it with an appropriate function
           miin <- function(x) min(x, na.rm = TRUE)
@@ -738,18 +741,261 @@ library(doSNOW)
           # Calculate minimum distances
           min_distances <- apply(distances, 1, miin)
           
-          # Replace values in Total_df$lake_distance if min_distances is less
-          Total_df$lake_distance[Total_df$postnr == i] <- ifelse(min_distances < Total_df$lake_distance[Total_df$postnr == i], min_distances, Total_df$lake_distance[Total_df$postnr == i])
+          f_d <- paste0("forest_distance_", d)
+          
+          # Replace values in Total_df$forest_distance if min_distances is less
+          Total_df$f_d[Total_df$postnr == i] <- min_distances
         }
         
-        cat("Time for municipality lake", i, "&", d,": ", Sys.time() - start_time, "\n")
+        cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
       }
       cat("Time for", d, "=", Sys.time() - d_start_time )
     }
-
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df7.Rdata")                
     
-
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_6_10.Rdata")                
+    
+    ### 11_15 forest_distance ----
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    for (d in 6:10) {
+      # Get the data frame at position 'd' in the list
+      df <- list.dfs_forest[[d]]
+      d_start_time <- Sys.time()
+      
+      for (i in kommune_nr) {
+        cat(i, "\n")
+        start_time <- Sys.time()
+        
+        # Subset the data
+        subset_df <- subset(Total_df, postnr == i) 
+        
+        
+        if(nrow(subset_df) > 0) {
+          # Calculate distances
+          distances <- sf::st_distance(subset_df, df)
+          
+          # Define the 'miin' function, or replace it with an appropriate function
+          miin <- function(x) min(x, na.rm = TRUE)
+          
+          # Calculate minimum distances
+          min_distances <- apply(distances, 1, miin)
+          
+          f_d <- paste0("forest_distance_", d)
+          
+          # Replace values in Total_df$forest_distance if min_distances is less
+          Total_df$f_d[Total_df$postnr == i] <- min_distances
+        }
+        
+        cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
+      }
+      cat("Time for", d, "=", Sys.time() - d_start_time )
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_11_15.Rdata")                
+    
+    ### 16_20 forest_distance ----
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    for (d in 6:10) {
+      # Get the data frame at position 'd' in the list
+      df <- list.dfs_forest[[d]]
+      d_start_time <- Sys.time()
+      
+      for (i in kommune_nr) {
+        cat(i, "\n")
+        start_time <- Sys.time()
+        
+        # Subset the data
+        subset_df <- subset(Total_df, postnr == i) 
+        
+        
+        if(nrow(subset_df) > 0) {
+          # Calculate distances
+          distances <- sf::st_distance(subset_df, df)
+          
+          # Define the 'miin' function, or replace it with an appropriate function
+          miin <- function(x) min(x, na.rm = TRUE)
+          
+          # Calculate minimum distances
+          min_distances <- apply(distances, 1, miin)
+          
+          f_d <- paste0("forest_distance_", d)
+          
+          # Replace values in Total_df$forest_distance if min_distances is less
+          Total_df$f_d[Total_df$postnr == i] <- min_distances
+        }
+        
+        cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
+      }
+      cat("Time for", d, "=", Sys.time() - d_start_time )
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_16_20.Rdata")                
+    
+    ## lake_distance ----
+    
+    ### 1_5 lake ----
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    for (d in 1:5) {
+      # Get the data frame at position 'd' in the list
+      df <- list.dfs_lake[[d]]
+      d_start_time <- Sys.time()
+      
+      for (i in kommune_nr) {
+        cat(i, "\n")
+        start_time <- Sys.time()
+        
+        # Subset the data
+        subset_df <- subset(Total_df, postnr == i) 
+        
+        
+        if(nrow(subset_df) > 0) {
+          # Calculate distances
+          distances <- sf::st_distance(subset_df, df)
+          
+          # Define the 'miin' function, or replace it with an appropriate function
+          miin <- function(x) min(x, na.rm = TRUE)
+          
+          # Calculate minimum distances
+          min_distances <- apply(distances, 1, miin)
+          
+          f_d <- paste0("lake_distance_", d)
+          
+          # Replace values in Total_df$lake_distance if min_distances is less
+          Total_df$f_d[Total_df$postnr == i] <- min_distances
+        }
+        
+        cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
+      }
+      cat("Time for", d, "=", Sys.time() - d_start_time )
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_1_5.Rdata")                
+    
+    ### 6_10 lake_distance ----
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    for (d in 6:10) {
+      # Get the data frame at position 'd' in the list
+      df <- list.dfs_lake[[d]]
+      d_start_time <- Sys.time()
+      
+      for (i in kommune_nr) {
+        cat(i, "\n")
+        start_time <- Sys.time()
+        
+        # Subset the data
+        subset_df <- subset(Total_df, postnr == i) 
+        
+        
+        if(nrow(subset_df) > 0) {
+          # Calculate distances
+          distances <- sf::st_distance(subset_df, df)
+          
+          # Define the 'miin' function, or replace it with an appropriate function
+          miin <- function(x) min(x, na.rm = TRUE)
+          
+          # Calculate minimum distances
+          min_distances <- apply(distances, 1, miin)
+          
+          f_d <- paste0("lake_distance_", d)
+          
+          # Replace values in Total_df$lake_distance if min_distances is less
+          Total_df$f_d[Total_df$postnr == i] <- min_distances
+        }
+        
+        cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
+      }
+      cat("Time for", d, "=", Sys.time() - d_start_time )
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_6_10.Rdata")                
+    
+    ### 11_15 lake_distance ----
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    for (d in 6:10) {
+      # Get the data frame at position 'd' in the list
+      df <- list.dfs_lake[[d]]
+      d_start_time <- Sys.time()
+      
+      for (i in kommune_nr) {
+        cat(i, "\n")
+        start_time <- Sys.time()
+        
+        # Subset the data
+        subset_df <- subset(Total_df, postnr == i) 
+        
+        
+        if(nrow(subset_df) > 0) {
+          # Calculate distances
+          distances <- sf::st_distance(subset_df, df)
+          
+          # Define the 'miin' function, or replace it with an appropriate function
+          miin <- function(x) min(x, na.rm = TRUE)
+          
+          # Calculate minimum distances
+          min_distances <- apply(distances, 1, miin)
+          
+          f_d <- paste0("lake_distance_", d)
+          
+          # Replace values in Total_df$lake_distance if min_distances is less
+          Total_df$f_d[Total_df$postnr == i] <- min_distances
+        }
+        
+        cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
+      }
+      cat("Time for", d, "=", Sys.time() - d_start_time )
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_11_15.Rdata")                
+    
+    ### 16_20 lake_distance ----
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    for (d in 6:10) {
+      # Get the data frame at position 'd' in the list
+      df <- list.dfs_lake[[d]]
+      d_start_time <- Sys.time()
+      
+      for (i in kommune_nr) {
+        cat(i, "\n")
+        start_time <- Sys.time()
+        
+        # Subset the data
+        subset_df <- subset(Total_df, postnr == i) 
+        
+        
+        if(nrow(subset_df) > 0) {
+          # Calculate distances
+          distances <- sf::st_distance(subset_df, df)
+          
+          # Define the 'miin' function, or replace it with an appropriate function
+          miin <- function(x) min(x, na.rm = TRUE)
+          
+          # Calculate minimum distances
+          min_distances <- apply(distances, 1, miin)
+          
+          f_d <- paste0("lake_distance_", d)
+          
+          # Replace values in Total_df$lake_distance if min_distances is less
+          Total_df$f_d[Total_df$postnr == i] <- min_distances
+        }
+        
+        cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
+      }
+      cat("Time for", d, "=", Sys.time() - d_start_time )
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_16_20.Rdata")                
+    
+    
+    
+    
+    
+    
+           
     
 save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")        
 load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")
