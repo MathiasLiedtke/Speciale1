@@ -546,10 +546,10 @@ library(doSNOW)
     rm(Soe0, Soe1, Soe2, Soe3, Soe4, Soe5, Soe6, Soe7, Soe8, Soe9, 
        Soe10, Soe11, Soe12, Soe13, Soe14, Soe15, Soe16, Soe17, Soe18)
     
-    lake_distance$area <- st_area(lake_distance)
+    lake_distance$area <- sf::st_area(lake_distance)
     lake_distance$area <- as.numeric(lake_distance$area)
     
-    lake_distance$geometry <- centroid_points <- st_centroid(lake_distance$geometry)
+    lake_distance$geometry <- centroid_points <- sf::st_centroid(lake_distance$geometry)
     
     seq <- seq(0.00, 0.95, by = 0.05)
     
@@ -575,13 +575,41 @@ library(doSNOW)
     
     ## Togstation ----
     trainstation_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/togstation/togstation.shp")
+    trainstation_distance <- sf::st_set_crs(trainstation_distance, sf::st_crs(Total_df))
     
     ## Vaadområde ----
     Vaadområde0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0000/vaadomraade.shp")
     Vaadområde1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0001/vaadomraade.shp")
     Vaadområde2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0002/vaadomraade.shp")
-    Vandområde <- rbind(Vaadområde0, Vaadområde1,Vaadområde2)
+    Wateryarea <- rbind(Vaadområde0, Vaadområde1,Vaadområde2)
     rm(Vaadområde0, Vaadområde1,Vaadområde2)
+    
+    lake_distance$area <- sf::st_area(lake_distance)
+    lake_distance$area <- as.numeric(lake_distance$area)
+    
+    lake_distance$geometry <- centroid_points <- sf::st_centroid(lake_distance$geometry)
+    
+    seq <- seq(0.00, 0.95, by = 0.05)
+    
+    #save in list
+    list.dfs_lake <- list()
+    
+    for (i in seq) {
+      # Create variable name
+      df_name <- paste0("lake_distance_", (i+0.025))
+      
+      # Subset data 
+      df <- subset(lake_distance, 
+                   lake_distance$area > quantile(lake_distance$area, probs = i) & 
+                     lake_distance$area < quantile(lake_distance$area, probs = (i + 0.025)))
+      
+      # Set CRS for the subset
+      df <- sf::st_set_crs(df, sf::st_crs(Total_df))
+      
+      # Save data frame in list
+      list.dfs_lake[[df_name]] <- df
+    }
+    rm(lake_distance, df)
     
     # Mangler vejkant pga. 160
     # vejkant0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vejkant/vejkant_0000/vejkant.shp")
@@ -589,7 +617,7 @@ library(doSNOW)
     
     ## Vindmølle ----
     windturbine_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vindmoelle/vindmoelle.shp")
-    
+    windturbine_distance <- sf::st_set_crs(windturbine_distance, sf::st_crs(Total_df))
     
     
 # Add missing geographical variables ----
@@ -673,6 +701,9 @@ library(doSNOW)
       cat("Time for municipality coastline", i, ": ", Sys.time() - start_time, "\n")
     }
     
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")        
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")
+    
     
     ## forest_distance ----
     
@@ -728,6 +759,12 @@ library(doSNOW)
       df <- list.dfs_forest[[d]]
       d_start_time <- Sys.time()
       
+      # Add new column to frame
+      Total_df[, ncol(Total_df) + 1] <- NA
+      #edit name of column
+      colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
+      
+      
       for (i in kommune_nr) {
         cat(i, "\n")
         start_time <- Sys.time()
@@ -747,10 +784,8 @@ library(doSNOW)
           min_distances <- apply(distances, 1, miin)
           
           # put in existign data frame
-          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
+          Total_df[Total_df$postnr == i, ncol(Total_df)] <- min_distances
           
-          #edit name of column
-          colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
         }
         
         cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -768,45 +803,11 @@ library(doSNOW)
       df <- list.dfs_forest[[d]]
       d_start_time <- Sys.time()
       
-      for (i in kommune_nr) {
-        cat(i, "\n")
-        start_time <- Sys.time()
-        
-        # Subset the data
-        subset_df <- subset(Total_df, postnr == i) 
-        
-        
-        if(nrow(subset_df) > 0) {
-          # Calculate distances
-          distances <- sf::st_distance(subset_df, df)
-          
-          # Define the 'miin' function, or replace it with an appropriate function
-          miin <- function(x) min(x, na.rm = TRUE)
-          
-          # Calculate minimum distances
-          min_distances <- apply(distances, 1, miin)
-          
-          # put in existign data frame
-          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
-          
-          #edit name of column
-          colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
-        }
-        
-        cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
-      }
-      cat("Time for", d, "=", Sys.time() - d_start_time )
-    }
-    
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_11_15.Rdata")                
-    
-    ### 16_20 forest_distance ----
-    kommune_nr <- sort(unique(Total_df$postnr))
-    
-    for (d in 6:10) {
-      # Get the data frame at position 'd' in the list
-      df <- list.dfs_forest[[d]]
-      d_start_time <- Sys.time()
+      # Add new column to frame
+      Total_df[, ncol(Total_df) + 1] <- NA
+      #edit name of column
+      colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
+      
       
       for (i in kommune_nr) {
         cat(i, "\n")
@@ -827,10 +828,52 @@ library(doSNOW)
           min_distances <- apply(distances, 1, miin)
           
           # put in existign data frame
-          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
+          Total_df[Total_df$postnr == i, ncol(Total_df)] <- min_distances
           
-          #edit name of column
-          colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
+        }
+        
+        cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
+      }
+      cat("Time for", d, "=", Sys.time() - d_start_time )
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_11_15.Rdata")                
+    
+    ### 16_20 forest_distance ----
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    for (d in 16:20) {
+      # Get the data frame at position 'd' in the list
+      df <- list.dfs_forest[[d]]
+      d_start_time <- Sys.time()
+      
+      # Add new column to frame
+      Total_df[, ncol(Total_df) + 1] <- NA
+      #edit name of column
+      colnames(Total_df)[ncol(Total_df)] <- paste0("forest_distance_", d)
+      
+      
+      for (i in kommune_nr) {
+        cat(i, "\n")
+        start_time <- Sys.time()
+        
+        # Subset the data
+        subset_df <- subset(Total_df, postnr == i) 
+        
+        
+        if(nrow(subset_df) > 0) {
+          # Calculate distances
+          distances <- sf::st_distance(subset_df, df)
+          
+          # Define the 'miin' function, or replace it with an appropriate function
+          miin <- function(x) min(x, na.rm = TRUE)
+          
+          # Calculate minimum distances
+          min_distances <- apply(distances, 1, miin)
+          
+          # put in existign data frame
+          Total_df[Total_df$postnr == i, ncol(Total_df)] <- min_distances
+          
         }
         
         cat("Time for municipality Forest", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -850,6 +893,12 @@ library(doSNOW)
       df <- list.dfs_lake[[d]]
       d_start_time <- Sys.time()
       
+      # Add new column to frame
+      Total_df[, ncol(Total_df) + 1] <- NA
+      #edit name of column
+      colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
+      
+      
       for (i in kommune_nr) {
         cat(i, "\n")
         start_time <- Sys.time()
@@ -869,10 +918,8 @@ library(doSNOW)
           min_distances <- apply(distances, 1, miin)
           
           # put in existign data frame
-          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
+          Total_df[Total_df$postnr == i, ncol(Total_df)] <- min_distances
           
-          #edit name of column
-          colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
         }
         
         cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -890,45 +937,11 @@ library(doSNOW)
       df <- list.dfs_lake[[d]]
       d_start_time <- Sys.time()
       
-      for (i in kommune_nr) {
-        cat(i, "\n")
-        start_time <- Sys.time()
-        
-        # Subset the data
-        subset_df <- subset(Total_df, postnr == i) 
-        
-        
-        if(nrow(subset_df) > 0) {
-          # Calculate distances
-          distances <- sf::st_distance(subset_df, df)
-          
-          # Define the 'miin' function, or replace it with an appropriate function
-          miin <- function(x) min(x, na.rm = TRUE)
-          
-          # Calculate minimum distances
-          min_distances <- apply(distances, 1, miin)
-          
-          # put in existign data frame
-          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
-          
-          #edit name of column
-          colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
-        }
-        
-        cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
-      }
-      cat("Time for", d, "=", Sys.time() - d_start_time )
-    }
-    
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_6_10.Rdata")                
-    
-    ### 11_15 lake_distance ----
-    kommune_nr <- sort(unique(Total_df$postnr))
-    
-    for (d in 6:10) {
-      # Get the data frame at position 'd' in the list
-      df <- list.dfs_lake[[d]]
-      d_start_time <- Sys.time()
+      # Add new column to frame
+      Total_df[, ncol(Total_df) + 1] <- NA
+      #edit name of column
+      colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
+      
       
       for (i in kommune_nr) {
         cat(i, "\n")
@@ -949,10 +962,52 @@ library(doSNOW)
           min_distances <- apply(distances, 1, miin)
           
           # put in existign data frame
-          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
+          Total_df[Total_df$postnr == i, ncol(Total_df)] <- min_distances
           
-          #edit name of column
-          colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
+        }
+        
+        cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
+      }
+      cat("Time for", d, "=", Sys.time() - d_start_time )
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_6_10.Rdata")                
+    
+    ### 11_15 lake_distance ----
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    for (d in 11:15) {
+      # Get the data frame at position 'd' in the list
+      df <- list.dfs_lake[[d]]
+      d_start_time <- Sys.time()
+      
+      # Add new column to frame
+      Total_df[, ncol(Total_df) + 1] <- NA
+      #edit name of column
+      colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
+      
+      
+      for (i in kommune_nr) {
+        cat(i, "\n")
+        start_time <- Sys.time()
+        
+        # Subset the data
+        subset_df <- subset(Total_df, postnr == i) 
+        
+        
+        if(nrow(subset_df) > 0) {
+          # Calculate distances
+          distances <- sf::st_distance(subset_df, df)
+          
+          # Define the 'miin' function, or replace it with an appropriate function
+          miin <- function(x) min(x, na.rm = TRUE)
+          
+          # Calculate minimum distances
+          min_distances <- apply(distances, 1, miin)
+          
+          # put in existign data frame
+          Total_df[Total_df$postnr == i, ncol(Total_df)] <- min_distances
+          
         }
         
         cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -970,6 +1025,12 @@ library(doSNOW)
       df <- list.dfs_lake[[d]]
       d_start_time <- Sys.time()
       
+      # Add new column to frame
+      Total_df[, ncol(Total_df) + 1] <- NA
+      #edit name of column
+      colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
+      
+      
       for (i in kommune_nr) {
         cat(i, "\n")
         start_time <- Sys.time()
@@ -989,10 +1050,8 @@ library(doSNOW)
           min_distances <- apply(distances, 1, miin)
           
           # put in existign data frame
-          Total_df[Total_df$postnr == i, ncol(Total_df) + 1] <- min_distances
+          Total_df[Total_df$postnr == i, ncol(Total_df)] <- min_distances
           
-          #edit name of column
-          colnames(Total_df)[ncol(Total_df)] <- paste0("lake_distance_", d)
         }
         
         cat("Time for municipality lake", i, ": ", "& it:", d, Sys.time() - start_time, "\n")
@@ -1003,14 +1062,296 @@ library(doSNOW)
     save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_16_20.Rdata")                
     
     
+    ## Trainstation_distance ----
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    for (i in kommune_nr) {
+      cat(i, "\n")
+      start_time <- Sys.time()
+      
+      # Subset the data
+      subset_df <- Total_df[Total_df$postnr == i & is.na(Total_df$trainstation_distance), ]
+      
+      if(nrow(subset_df) > 0) {
+        # Calculate distances
+        distances <- sf::st_distance(subset_df, trainstation_distance)
+        
+        # Define the 'miin' function, or replace it with an appropriate function
+        miin <- function(x) min(x, na.rm = TRUE)
+        
+        # Assign distances back to the correct rows in Total_df
+        Total_df$trainstation_distance[Total_df$postnr == i & is.na(Total_df$trainstation_distance)] <- apply(distances, 1, miin)
+      }
+      
+      
+      cat("Time for municipality", i, ": ", Sys.time() - start_time, "\n")
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_trainstation.Rdata")                
     
     
+    ## Wateryarea ----
+    kommune_nr <- sort(unique(Total_df$postnr))
+    
+    for (i in kommune_nr) {
+      cat(i, "\n")
+      start_time <- Sys.time()
+      
+      # Subset the data
+      subset_df <- Total_df[Total_df$postnr == i & is.na(Total_df$wateryarea_distance), ]
+      
+      if(nrow(subset_df) > 0) {
+        # Calculate distances
+        distances <- sf::st_distance(subset_df, wateryarea_distance)
+        
+        # Define the 'miin' function, or replace it with an appropriate function
+        miin <- function(x) min(x, na.rm = TRUE)
+        
+        # Assign distances back to the correct rows in Total_df
+        Total_df$wateryarea_distance[Total_df$postnr == i & is.na(Total_df$wateryarea_distance)] <- apply(distances, 1, miin)
+      }
+      
+      
+      cat("Time for municipality", i, ": ", Sys.time() - start_time, "\n")
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_wateryarea.Rdata")                
     
     
-           
+    ## Windmill ----
+    kommune_nr <- sort(unique(Total_df$postnr))
     
-save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")        
-load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")
+    for (i in kommune_nr) {
+      cat(i, "\n")
+      start_time <- Sys.time()
+      
+      # Subset the data
+      subset_df <- Total_df[Total_df$postnr == i & is.na(Total_df$windturbine_distance), ]
+      
+      if(nrow(subset_df) > 0) {
+        # Calculate distances
+        distances <- sf::st_distance(subset_df, windturbine_distance)
+        
+        # Define the 'miin' function, or replace it with an appropriate function
+        miin <- function(x) min(x, na.rm = TRUE)
+        
+        # Assign distances back to the correct rows in Total_df
+        Total_df$windturbine_distance[Total_df$postnr == i & is.na(Total_df$windturbine_distance)] <- apply(distances, 1, miin)
+      }
+      
+      
+      cat("Time for municipality", i, ": ", Sys.time() - start_time, "\n")
+    }
+    
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_windturbine.Rdata")                
+    
+  # Combine after splitting (Split due to large computational time) ----  
+    ## Forest ----
+    ### Load df from after powerline, railway_distance, coastline. 
+    T1 <- Sys.time()
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")
+    Total_df_5 <- Total_df
+    
+    # Load first forest
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_1_5.Rdata")                
+    Total_df_1_5 <- Total_df
+    
+    ### Merge 1_5 ----
+    Starttime <- Sys.time()
+    Total_df_6 <- Total_df_5 %>% 
+      dplyr::bind_cols(select(Total_df_1_5, forest_distance_1, forest_distance_2, forest_distance_3, 
+                              forest_distance_4, forest_distance_5), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    ## Take minimum from partitioned forest distance
+    Total_df_6 <- Total_df_6 %>% 
+      rowwise() %>%
+      mutate(forest_distance = min(forest_distance_1, forest_distance_2, forest_distance_3, 
+                                   forest_distance_4, forest_distance_5))
+    
+    # Load second forest 
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_6_10.Rdata")                
+    Total_df_6_10 <- Total_df 
+    
+    ### Merge 6_10 ----
+    Starttime <- Sys.time()
+    Total_df_6 <- Total_df_6 %>% 
+      dplyr::bind_cols(select(Total_df_6_10, forest_distance_6, forest_distance_7, forest_distance_8, 
+                              forest_distance_9, forest_distance_10), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    ## Take minimum from partitioned forest distance
+    Total_df_6 <- Total_df_6 %>% 
+      rowwise() %>%
+      mutate(forest_distance = min(forest_distance, forest_distance_6, forest_distance_7, forest_distance_8, 
+                                   forest_distance_9, forest_distance_10))
+    
+    # Load third forest 
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_11_15.Rdata")                
+    Total_df_11_15 <- Total_df
+    
+    ### Merge 11_15 ----
+    Starttime <- Sys.time()
+    Total_df_6 <- Total_df_6 %>% 
+      dplyr::bind_cols(select(Total_df_11_15, forest_distance_11, forest_distance_12, forest_distance_13, 
+                              forest_distance_14, forest_distance_15), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    ## Take minimum from partitioned forest distance
+    Total_df_6 <- Total_df_6 %>% 
+      rowwise() %>%
+      mutate(forest_distance = min(forest_distance, forest_distance_11, forest_distance_12, forest_distance_13, 
+                                   forest_distance_14, forest_distance_15))
+    
+    # Load fourth forest 
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_16_20.Rdata")                
+    Total_df_16_20 <- Total_df  
+    
+    ### Merge 16_20 ----
+    Starttime <- Sys.time()
+    Total_df_6 <- Total_df_6 %>% 
+      dplyr::bind_cols(select(Total_df_16_20, forest_distance_16, forest_distance_17, forest_distance_18, 
+                              forest_distance_19, forest_distance_20), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    ## Take minimum from partitioned forest distance
+    Total_df_6 <- Total_df_6 %>% 
+      rowwise() %>%
+      mutate(forest_distance = min(forest_distance,  forest_distance_16, forest_distance_17, forest_distance_18, 
+                                   forest_distance_19, forest_distance_20))
+    
+    
+    T2 <- Sys.time()-T1
+    print(T2)
+    rm(Total_df_1_5, Total_df_11_15, Total_df_16_20, Total_df_6_10)
+    
+    ## Lake ----
+    ### Load df from after powerline, railway_distance, coastline. 
+    T1 <- Sys.time()
+    
+    # Load first lake
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_1_5.Rdata")                
+    Total_df_1_5 <- Total_df
+    
+    ### Merge 1_5 ----
+    Starttime <- Sys.time()
+    Total_df_6 <- Total_df_6 %>% 
+      dplyr::bind_cols(select(Total_df_1_5, lake_distance_1, lake_distance_2, lake_distance_3, 
+                              lake_distance_4, lake_distance_5), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    ## Take minimum from partitioned lake distance
+    Total_df_6 <- Total_df_6 %>% 
+      rowwise() %>%
+      mutate(lake_distance = min(lake_distance_1, lake_distance_2, lake_distance_3, 
+                                   lake_distance_4, lake_distance_5))
+    
+    # Load second lake 
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_6_10.Rdata")                
+    Total_df_6_10 <- Total_df 
+    
+    ### Merge 6_10 ----
+    Starttime <- Sys.time()
+    Total_df_6 <- Total_df_6 %>% 
+      dplyr::bind_cols(select(Total_df_6_10, lake_distance_8, 
+                              lake_distance_9, lake_distance_10), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    ## Take minimum from partitioned lake distance
+    Total_df_6 <- Total_df_6 %>% 
+      rowwise() %>%
+      mutate(lake_distance = min(lake_distance, lake_distance_8, 
+                                   lake_distance_9, lake_distance_10))
+    
+    # Load third lake 
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_11_15.Rdata")                
+    Total_df_11_15 <- Total_df
+    
+    ### Merge 11_15 ----
+    Starttime <- Sys.time()
+    Total_df_6 <- Total_df_6 %>% 
+      dplyr::bind_cols(select(Total_df_11_15, lake_distance_11, lake_distance_12, lake_distance_13, 
+                              lake_distance_14, lake_distance_15), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    ## Take minimum from partitioned lake distance
+    Total_df_6 <- Total_df_6 %>% 
+      rowwise() %>%
+      mutate(lake_distance = min(lake_distance, lake_distance_11, lake_distance_12, lake_distance_13, 
+                                   lake_distance_14, lake_distance_15))
+    
+    # Load fourth lake 
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_16_20.Rdata")                
+    Total_df_16_20 <- Total_df  
+    
+    ### Merge 16_20 ----
+    Starttime <- Sys.time()
+    Total_df_6 <- Total_df_6 %>% 
+      dplyr::bind_cols(select(Total_df_16_20, lake_distance_16, lake_distance_17, lake_distance_18, 
+                              lake_distance_19, lake_distance_20), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    ## Take minimum from partitioned lake distance
+    Total_df_6 <- Total_df_6 %>% 
+      rowwise() %>%
+      mutate(lake_distance = min(lake_distance,  lake_distance_16, lake_distance_17, lake_distance_18, 
+                                   lake_distance_19, lake_distance_20))
+    
+    
+    T2 <- Sys.time()-T1
+    print(T2)    
+    
+    rm(Total_df_1_5, Total_df_11_15, Total_df_16_20, Total_df_6_10)
+    
+    save(Total_df_6, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df6.Rdata")        
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df6.Rdata")
+    
+    # Get rid of all new unnecessary variables
+    names <- colnames(Total_df_6[, 1:71])
+    Total_df_6 <- subset(Total_df_6, select = names)
+  
+    ## Trainstation ----    
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_trainstation.Rdata")                
+    Starttime <- Sys.time()
+    Total_df_6 <- Total_df_6 %>% 
+      dplyr::bind_cols(select(Total_df, trainstation_distance), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    ## Wateryarea ----    
+    Starttime <- Sys.time()
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_wateryarea.Rdata")             
+    Total_df_6 <- Total_df_6 %>% 
+      dplyr::bind_cols(select(Total_df, Wateryarea_distance_1, Wateryarea_distance_2,
+                              Wateryarea_distance_3, Wateryarea_distance_4), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    ## Take minimum from partitioned lake distance
+    Total_df_6 <- Total_df_6 %>% 
+      rowwise() %>%
+      mutate(Wateryarea_distance = min(Wateryarea_distance_1, Wateryarea_distance_2,
+                                       Wateryarea_distance_3, Wateryarea_distance_4))
+    
+    ## Windmill ----    
+    Starttime <- Sys.time()
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_windturbine.Rdata")             
+    Total_df_6 <- Total_df_6 %>% 
+      dplyr::bind_cols(select(Total_df, windturbine_distance, windturbine_height), by = c("Coor" = "Coor"))
+    endtime <- Sys.time()-Starttime
+    print(endtime)
+    
+    Total_df_7 <- Total_df_6
+    save(Total_df_7, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_7.Rdata")
+    
 # Clean data of outliers  ---- 
     
     
