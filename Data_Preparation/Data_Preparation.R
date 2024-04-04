@@ -1657,22 +1657,62 @@ library(pbapply)
                    "lag_price1", "forest_size", "habour_distance", "highway_distance", "market_name" )
     Total_df_13 <- Total_df_12[, !(names(Total_df_12) %in% varDelete)]
     
+    Total_df_13$lag_price <- as.numeric(subsetTotal_df_13$lag_price)
+    Total_df_13 <- as.data.frame(Total_df_13)
     
     
-    hist(Total_df_13$nominal_price, main = "Histogram of Count Variable")
+    # hist(Total_df_13$nominal_price, main = "Histogram of Count Variable")
     
 # Clean data of outliers  ---- 
+    # Univariate outlier ------------------------------------------------------
+    plot(Total_df_13$nominal_price)
     
-    
-    
-  
-    
-# Plot ----
-    df_descriptives <- summary(Total_df_13)
+# Descriptives ----
     library(gt)
+    library(gtExtras)
     
+    colnames <- c("nominal_price", "m2", "district_heating", "central_heating", "electric_heating",
+                  "tile_roof", "thatch_roof", "fibercement_asbestos_roof", "roofing", "Outbuilding",
+                  "Car_Park", "Garage", "TerracedHouse", "<1940", "1940-1950", "1950-1960", "1960-1970",
+                  "1970-1980", "1980-1990", "1980-1990", "1990-2000", "2000-2010", "2010", "Brick", 
+                  "lightweight_concrete","wood", "Renovated_1940-1950", "Renovated_1950-1960", 
+                  "Renovated_1960-1970", "Renovated_1970-1980", "Renovated_1980-1990", "rooms", "toilets", 
+                  "Tidligere udbetalt byg/løs/afgrd", "flooded", "urban_size", "heatpump_heating", "forest_distance", 
+                  "coastline_distance", "powerline_distance", "railway_distance", "lake_distance", "Trainstation_distance",
+                  "Wateryarea_distance", "lag_price", "Bluespot_0cm", "Bluespot_10cm", "Bluespot_20cm")
     
+    subsetTotal_df_13 <- subset(Total_df_13, select = colnames)
+    subsetTotal_df_13 <- as.data.frame(subsetTotal_df_13)
+    subsetTotal_df_13 <- subset(subsetTotal_df_13, select = -Coor)
+    subsetTotal_df_13$lag_price <- as.numeric(subsetTotal_df_13$lag_price)
     
+    df_descriptives <- as.data.frame(matrix(NA, nrow = 0, ncol = 7))
+    colnames(df_descriptives) <- c("Min", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max", "Plot")
+    
+    for (i in colnames(subsetTotal_df_13)){
+      start_time <- Sys.time()
+      df_descriptives[i,1] <- quantile(subsetTotal_df_13[,i], probs = 0, na.rm = TRUE)
+      df_descriptives[i,2] <- quantile(subsetTotal_df_13[,i], probs = 0.25, na.rm = TRUE)
+      df_descriptives[i,3] <- quantile(subsetTotal_df_13[,i], probs = 0.5, na.rm = TRUE)
+      df_descriptives[i,4] <- mean(subsetTotal_df_13[,i])
+      df_descriptives[i,5] <- quantile(subsetTotal_df_13[,i], probs = 0.75, na.rm = TRUE)
+      df_descriptives[i,6] <- quantile(subsetTotal_df_13[,i], probs = 1, na.rm = TRUE)
+      
+    
+      cat("Time", i, ": ", Sys.time() - start_time, "\n")
+    }
+    
+    gt_tbl <- gt(df_descriptives)
+    
+    gt_tbl <- gt_tbl %>%
+      tab_header(
+        title = "My Custom Table",
+        subtitle = "Data from my_df"
+      ) 
+    
+    print(gt_tbl)
+    
+# Plot ----    
     plot_name <- subset(Total_df_8, select = c(Coor, flooded))
     #plot_name <- subset(plot_name, flooded == 1)
     plot_name <- sf::st_as_sf(plot_name)
