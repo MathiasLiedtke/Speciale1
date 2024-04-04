@@ -16,6 +16,11 @@ library(doParallel)
 library(units)
 library(Kendall)
 library(doSNOW)
+library(tripack)
+library(spdep)
+library(spData)
+library(spDataLarge)
+library(pbapply)
 
 
 
@@ -1351,10 +1356,328 @@ library(doSNOW)
     
     Total_df_7 <- Total_df_6
     save(Total_df_7, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_7.Rdata")
+    colnames(Total_df_7)[71] <- "Coor"
+    colnames(Total_df_7)[72] <- "Trainstation_distance"
+    
+    
+    var_remove <- c("trainstation_distance...59", "windturbine_height...62", "windturbine_distance...61", "Coor...73",
+                    "by...74", "Wateryarea_distance_1", "Wateryarea_distance_2", "Wateryarea_distance_3", 
+                    "Wateryarea_distance_4", "windturbine_height...83", "Coor...84", "by...85", "by...80", "by...74", 
+                    "windturbine_distance...82", "Coor...79")
+    Total_df_8 <- Total_df_7[, !(names(Total_df_7) %in% var_remove)]
+    save(Total_df_8, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_8.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_8.Rdata")
+
+# Spatial variable ----
+    Total_df_8 <- sf::st_as_sf(Total_df_8)
+    #Retrieve coordinates
+    
+    kommune_nr <- sort(unique(Total_df_8$postnr))
+    Total_df_8$rownumber <- row.names(Total_df_8)
+    Total_df_9 <- data.frame(matrix(nrow = 0, ncol = ncol(Total_df_8)))
+    colnames(Total_df_9) <- colnames(Total_df_8)
+    
+    
+    for(i in kommune_nr){
+      start_time <- Sys.time()
+      df_s <- subset(Total_df_8, postnr == i)
+      df_s <-  subset(df_s, select = c(Coor, rownumber))
+      row.names(df_s) <- df_s$rownumber
+      
+      df_d <- df_s %>% 
+        dplyr::distinct(Coor, .keep_all = TRUE)
+      
+      rownames <- df_d$rownumber
+      
+      df_d <- as.data.frame(df_d[,1])
+      rownames(df_d) <- rownames
+      
+      if(nrow(df_d) > 200) {
+      # do neighbors
+      df_neighbor <- spdep::tri2nb(df_d$Coor)
+      
+      # Store neighbor in new variable
+      df_d[, ncol(df_d) + 1] <- NA
+      colnames(df_d)[ncol(df_d)] <- "neighbor"
+      
+             # Insert values from list to df 
+             for (j in 1:length(df_neighbor)){
+               output_string <- paste(df_neighbor[[j]], collapse = ", ")
+               df_d[j, 2] <- output_string
+             }
+      
+      } else if (nrow(df_d) < 200 & nrow(df_d) > 5) {
+        # do neighbors
+        df_d$n <- seq(from = 1, to = nrow(df_d))
+        df_neighbor <- spdep::knn2nb(spdep::knearneigh(df_d$Coor, k = 5))
+        
+        
+        # Store neighbor in new variable
+        df_d[, ncol(df_d) + 1] <- NA
+        colnames(df_d)[ncol(df_d)] <- "n1"
+        df_d[, ncol(df_d) + 1] <- NA
+        colnames(df_d)[ncol(df_d)] <- "n2"
+        df_d[, ncol(df_d) + 1] <- NA
+        colnames(df_d)[ncol(df_d)] <- "n3"
+        df_d[, ncol(df_d) + 1] <- NA
+        colnames(df_d)[ncol(df_d)] <- "n4"
+        df_d[, ncol(df_d) + 1] <- NA
+        colnames(df_d)[ncol(df_d)] <- "n5"
+        df_d$rownames <- row.names(df_d)
+        df_d[, ncol(df_d) + 1] <- NA
+        colnames(df_d)[ncol(df_d)] <- "neighbor"
+
+        
+               # Insert values from list to df 
+               for (j in 1:length(df_neighbor)){
+                 char_vector <- as.character(df_neighbor[[j]])
+                 df_d[j, "n1"] <- strsplit(char_vector, " ")[[1]]
+                 df_d[j, "n2"] <- strsplit(char_vector, " ")[[2]]
+                 df_d[j, "n3"] <- strsplit(char_vector, " ")[[3]]
+                 df_d[j, "n4"] <- strsplit(char_vector, " ")[[4]]
+                 df_d[j, "n5"] <- strsplit(char_vector, " ")[[5]]
+                 
+                 df_d[j, "n1"] <- df_d$rownames[match(df_d[j, "n1"], df_d$n)]
+                 df_d[j, "n2"] <- df_d$rownames[match(df_d[j, "n2"], df_d$n)]
+                 df_d[j, "n3"] <- df_d$rownames[match(df_d[j, "n3"], df_d$n)]
+                 df_d[j, "n4"] <- df_d$rownames[match(df_d[j, "n4"], df_d$n)]
+                 df_d[j, "n5"] <- df_d$rownames[match(df_d[j, "n5"], df_d$n)]
+                 
+                 
+                 df_d[j, "neighbor"] <- paste0(df_d[j, "n1"], ", ", df_d[j, "n2"], ", ", df_d[j, "n3"], 
+                                                              ", ", df_d[j, "n4"], ", ", df_d[j, "n5"])
+                   }
+        
+                df_d <- subset(df_d, select = c(Coor, neighbor))
+      } else {
+              next
+            }
+     
+       # Merge on existing
+      ## Define subset again to bind on rows 
+      df_s <- subset(Total_df_8, postnr == i)
+      df_s <- dplyr::left_join(df_s, df_d, by = "Coor")
+      Total_df_9 <- rbind(Total_df_9, df_s)
+      
+      cat("Time for municipality", i, ": ", Sys.time() - start_time, "\n")
+      
+    }
+  
+    save(Total_df_9, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_9.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_9.Rdata")
+    
+ ## Neighbor spatial lag variable ----
+    Total_df_9$neighbor_list <- strsplit(Total_df_9$neighbor, ", ")
+    Total_df_9$lag_price <- NA
+    # Convert neighbor column to a list of value
+    
+    # Function to calculate lag_price
+    calculate_lag_price <- function(i) {
+      nb_row_numbers <- as.integer(unlist(Total_df_9$neighbor_list[i]))
+      nb_sales_prices <- Total_df_9$nominal_price[nb_row_numbers]
+      current_sales_price <- Total_df_9$nominal_price[i]
+      nb_sales_dates <- Total_df_9$dato.x[nb_row_numbers]
+      
+      # Filter neighbor prices in relation to observed pris
+      valid_prices <- nb_sales_prices[nb_sales_dates < Total_df_9$dato.x[i]]
+      
+      # Calculate mean if there are valid prices
+      if (length(valid_prices) > 0) {
+        return(mean(valid_prices))
+      } else {
+        return(NA)
+      }
+    }
+    
+    # Apply 
+    Total_df_9$lag_price <- pbapply::pblapply(1:nrow(Total_df_9), calculate_lag_price)
+    
+    Total_df_10 <- Total_df_9
+    
+    save(Total_df_10, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_10.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_10.Rdata")
+  
+    # Group by zip code and then order street name to retrieve information
+    Total_df_10 <- Total_df_10 %>%
+                    group_by(postnr) %>%
+                    arrange(vejnavn)
+    
+    Total_df_10 <- Total_df_10 %>%
+      arrange(sf::st_coordinates(.)[, "X"], sf::st_coordinates(.)[, "Y"])
+
+    Total_df_10$nabolag <- NA
+    nabolag <- function(i){
+      seq <- seq(from = i-15, to = i + 15, by = 1)
+      seq <- seq[seq>0]
+      seq <- seq[seq<2032886]
+      rows <- paste(seq, collapse = ", ")
+      # output_string <- paste(df_neighbor[[j]], collapse = ", ")
+      return(rows)
+    }
+    Total_df_10$nabolag <- pbapply::pblapply(1:nrow(Total_df_10), nabolag)
+    Total_df_10$nabolag <- as.character(Total_df_10$nabolag)
+    
+    ## Apply for missing obs take surrounding neighbors 
+    Total_df_10$nabolag_list <- strsplit(Total_df_10$nabolag, ", ")
+    Total_df_10$lag_price1 <- NA
+    # Convert neighbor column to a list of value
+    
+    # Function to calculate lag_price
+    calculate_lag_price1 <- function(i) {
+      nb_row_numbers <- as.integer(unlist(Total_df_10$nabolag_list[i]))
+      nb_sales_prices <- Total_df_10$nominal_price[nb_row_numbers]
+      current_sales_price <- Total_df_10$nominal_price[i]
+      nb_sales_dates <- Total_df_10$dato.x[nb_row_numbers]
+      
+      # Filter neighbor prices in relation to observed pris
+      valid_prices <- nb_sales_prices[nb_sales_dates < Total_df_10$dato.x[i]]
+      
+      # Calculate mean if there are valid prices
+      if (length(valid_prices) > 0) {
+        return(mean(valid_prices))
+      } else {
+        return(NA)
+      }
+    }
+    
+    # apply for the rest
+    Total_df_10$lag_price1 <- pbapply::pblapply(1:nrow(Total_df_10), calculate_lag_price1)
+    
+    ## Replace if lag price is na 
+    Total_df_10 <- Total_df_10 %>%
+      mutate(lag_price = ifelse(is.na(lag_price), lag_price1, lag_price))
+    
+    Total_df_11 <- Total_df_10
+    save(Total_df_11, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_11.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_11.Rdata")
+    
+    
+    ## Difference in Difference variable ----
+    #Tre variable for hver oversvømmelse, men hvis event er sket efter salgs skal den være NA
+    Events <- as.data.frame(table(Total_df_11$Hændelsesdato))
+    Events$Var1 <- as.Date(Events$Var1)
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(EV1 = ifelse(dato.x < Events[1,1], 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(EV2 = ifelse(dato.x > Events[1,1] & dato.x < Events[2,1], 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(EV3 = ifelse(dato.x > Events[2,1] & dato.x < Events[3,1], 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(EV4 = ifelse(dato.x > Events[3,1] & dato.x < Events[4,1], 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(EV5 = ifelse(dato.x > Events[4,1] & dato.x < Events[5,1], 0, 1))
+    
+    ## Sold after event variable 
+    ### EV1 ----
+    Total_df_11 <- Total_df_11 %>%
+             mutate(Sold_Ev1_0_0.5 = ifelse(dato.x > Events[1,1] & dato.x < Events[1,1] + 365/2, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev1_1 = ifelse(dato.x > Events[1,1] & dato.x < Events[1,1] + 365, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev1_2 = ifelse(dato.x > Events[1,1] & dato.x < Events[1,1] + 365*2, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev1_5 = ifelse(dato.x > Events[1,1] & dato.x < Events[1,1] + 365*5, 0, 1))
+    
+    ### EV2 ----
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev2_0_0.5 = ifelse(dato.x > Events[2,1] & dato.x < Events[2,1] + 365/2, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev2_1 = ifelse(dato.x > Events[2,1] & dato.x < Events[2,1] + 365, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev2_2 = ifelse(dato.x > Events[2,1] & dato.x < Events[2,1] + 365*2, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev2_5 = ifelse(dato.x > Events[2,1] & dato.x < Events[2,1] + 365*5, 0, 1))
+    
+    ### EV3 ----
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev3_0_0.5 = ifelse(dato.x > Events[3,1] & dato.x < Events[3,1] + 365/2, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev3_1 = ifelse(dato.x > Events[3,1] & dato.x < Events[3,1] + 365, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev3_2 = ifelse(dato.x > Events[3,1] & dato.x < Events[3,1] + 365*2, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev3_5 = ifelse(dato.x > Events[3,1] & dato.x < Events[3,1] + 365*5, 0, 1))
+    
+    ### EV4 ----
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev4_0_0.5 = ifelse(dato.x > Events[4,1] & dato.x < Events[4,1] + 365/2, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev4_1 = ifelse(dato.x > Events[4,1] & dato.x < Events[4,1] + 365, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev4_2 = ifelse(dato.x > Events[4,1] & dato.x < Events[4,1] + 365*2, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev4_5 = ifelse(dato.x > Events[4,1] & dato.x < Events[4,1] + 365*5, 0, 1))
+    
+    ### EV5 ----
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev5_0_0.5 = ifelse(dato.x > Events[5,1] & dato.x < Events[5,1] + 365/2, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev5_1 = ifelse(dato.x > Events[5,1] & dato.x < Events[5,1] + 365, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev5_2 = ifelse(dato.x > Events[5,1] & dato.x < Events[5,1] + 365*2, 0, 1))
+    
+    Total_df_11 <- Total_df_11 %>%
+      mutate(Sold_Ev5_5 = ifelse(dato.x > Events[5,1] & dato.x < Events[5,1] + 365*5, 0, 1))
+    
+    summary(Total_df_11$Sold_Ev1_0_0.5)
+    
+# Subsetting ---- 
+    varDelete <- c("EPSG", "Geometri_EPSG_25832", "y_coord", "x_coord", "latitude", "longitude", 
+                   "neighbor_list", "rownumber", "neighbor", "nabolag")
+    Total_df_11 <- Total_df_11[, !(names(Total_df_11) %in% varDelete)]
+    
+    Total_df_12 <- Total_df_11
+    save(Total_df_12, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_12.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_12.Rdata")
+    
+    # Subsetting last variables to final df
+    Total_df_13 <- Total_df_12
+    
+    varDelete <- c("vejnavn", "husnr", "floor", "kommunenavn", "side", "entryAddressID.x", 
+                   "dato.x", "adr_etrs89_oest", "adr_etrs89_nord", "Hændelsesdato", "Coor", "nabolag_list",
+                   "lag_price1", "forest_size", "habour_distance", "highway_distance", "market_name" )
+    Total_df_13 <- Total_df_12[, !(names(Total_df_12) %in% varDelete)]
+    
+    
+    
+    hist(Total_df_13$nominal_price, main = "Histogram of Count Variable")
     
 # Clean data of outliers  ---- 
     
     
+    
+  
+    
+# Plot ----
+    df_descriptives <- summary(Total_df_13)
+    library(gt)
+    
+    
+    
+    plot_name <- subset(Total_df_8, select = c(Coor, flooded))
+    #plot_name <- subset(plot_name, flooded == 1)
+    plot_name <- sf::st_as_sf(plot_name)
+    
+    plot(plot_name)  
     
     
     
