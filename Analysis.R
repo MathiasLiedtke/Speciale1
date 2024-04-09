@@ -4,8 +4,10 @@
 
 
 # Library ----
-library(xgboost)
-library(tree)
+library(stats) # For linear regression estimation, functions as lm
+library(gwmodel) # For Geographically weighted models
+library(xgboost) # For xgboosting
+library(tree) # vizualise trees 
 
 
 # Load in file ----
@@ -18,7 +20,7 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 202
 
     ## XGBoosting ----
 
-
+ 
 
 
 
