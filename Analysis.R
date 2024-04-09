@@ -176,7 +176,7 @@ summary(boost.boston)
   
   
   
-  https://www.appsilon.com/post/r-xgboost
+  # https://www.appsilon.com/post/r-xgboost
   # XGboosting
   library(xgboost)
   library(caTools)

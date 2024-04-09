@@ -1649,16 +1649,57 @@ library(pbapply)
     save(Total_df_12, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_12.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_12.Rdata")
     
+    ## Subsetting ----
     # Subsetting last variables to final df
     Total_df_13 <- Total_df_12
     
+    ## add nettoprisindeks ----
+    Prisindeks <- read_excel("~/Downloads/Prisindeks.xlsx", col_types = c("date", "numeric"))
+    Prisindeks$Dato <- as.Date(Prisindeks$Dato)
+    Prisindeks$year <- format(Prisindeks$Dato, "%Y")
+    Prisindeks$month <- format(Prisindeks$Dato, "%m")
+    
+    Total_df_12$year <- format(Total_df_12$dato.x, "%Y")
+    Total_df_12$month <- format(Total_df_12$dato.x, "%m")
+    
+    joined_df <- Total_df_12 %>%
+      left_join(Prisindeks, by = c("year", "month"))
+    
+    Total_df_13 <- joined_df %>%
+      mutate(indeks = Prisindeks / 100,
+             sales_price = indeks * nominal_price)
+    
+    Total_df_13 <- as.data.frame(Total_df_13)
+    Total_df_13 <- Total_df_13 %>% tidyr::drop_na(sales_price)
+    
+    
+    ## add interest rate at time of purchase
+    obligationsrente <- read_excel("~/Downloads/obligationsrente_fida_uge13-2024.xlsx", 
+                                                    sheet = "Sheet1", col_types = c("date", "numeric"))
+    obligationsrente$Dato <- as.Date(obligationsrente$Dato)
+    obligationsrente$year <- format(obligationsrente$Dato, "%Y")
+    obligationsrente$month <- format(obligationsrente$Dato, "%m")
+    
+    monthly_mean <- aggregate(`Lang rente` ~ year + month, data = obligationsrente, FUN = mean)
+  
+    Total_df_13 <- Total_df_13 %>%
+      left_join(monthly_mean, by = c("year", "month"))
+    
+    
     varDelete <- c("vejnavn", "husnr", "floor", "kommunenavn", "side", "entryAddressID.x", 
                    "dato.x", "adr_etrs89_oest", "adr_etrs89_nord", "Hændelsesdato", "Coor", "nabolag_list",
-                   "lag_price1", "forest_size", "habour_distance", "highway_distance", "market_name" )
+                   "urban", "lag_price1", "forest_size", "habour_distance", "highway_distance", "market_name", 
+                   "year", "month", "Dato.x", "Prisindeks", "indeks", "sales_price", "Dato.y", "Lang rente.x")
+    
     Total_df_13 <- Total_df_12[, !(names(Total_df_12) %in% varDelete)]
     
-    Total_df_13$lag_price <- as.numeric(subsetTotal_df_13$lag_price)
+    Total_df_13$lag_price <- as.numeric(Total_df_13$lag_price)
     Total_df_13 <- as.data.frame(Total_df_13)
+    
+    save(Total_df_13, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_13.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_13.Rdata")
+    
+    
     
     
     # hist(Total_df_13$nominal_price, main = "Histogram of Count Variable")
