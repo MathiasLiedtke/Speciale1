@@ -1749,10 +1749,8 @@ library(psych)
     # Subsetting last variables to final df
     Total_df_13 <- Total_df_12
     
-    
-    
     ## add nettoprisindeks ----
-    Prisindeks <- read_excel("~/Downloads/Prisindeks.xlsx", col_types = c("date", "numeric"))
+    Prisindeks <- readxl::read_excel("~/Downloads/Prisindeks.xlsx", col_types = c("date", "numeric"))
     Prisindeks$Dato <- as.Date(Prisindeks$Dato)
     Prisindeks$year <- format(Prisindeks$Dato, "%Y")
     Prisindeks$month <- format(Prisindeks$Dato, "%m")
@@ -1799,6 +1797,9 @@ library(psych)
     Total_df_13 <- Total_df_13 %>%
       rowwise() %>%
       mutate(Car_Garage = ifelse(Car_Park == 1 | Garage == 1, 1, 0))
+    Total_df_13 <- Total_df_13 %>%
+      rowwise() %>%
+      mutate(Car_Garage = ifelse(is.na(Car_Garage), 0, Car_Garage))
     
     save(Total_df_13, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_13.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_13.Rdata")
@@ -1806,8 +1807,26 @@ library(psych)
      
     
 # Clean data of outliers  ---- 
-    varDelete <- c("Garage", "Car_Park")
+    varDelete <- c("Garage", "Car_Park", "toilets", "urban_size")
     Total_df_14 <- Total_df_13[, !(names(Total_df_13) %in% varDelete)]
+    
+    #Rename problematic variables such as - " " 
+    names(Total_df_14)[names(Total_df_14) == '<1940'] <- 'builtbefore1940'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1980-1990'] <- 'Renovated_1980_1990'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1940-1950'] <- 'Renovated_1940_1950'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1950-1960'] <- 'Renovated_1950_1960'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1960-1970'] <- 'Renovated_1960_1970'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1970-1980'] <- 'Renovated_1970_1980'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1980_1990'] <- 'Renovated_1980_1990'
+    names(Total_df_14)[names(Total_df_14) == '1940-1950'] <- 'built_1940_1950'
+    names(Total_df_14)[names(Total_df_14) == '1950-1960'] <- 'built_1950_1960'
+    names(Total_df_14)[names(Total_df_14) == '1960-1970'] <- 'built_1960_1970'
+    names(Total_df_14)[names(Total_df_14) == '1980-1990'] <- 'built_1980_1990'
+    names(Total_df_14)[names(Total_df_14) == '1990-2000'] <- 'built_1990_2000'
+    names(Total_df_14)[names(Total_df_14) == '2000-2010'] <- 'built_2000_2010'
+    names(Total_df_14)[names(Total_df_14) == '1970-1980'] <- 'built_1970_1980'
+    names(Total_df_14)[names(Total_df_14) == '2010'] <- 'builtafter_2010'
+    names(Total_df_14)[names(Total_df_14) == 'Tidligere udbetalt byg/løs/afgrd'] <- 'Udbetalt'
     
     ## Pricecleaning ---- 
     ## How many house prices are above 25 mil
@@ -1838,10 +1857,10 @@ library(psych)
     # Create the plot
     x <- seq(1, 512)
     df <- data.frame(x = x, Density1 = Density1$y, Density2 = Density2$y, Density3 = Density3$y)
-    Nominal_price_plot <- ggplot(df, aes(x)) +
-      geom_line(aes(y = Density1, color = "Density 1"), size = 1) +
-      geom_line(aes(y = Density2, color = "Density 2"), size = 1) +
-      geom_line(aes(y = Density3, color = "Density 3"), size = 1) +
+    Nominal_price_plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
+      ggplot2::geom_line(aes(y = Density1, color = "Density 1"), size = 1) +
+      ggplot2::geom_line(aes(y = Density2, color = "Density 2"), size = 1) +
+      ggplot2::geom_line(aes(y = Density3, color = "Density 3"), size = 1) +
       labs(x = "Frequency", y = "Price", title = "Density for nominal price") +
       scale_color_manual(name = "Legend", values = c("green", "orange", "purple")) +
       theme_minimal() +
@@ -1852,7 +1871,7 @@ library(psych)
     plot(Nominal_price_plot)
     
     # Save plot 
-    ggsave("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Plots/Nominal_price.png", plot = Nominal_price_plot, width = 10, height = 6, dpi = 400)
+    ggplot2::ggsave("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Plots/Nominal_price.png", plot = Nominal_price_plot, width = 10, height = 6, dpi = 400)
     
     Summary_statistics <- psych::describe(Total_df_14)
     
@@ -1863,21 +1882,23 @@ library(psych)
     Total_df_14 <- Total_df_14 %>%
       rowwise() %>%
       mutate(coastline_distance = ifelse(coastline_distance == Inf, NA, coastline_distance))
+    Total_df_14 <- subset(Total_df_14, !is.na(lag_price))
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(Outbuilding = ifelse(is.na(Outbuilding), 0, Outbuilding))
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(heatpump_heating = ifelse(is.na(heatpump_heating), 0, heatpump_heating))
+    Total_df_14 <- subset(Total_df_14, !is.na(coastline_distance))
     
-    df_Flooded <- subset(Total_df_14, flooded == 1)
+    
+    df_Flooded <- subset(Total_df_14, flooded == 1) # Divide to remove some larger data set
     df_Notflooded <- subset(Total_df_14, flooded != 1)
     df_Notflooded <- subset(df_Notflooded, !is.na(postnr))
-    df_Notflooded <- df_Notflooded[complete.cases(df_Notflooded[, -c("addressID", "enhed_id", "Coor", "Areas")]), ]
-    df_Notflooded <- df_Notflooded[complete.cases(df_Notflooded[, -c('addressID', 'enhed_id', 'Coor', 'Areas')]), ]
-    
-    
-    columns_to_exclude <- c("addressID", "enhed_id", "Coor", "Areas")
+    columns_to_exclude <- c("addressID", "enhed_id", "Coor", "Areas") 
     columns_to_select <- setdiff(names(df_Notflooded), columns_to_exclude)
     df_Notflooded <- df_Notflooded[complete.cases(df_Notflooded[, columns_to_select]), ]
-    
-    
-    
-    filtered_df <- df[complete.cases(df[, -1]), ]
+    summary(df_Notflooded)
     
     Summary_statistics <- psych::describe(df_Notflooded)
     stats <- summary(df_Notflooded)
@@ -1886,23 +1907,7 @@ library(psych)
     
 
     
-  #Rename problematic variables such as - " " 
-    names(Total_df_14)[names(Total_df_14) == '<1940'] <- 'builtbefore1940'
-    names(Total_df_14)[names(Total_df_14) == 'Renovated_1980-1990'] <- 'Renovated_1980_1990'
-    names(Total_df_14)[names(Total_df_14) == 'Renovated_1940-1950'] <- 'Renovated_1940_1950'
-    names(Total_df_14)[names(Total_df_14) == 'Renovated_1950-1960'] <- 'Renovated_1950_1960'
-    names(Total_df_14)[names(Total_df_14) == 'Renovated_1960-1970'] <- 'Renovated_1960_1970'
-    names(Total_df_14)[names(Total_df_14) == 'Renovated_1970-1980'] <- 'Renovated_1970_1980'
-    names(Total_df_14)[names(Total_df_14) == 'Renovated_1980_1990'] <- 'Renovated_1980_1990'
-    names(Total_df_14)[names(Total_df_14) == '1940-1950'] <- 'built_1940_1950'
-    names(Total_df_14)[names(Total_df_14) == '1950-1960'] <- 'built_1950_1960'
-    names(Total_df_14)[names(Total_df_14) == '1960-1970'] <- 'built_1960_1970'
-    names(Total_df_14)[names(Total_df_14) == '1980-1990'] <- 'built_1980_1990'
-    names(Total_df_14)[names(Total_df_14) == '1990-2000'] <- 'built_1990_2000'
-    names(Total_df_14)[names(Total_df_14) == '2000-2010'] <- 'built_2000_2010'
-    names(Total_df_14)[names(Total_df_14) == '1970-1980'] <- 'built_1970_1980'
-    names(Total_df_14)[names(Total_df_14) == '2010'] <- 'builtafter_2010'
-    names(Total_df_14)[names(Total_df_14) == 'Tidligere udbetalt byg/løs/afgrd'] <- 'Udbetalt'
+
     
     
     ## Narrow down zip codes 
