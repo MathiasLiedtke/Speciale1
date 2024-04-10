@@ -29,12 +29,12 @@ library(psych)
 # The following loads in the data from Toke about damages due to precipitation. 
 
     ## Load data ----
-    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/fp_events.Rdata")
-    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev6_Aalborg.Rdata")
-    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev7_aarhus.Rdata")
-    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev8_Trekanstomraade.Rdata")
-    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev1_Koebenhavn.Rdata")
-    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev1_StorKoebenhavn.Rdata")
+    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/fp_events.Rdata")
+    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev6_Aalborg.Rdata")
+    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev7_aarhus.Rdata")
+    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev8_Trekanstomraade.Rdata")
+    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev1_Koebenhavn.Rdata")
+    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/ev1_StorKoebenhavn.Rdata")
 
         ### Excel printout of head of each sheet ----
         sheet_names <- c("Koebenhavn", "Storkoebenhavn", "Aalborg", "Aarhus", "Trekantsområde", "fp_events")
@@ -42,7 +42,7 @@ library(psych)
         
         # library(openxlsx)
         wb <- createWorkbook()
-        file_path <- "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Excel_Summary.xlsx"  # Specify the desired file path
+        file_path <- "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Excel_Summary.xlsx"  # Specify the desired file path
         
         # Add each data frame to a separate sheet
         for (i in seq_along(data_frames)) {
@@ -156,14 +156,14 @@ library(psych)
       
         
     ### Save Precipitation ----
-    save(Precipitation_subset, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")    
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")
+    save(Precipitation_subset, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")    
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")
             
     ## Id for data frame = Enhed_id, adresse (husnr, vejnavn, postnr)
         
 # BBR Bygning ----
     ## Load data of BBR_Bygning
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Bygning.rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Bygning.rdata")
         
     ## Reduce dimension ----
     Var_BBR_Bygning <- c("bygning_id","byg039BygningensSamledeBoligAreal", "byg021BygningensAnvendelse", "byg044ArealIndbyggetUdhus", "byg026Opførelsesår", 
@@ -248,21 +248,21 @@ library(psych)
                                                          BBR_Bygning_Subset$Ombygning > 1980 , 1, 0)
     
     ## Save and load BBR_Bygning_Subset ----
-    save(BBR_Bygning_Subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Subset.Rdata")    
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Subset.Rdata")        
+    save(BBR_Bygning_Subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Subset.Rdata")    
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Subset.Rdata")        
     
 #BBR_Enhed 
     ## Load data to see if possible mapping between Precipitation and Trade_Skader ----
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed.Rdata")        
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed.Rdata")        
     Var_BBR_Enhed <- c("enhed_id", "adresseIdentificerer", "etage", "opgang", "bygning")
     BBR_Enhed_Subset <- subset(BBR_Enhed, select = Var_BBR_Enhed)
-    save(BBR_Enhed_Subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed_Subset.Rdata")    
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed_Subset.Rdata")
+    save(BBR_Enhed_Subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed_Subset.Rdata")    
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/BBR_Enhed_Subset.Rdata")
     
 # Trades 1991-2021 from Carsten ----
     
     ## Load data ----
-    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Carsten Bertram/SpecialeTrades_1992-2021.RData")
+    load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Carsten Bertram/SpecialeTrades_1992-2021.RData")
     
     ## Narrow down variables ----
     # Change heating to numeric variable like other df 
@@ -281,13 +281,13 @@ library(psych)
                                  "entryAddressID", "district_heating", "central_heating", "electric_heating",
                                  "Tile", "Thatched", "Fiberasbetos", "roofing")
     `Trades_1992_2021_Subset` <- subset(trades_1992_2021, select = `Var_Trades_1992-2021`)
-    save(`Trades_1992_2021_Subset`, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Trades_1992_2021_Subset.Rdata")
-    # load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Trades_1992_2021_Subset.Rdata")
+    save(`Trades_1992_2021_Subset`, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Trades_1992_2021_Subset.Rdata")
+    # load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Trades_1992_2021_Subset.Rdata")
     rm(`Var_Trades_1992-2021`)
     
 # Skader, a df that contains damage of flooding ---- 
     ## load data ----
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader.Rdata")
     
     ## Reduce 'Skader' of variables
     Var_Skader <- c("vejnavn", "husnr", "bygning_id", "Outbuilding", "Opførelsesår", 
@@ -301,11 +301,11 @@ library(psych)
                     "opgang", "dato", "entryAddressID", "Hændelsesdato", "Selvrisiko",
                     "Tidligere udbetalt byg/løs/afgrd")
     Skader_subset <- subset(Skader, select = Var_Skader)
-    save(Skader_subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader_Subset.Rdata")
+    save(Skader_subset, file ="~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader_Subset.Rdata")
     
     rm(Skader)
     
-    # load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader_Subset.Rdata")
+    # load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader_Subset.Rdata")
     
 
 # Merging ----
@@ -324,7 +324,7 @@ library(psych)
     
     ## Merge Precipitation on merged data  ----
     # Precipitation only unique identifier is 'Enhed' that maps onto BBR_Enhed_Subset enhed_id
-        load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")
+        load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")
         # Precipitation_subset <- merge(Precipitation_subset, BBR_Enhed_Subset, by.x = "Enhed_id", by.y = "enhed_id")
     ## Rename variables to fit to Trade_Skader ----
         ### Trade_Skader
@@ -347,8 +347,8 @@ library(psych)
     ## Merge of Precipitation and Trade_Skader ----
     #Total_df <- merge(Trade_Skader, Precipitation_subset, by.x = "bygning_id", by.y = "bygning")
     Total_df <- bind_rows(Trade_Skader, Precipitation_subset)
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df.Rdata")
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df.Rdata")
 # Finalizing data frame Total_df ----
     ## Remove unnecessary variables ----
     Var_Total_df <- c("vejnavn.y", "husnr.y")
@@ -409,8 +409,8 @@ library(psych)
     Total_df$`Tidligere udbetalt byg/løs/afgrd` <- ifelse(is.na(Total_df$`Tidligere udbetalt byg/løs/afgrd`), 
                                                       Total_df$Total_tab, Total_df$`Tidligere udbetalt byg/løs/afgrd`)
 
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df2.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df2.Rdata")
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df2.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df2.Rdata")
     
     ## Reduce to predictor variables ----
     Var_Total_df <- c("year", "hustype", "year_of_built", "bygning_id", "grund", "husnummer",
@@ -430,11 +430,11 @@ library(psych)
     #Keep only unique observations
     Total_df <- dplyr::distinct(Total_df)
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df3.Rdata")
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df3.Rdata")
     
 
 # Change geographical point variable to spatial variable ----
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df3.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df3.Rdata")
 
     ## Convert latitude and longitude to EPSG system. 
         ## Extract EPSG: 
@@ -459,39 +459,39 @@ library(psych)
        
     
     ## Save date ----
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df4.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df4.Rdata")
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df4.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df4.Rdata")
 
 
 # Load in geographical variables ----
     
     ## Højspænding ----
-    powerline_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/hoejspaendingsledning/hoejspaendingsledning.shp")
+    powerline_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/hoejspaendingsledning/hoejspaendingsledning.shp")
     
     ## Jernbane ----
-    Jernbane1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/jernbane/jernbane_0001/jernbane.shp")
-    Jernbane <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/jernbane/jernbane_0000/jernbane.shp")
+    Jernbane1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/jernbane/jernbane_0001/jernbane.shp")
+    Jernbane <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/jernbane/jernbane_0000/jernbane.shp")
     railway_distance <- rbind(Jernbane, Jernbane1)
     rm(Jernbane1)
     
     ## Kyst ----
-    Kyst0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/kyst/kyst_0000/kyst.shp")
-    Kyst1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/kyst/kyst_0001/kyst.shp")
+    Kyst0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/kyst/kyst_0000/kyst.shp")
+    Kyst1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/kyst/kyst_0001/kyst.shp")
     coastline_distance <- rbind(Kyst0, Kyst1)
     rm(Kyst0, Kyst1)
     
     ## skov ----
-    Skov0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0000/skov.shp")
-    Skov1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0001/skov.shp")
-    Skov2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0002/skov.shp")
-    Skov3 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0003/skov.shp")
-    Skov4 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0004/skov.shp")
-    Skov5 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0005/skov.shp")
-    Skov6 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0006/skov.shp")
-    Skov7 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0007/skov.shp")
-    Skov8 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0008/skov.shp")
-    Skov9 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0009/skov.shp")
-    Skov10 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0010/skov.shp")
+    Skov0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0000/skov.shp")
+    Skov1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0001/skov.shp")
+    Skov2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0002/skov.shp")
+    Skov3 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0003/skov.shp")
+    Skov4 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0004/skov.shp")
+    Skov5 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0005/skov.shp")
+    Skov6 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0006/skov.shp")
+    Skov7 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0007/skov.shp")
+    Skov8 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0008/skov.shp")
+    Skov9 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0009/skov.shp")
+    Skov10 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/skov/skov_0010/skov.shp")
     forest_distance <- rbind(Skov0, Skov1, Skov2, Skov3, Skov4, Skov5, Skov6, Skov7, Skov8, Skov9, Skov10)
     rm(Skov0, Skov1, Skov2, Skov3, Skov4, Skov5, Skov6, Skov7, Skov8, Skov9, Skov10)
     forest_distance$area <- sf::st_area(forest_distance)
@@ -528,25 +528,25 @@ library(psych)
 
     
     ## Soe ----
-    Soe0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0000/soe.shp")
-    Soe1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0001/soe.shp")
-    Soe2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0002/soe.shp")
-    Soe3 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0003/soe.shp")
-    Soe4 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0004/soe.shp")
-    Soe5 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0005/soe.shp")
-    Soe6 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0006/soe.shp")
-    Soe7 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0007/soe.shp")
-    Soe8 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0008/soe.shp")
-    Soe9 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0009/soe.shp")
-    Soe10 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0010/soe.shp")
-    Soe11 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0011/soe.shp")
-    Soe12 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0012/soe.shp")
-    Soe13 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0013/soe.shp")
-    Soe14 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0014/soe.shp")
-    Soe15 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0015/soe.shp")
-    Soe16 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0016/soe.shp")
-    Soe17 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0017/soe.shp")
-    Soe18 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0018/soe.shp")
+    Soe0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0000/soe.shp")
+    Soe1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0001/soe.shp")
+    Soe2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0002/soe.shp")
+    Soe3 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0003/soe.shp")
+    Soe4 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0004/soe.shp")
+    Soe5 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0005/soe.shp")
+    Soe6 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0006/soe.shp")
+    Soe7 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0007/soe.shp")
+    Soe8 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0008/soe.shp")
+    Soe9 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0009/soe.shp")
+    Soe10 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0010/soe.shp")
+    Soe11 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0011/soe.shp")
+    Soe12 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0012/soe.shp")
+    Soe13 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0013/soe.shp")
+    Soe14 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0014/soe.shp")
+    Soe15 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0015/soe.shp")
+    Soe16 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0016/soe.shp")
+    Soe17 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0017/soe.shp")
+    Soe18 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/soe/soe_0018/soe.shp")
     lake_distance <- rbind(Soe0, Soe1, Soe2, Soe3, Soe4, Soe5, Soe6, Soe7, Soe8, Soe9, 
                  Soe10, Soe11, Soe12, Soe13, Soe14, Soe15, Soe16, Soe17, Soe18)
     rm(Soe0, Soe1, Soe2, Soe3, Soe4, Soe5, Soe6, Soe7, Soe8, Soe9, 
@@ -580,13 +580,13 @@ library(psych)
     rm(lake_distance, df)
     
     ## Togstation ----
-    trainstation_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/togstation/togstation.shp")
+    trainstation_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/togstation/togstation.shp")
     trainstation_distance <- sf::st_set_crs(trainstation_distance, sf::st_crs(Total_df))
     
     ## Vaadområde ----
-    Vaadområde0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0000/vaadomraade.shp")
-    Vaadområde1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0001/vaadomraade.shp")
-    Vaadområde2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0002/vaadomraade.shp")
+    Vaadområde0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0000/vaadomraade.shp")
+    Vaadområde1 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0001/vaadomraade.shp")
+    Vaadområde2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vaadomraade/vaadomraade_0002/vaadomraade.shp")
     Wateryarea <- rbind(Vaadområde0, Vaadområde1,Vaadområde2)
     rm(Vaadområde0, Vaadområde1,Vaadområde2)
     
@@ -618,11 +618,11 @@ library(psych)
     rm(lake_distance, df)
     
     # Mangler vejkant pga. 160
-    # vejkant0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vejkant/vejkant_0000/vejkant.shp")
+    # vejkant0 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vejkant/vejkant_0000/vejkant.shp")
     
     
     ## Vindmølle ----
-    windturbine_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vindmoelle/vindmoelle.shp")
+    windturbine_distance <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Lokationer/Unzipped/vindmoelle/vindmoelle.shp")
     windturbine_distance <- sf::st_set_crs(windturbine_distance, sf::st_crs(Total_df))
     
     
@@ -707,8 +707,8 @@ library(psych)
       cat("Time for municipality coastline", i, ": ", Sys.time() - start_time, "\n")
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")        
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")        
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")
     
     
     ## forest_distance ----
@@ -755,7 +755,7 @@ library(psych)
       cat("Time for", d, "=", Sys.time() - d_start_time )
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_1_5.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_1_5.Rdata")                
   
     ### 6_10 forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
@@ -799,7 +799,7 @@ library(psych)
       cat("Time for", d, "=", Sys.time() - d_start_time )
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_6_10.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_6_10.Rdata")                
     
     ### 11_15 forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
@@ -843,7 +843,7 @@ library(psych)
       cat("Time for", d, "=", Sys.time() - d_start_time )
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_11_15.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_11_15.Rdata")                
     
     ### 16_20 forest_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
@@ -887,7 +887,7 @@ library(psych)
       cat("Time for", d, "=", Sys.time() - d_start_time )
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_16_20.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_16_20.Rdata")                
     
     ## lake_distance ----
     
@@ -933,7 +933,7 @@ library(psych)
       cat("Time for", d, "=", Sys.time() - d_start_time )
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_1_5.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_1_5.Rdata")                
     
     ### 6_10 lake_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
@@ -977,7 +977,7 @@ library(psych)
       cat("Time for", d, "=", Sys.time() - d_start_time )
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_6_10.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_6_10.Rdata")                
     
     ### 11_15 lake_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
@@ -1021,7 +1021,7 @@ library(psych)
       cat("Time for", d, "=", Sys.time() - d_start_time )
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_11_15.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_11_15.Rdata")                
     
     ### 16_20 lake_distance ----
     kommune_nr <- sort(unique(Total_df$postnr))
@@ -1065,7 +1065,7 @@ library(psych)
       cat("Time for", d, "=", Sys.time() - d_start_time )
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_16_20.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_16_20.Rdata")                
     
     
     ## Trainstation_distance ----
@@ -1093,7 +1093,7 @@ library(psych)
       cat("Time for municipality", i, ": ", Sys.time() - start_time, "\n")
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_trainstation.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_trainstation.Rdata")                
     
     
     ## Wateryarea ----
@@ -1121,7 +1121,7 @@ library(psych)
       cat("Time for municipality", i, ": ", Sys.time() - start_time, "\n")
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_wateryarea.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_wateryarea.Rdata")                
     
     
     ## Windmill ----
@@ -1149,17 +1149,17 @@ library(psych)
       cat("Time for municipality", i, ": ", Sys.time() - start_time, "\n")
     }
     
-    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_windturbine.Rdata")                
+    save(Total_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_windturbine.Rdata")                
     
   # Combine after splitting (Split due to large computational time) ----  
     ## Forest ----
     ### Load df from after powerline, railway_distance, coastline. 
     T1 <- Sys.time()
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df5.Rdata")
     Total_df_5 <- Total_df
     
     # Load first forest
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_1_5.Rdata")                
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_1_5.Rdata")                
     Total_df_1_5 <- Total_df
     
     ### Merge 1_5 ----
@@ -1177,7 +1177,7 @@ library(psych)
                                    forest_distance_4, forest_distance_5))
     
     # Load second forest 
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_6_10.Rdata")                
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_6_10.Rdata")                
     Total_df_6_10 <- Total_df 
     
     ### Merge 6_10 ----
@@ -1195,7 +1195,7 @@ library(psych)
                                    forest_distance_9, forest_distance_10))
     
     # Load third forest 
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_11_15.Rdata")                
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_11_15.Rdata")                
     Total_df_11_15 <- Total_df
     
     ### Merge 11_15 ----
@@ -1213,7 +1213,7 @@ library(psych)
                                    forest_distance_14, forest_distance_15))
     
     # Load fourth forest 
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_16_20.Rdata")                
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_forest_16_20.Rdata")                
     Total_df_16_20 <- Total_df  
     
     ### Merge 16_20 ----
@@ -1240,7 +1240,7 @@ library(psych)
     T1 <- Sys.time()
     
     # Load first lake
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_1_5.Rdata")                
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_1_5.Rdata")                
     Total_df_1_5 <- Total_df
     
     ### Merge 1_5 ----
@@ -1258,7 +1258,7 @@ library(psych)
                                    lake_distance_4, lake_distance_5))
     
     # Load second lake 
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_6_10.Rdata")                
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_6_10.Rdata")                
     Total_df_6_10 <- Total_df 
     
     ### Merge 6_10 ----
@@ -1276,7 +1276,7 @@ library(psych)
                                    lake_distance_9, lake_distance_10))
     
     # Load third lake 
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_11_15.Rdata")                
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_11_15.Rdata")                
     Total_df_11_15 <- Total_df
     
     ### Merge 11_15 ----
@@ -1294,7 +1294,7 @@ library(psych)
                                    lake_distance_14, lake_distance_15))
     
     # Load fourth lake 
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_16_20.Rdata")                
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_lake_16_20.Rdata")                
     Total_df_16_20 <- Total_df  
     
     ### Merge 16_20 ----
@@ -1317,15 +1317,15 @@ library(psych)
     
     rm(Total_df_1_5, Total_df_11_15, Total_df_16_20, Total_df_6_10)
     
-    save(Total_df_6, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df6.Rdata")        
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df6.Rdata")
+    save(Total_df_6, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df6.Rdata")        
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df6.Rdata")
     
     # Get rid of all new unnecessary variables
     names <- colnames(Total_df_6[, 1:71])
     Total_df_6 <- subset(Total_df_6, select = names)
   
     ## Trainstation ----    
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_trainstation.Rdata")                
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_trainstation.Rdata")                
     Starttime <- Sys.time()
     Total_df_6 <- Total_df_6 %>% 
       dplyr::bind_cols(select(Total_df, trainstation_distance), by = c("Coor" = "Coor"))
@@ -1334,7 +1334,7 @@ library(psych)
     
     ## Wateryarea ----    
     Starttime <- Sys.time()
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_wateryarea.Rdata")             
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_wateryarea.Rdata")             
     Total_df_6 <- Total_df_6 %>% 
       dplyr::bind_cols(select(Total_df, Wateryarea_distance_1, Wateryarea_distance_2,
                               Wateryarea_distance_3, Wateryarea_distance_4), by = c("Coor" = "Coor"))
@@ -1349,14 +1349,14 @@ library(psych)
     
     ## Windmill ----    
     Starttime <- Sys.time()
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_windturbine.Rdata")             
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_windturbine.Rdata")             
     Total_df_6 <- Total_df_6 %>% 
       dplyr::bind_cols(select(Total_df, windturbine_distance, windturbine_height), by = c("Coor" = "Coor"))
     endtime <- Sys.time()-Starttime
     print(endtime)
     
     Total_df_7 <- Total_df_6
-    save(Total_df_7, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_7.Rdata")
+    save(Total_df_7, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_7.Rdata")
     colnames(Total_df_7)[71] <- "Coor"
     colnames(Total_df_7)[72] <- "Trainstation_distance"
     
@@ -1366,8 +1366,8 @@ library(psych)
                     "Wateryarea_distance_4", "windturbine_height...83", "Coor...84", "by...85", "by...80", "by...74", 
                     "windturbine_distance...82", "Coor...79")
     Total_df_8 <- Total_df_7[, !(names(Total_df_7) %in% var_remove)]
-    save(Total_df_8, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_8.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_8.Rdata")
+    save(Total_df_8, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_8.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_8.Rdata")
 
 # Spatial variable ----
     Total_df_8 <- sf::st_as_sf(Total_df_8)
@@ -1464,8 +1464,8 @@ library(psych)
       
     }
   
-    save(Total_df_9, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_9.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_9.Rdata")
+    save(Total_df_9, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_9.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_9.Rdata")
     
  ## Neighbor spatial lag variable ----
     Total_df_9$neighbor_list <- strsplit(Total_df_9$neighbor, ", ")
@@ -1495,8 +1495,8 @@ library(psych)
     
     Total_df_10 <- Total_df_9
     
-    save(Total_df_10, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_10.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_10.Rdata")
+    save(Total_df_10, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_10.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_10.Rdata")
   
     # Group by zip code and then order street name to retrieve information
     Total_df_10 <- Total_df_10 %>%
@@ -1549,8 +1549,8 @@ library(psych)
       mutate(lag_price = ifelse(is.na(lag_price), lag_price1, lag_price))
     
     Total_df_11 <- Total_df_10
-    save(Total_df_11, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_11.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_11.Rdata")
+    save(Total_df_11, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_11.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_11.Rdata")
     
     
     ## Difference in Difference variable ----
@@ -1560,95 +1560,190 @@ library(psych)
     
     Total_df_11 <- Total_df_11 %>%
       mutate(EV1 = ifelse(dato.x < Events[1,1], 0, 1))
-    
+    Total_df_11 <- Total_df_11 %>%
+                    rowwise %>%
+                    mutate(EV1 = ifelse(is.na(EV1), 0, EV1))
+      
     Total_df_11 <- Total_df_11 %>%
       mutate(EV2 = ifelse(dato.x > Events[1,1] & dato.x < Events[2,1], 0, 1))
+                     Total_df_11 <- Total_df_11 %>%
+                     rowwise %>%
+                     mutate(EV2 = ifelse(is.na(EV2), 0, EV2))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(EV3 = ifelse(dato.x > Events[2,1] & dato.x < Events[3,1], 0, 1))
+                     Total_df_11 <- Total_df_11 %>%
+                       rowwise %>%
+                       mutate(EV3 = ifelse(is.na(EV3), 0, EV3))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(EV4 = ifelse(dato.x > Events[3,1] & dato.x < Events[4,1], 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+                     rowwise %>%
+                     mutate(EV4 = ifelse(is.na(EV4), 0, EV4))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(EV5 = ifelse(dato.x > Events[4,1] & dato.x < Events[5,1], 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+                     rowwise %>%
+                     mutate(EV5 = ifelse(is.na(EV5), 0, EV5))
     
     ## Sold after event variable 
     ### EV1 ----
     Total_df_11 <- Total_df_11 %>%
              mutate(Sold_Ev1_0_0.5 = ifelse(dato.x > Events[1,1] & dato.x < Events[1,1] + 365/2, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev1_0_0.5 = ifelse(is.na(Sold_Ev1_0_0.5), 0, Sold_Ev1_0_0.5))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev1_1 = ifelse(dato.x > Events[1,1] & dato.x < Events[1,1] + 365, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev1_1 = ifelse(is.na(Sold_Ev1_1), 0, Sold_Ev1_1))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev1_2 = ifelse(dato.x > Events[1,1] & dato.x < Events[1,1] + 365*2, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev1_2 = ifelse(is.na(Sold_Ev1_2), 0, Sold_Ev1_2))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev1_5 = ifelse(dato.x > Events[1,1] & dato.x < Events[1,1] + 365*5, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev1_5 = ifelse(is.na(Sold_Ev1_5), 0, Sold_Ev1_5))
     
     ### EV2 ----
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev2_0_0.5 = ifelse(dato.x > Events[2,1] & dato.x < Events[2,1] + 365/2, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev2_0_0.5 = ifelse(is.na(Sold_Ev2_0_0.5), 0, Sold_Ev2_0_0.5))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev2_1 = ifelse(dato.x > Events[2,1] & dato.x < Events[2,1] + 365, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev2_1 = ifelse(is.na(Sold_Ev2_1), 0, Sold_Ev2_1))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev2_2 = ifelse(dato.x > Events[2,1] & dato.x < Events[2,1] + 365*2, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev2_2 = ifelse(is.na(Sold_Ev2_2), 0, Sold_Ev2_2))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev2_5 = ifelse(dato.x > Events[2,1] & dato.x < Events[2,1] + 365*5, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev2_5 = ifelse(is.na(Sold_Ev2_5), 0, Sold_Ev2_5))
+    
     
     ### EV3 ----
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev3_0_0.5 = ifelse(dato.x > Events[3,1] & dato.x < Events[3,1] + 365/2, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev3_0_0.5 = ifelse(is.na(Sold_Ev3_0_0.5), 0, Sold_Ev3_0_0.5))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev3_1 = ifelse(dato.x > Events[3,1] & dato.x < Events[3,1] + 365, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev3_1 = ifelse(is.na(Sold_Ev3_1), 0, Sold_Ev3_1))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev3_2 = ifelse(dato.x > Events[3,1] & dato.x < Events[3,1] + 365*2, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev3_2 = ifelse(is.na(Sold_Ev3_2), 0, Sold_Ev3_2))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev3_5 = ifelse(dato.x > Events[3,1] & dato.x < Events[3,1] + 365*5, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev3_5 = ifelse(is.na(Sold_Ev3_5), 0, Sold_Ev3_5))
     
     ### EV4 ----
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev4_0_0.5 = ifelse(dato.x > Events[4,1] & dato.x < Events[4,1] + 365/2, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev4_0_0.5 = ifelse(is.na(Sold_Ev4_0_0.5), 0, Sold_Ev4_0_0.5))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev4_1 = ifelse(dato.x > Events[4,1] & dato.x < Events[4,1] + 365, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev4_1 = ifelse(is.na(Sold_Ev4_1), 0, Sold_Ev4_1))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev4_2 = ifelse(dato.x > Events[4,1] & dato.x < Events[4,1] + 365*2, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev4_2 = ifelse(is.na(Sold_Ev4_2), 0, Sold_Ev4_2))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev4_5 = ifelse(dato.x > Events[4,1] & dato.x < Events[4,1] + 365*5, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev4_5 = ifelse(is.na(Sold_Ev4_5), 0, Sold_Ev4_5))
     
     ### EV5 ----
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev5_0_0.5 = ifelse(dato.x > Events[5,1] & dato.x < Events[5,1] + 365/2, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev5_0_0.5 = ifelse(is.na(Sold_Ev5_0_0.5), 0, Sold_Ev5_0_0.5))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev5_1 = ifelse(dato.x > Events[5,1] & dato.x < Events[5,1] + 365, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev5_1 = ifelse(is.na(Sold_Ev5_1), 0, Sold_Ev5_1))
+    
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev5_2 = ifelse(dato.x > Events[5,1] & dato.x < Events[5,1] + 365*2, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev5_2 = ifelse(is.na(Sold_Ev5_2), 0, Sold_Ev5_2))
     
     Total_df_11 <- Total_df_11 %>%
       mutate(Sold_Ev5_5 = ifelse(dato.x > Events[5,1] & dato.x < Events[5,1] + 365*5, 0, 1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise %>%
+      mutate(Sold_Ev5_5 = ifelse(is.na(Sold_Ev5_5), 0, Sold_Ev5_5))
     
-    summary(Total_df_11$Sold_Ev1_0_0.5)
+    # combine variables with sold after 
+    Total_df_11 <- Total_df_11 %>%
+      rowwise() %>%
+      mutate(Sold_0_0.5 = sum(Sold_Ev1_0_0.5, Sold_Ev2_0_0.5, Sold_Ev3_0_0.5, Sold_Ev4_0_0.5, Sold_Ev5_0_0.5))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise() %>%
+      mutate(Sold_1 = sum(Sold_Ev1_1, Sold_Ev2_1, Sold_Ev3_1, Sold_Ev4_1, Sold_Ev5_1))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise() %>%
+      mutate(Sold_2 = sum(Sold_Ev1_2, Sold_Ev2_2, Sold_Ev3_2, Sold_Ev4_2, Sold_Ev5_2))
+    Total_df_11 <- Total_df_11 %>%
+      rowwise() %>%
+      mutate(Sold_5 = sum(Sold_Ev1_5, Sold_Ev2_5, Sold_Ev3_5, Sold_Ev4_5, Sold_Ev5_5))
+
+    
     
 # Subsetting ---- 
     varDelete <- c("EPSG", "Geometri_EPSG_25832", "y_coord", "x_coord", "latitude", "longitude", 
-                   "neighbor_list", "rownumber", "neighbor", "nabolag")
+                   "neighbor_list", "rownumber", "neighbor", "nabolag",
+                   "Sold_Ev1_0_0.5", "Sold_Ev2_0_0.5", "Sold_Ev3_0_0.5", "Sold_Ev4_0_0.5", "Sold_Ev5_0_0.5",
+                   "Sold_Ev1_1", "Sold_Ev2_1", "Sold_Ev3_1", "Sold_Ev4_1", "Sold_Ev5_1",
+                   "Sold_Ev1_2", "Sold_Ev2_2", "Sold_Ev3_2", "Sold_Ev4_2", "Sold_Ev5_2",
+                   "Sold_Ev1_5", "Sold_Ev2_5", "Sold_Ev3_5", "Sold_Ev4_5", "Sold_Ev5_5")
     Total_df_11 <- Total_df_11[, !(names(Total_df_11) %in% varDelete)]
     
     Total_df_12 <- Total_df_11
-    save(Total_df_12, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_12.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_12.Rdata")
+    save(Total_df_12, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_12.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_12.Rdata")
     
     ## Subsetting ----
     # Subsetting last variables to final df
@@ -1663,7 +1758,7 @@ library(psych)
     Total_df_12$year <- format(Total_df_12$dato.x, "%Y")
     Total_df_12$month <- format(Total_df_12$dato.x, "%m")
     
-    joined_df <- Total_df_12 %>%
+    joined_df <- Total_df_13 %>%
       left_join(Prisindeks, by = c("year", "month"))
     
     Total_df_13 <- joined_df %>%
@@ -1686,11 +1781,12 @@ library(psych)
     Total_df_13 <- Total_df_13 %>%
       left_join(monthly_mean, by = c("year", "month"))
     
-    
-    varDelete <- c("vejnavn", "husnr", "floor", "kommunenavn", "side", "entryAddressID.x", 
+    # 
+    varDelete <- c("vejnavn", "husnr", "floor", "kommunenavn", "side", "entryAddressID.x", "roofing", 
                    "dato.x", "adr_etrs89_oest", "adr_etrs89_nord", "Hændelsesdato", "Coor", "nabolag_list",
                    "urban", "lag_price1", "forest_size", "habour_distance", "highway_distance", "market_name", 
-                   "year", "month", "Dato.x", "Prisindeks", "indeks", "sales_price", "Dato.y", "Lang rente.x")
+                   "year", "month", "Dato.x", "Prisindeks", "indeks", "sales_price", "Dato.y", "Lang rente.x", 
+                   "Bluespot_0cm","Bluespot_10cm","Bluespot_20cm")
     
     Total_df_13 <- Total_df_12[, !(names(Total_df_12) %in% varDelete)]
     
@@ -1702,16 +1798,16 @@ library(psych)
       rowwise() %>%
       mutate(Car_Garage = ifelse(Car_Park == 1 | Garage == 1, 1, 0))
     
-    save(Total_df_13, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_13.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_13.Rdata")
+    save(Total_df_13, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_13.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_13.Rdata")
     
-    
+     
     
 # Clean data of outliers  ---- 
-    # Univariate outlier ------------------------------------------------------
     varDelete <- c("Garage", "Car_Park")
     Total_df_14 <- Total_df_13[, !(names(Total_df_13) %in% varDelete)]
     
+    ## Pricecleaning ---- 
     ## How many house prices are above 25 mil
     prices <- Total_df_14 %>%
       filter(nominal_price > 25000000) %>%
@@ -1721,8 +1817,8 @@ library(psych)
     Density1 <- density(Total_df_14$nominal_price)
     # we take subset and plot
     Price_25 <- subset(Total_df_14, nominal_price < 25000000)
-    Density2 <- density(subset_Price$nominal_price)
-    plot(density(subset_Price$nominal_price)) # still too skewed
+    Density2 <- density(Price_25$nominal_price)
+    plot(density(Price_25$nominal_price)) # still too skewed
     # Not enough we remove 1st and 99 percentile. 
     # Check what thresholds are removed 
     p1 <- quantile(Total_df_14$nominal_price, 0.01)
@@ -1754,16 +1850,41 @@ library(psych)
     plot(Nominal_price_plot)
     
     # Save plot 
-    ggsave("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Plots/Nominal_price.png", plot = Nominal_price_plot, width = 10, height = 6, dpi = 400)
+    ggsave("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Plots/Nominal_price.png", plot = Nominal_price_plot, width = 10, height = 6, dpi = 400)
     
     Summary_statistics <- psych::describe(Total_df_14)
     
     ## Mark variables as factors ----
-    Total_df_14$postnr <- as.factor(Total_df_14$postnr)
     Total_df_14 <- Total_df_14 %>%
       rowwise() %>%
       mutate(flooded = ifelse(flooded == 2 | flooded == 1, 1, 0))
-  
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(coastline_distance = ifelse(coastline_distance == Inf, NA, coastline_distance))
+    
+    df_Flooded <- subset(Total_df_14, flooded == 1)
+    df_Notflooded <- subset(Total_df_14, flooded != 1)
+    df_Notflooded <- subset(df_Notflooded, !is.na(postnr))
+    df_Notflooded <- df_Notflooded[complete.cases(df_Notflooded[, -c("addressID", "enhed_id", "Coor", "Areas")]), ]
+    df_Notflooded <- df_Notflooded[complete.cases(df_Notflooded[, -c('addressID', 'enhed_id', 'Coor', 'Areas')]), ]
+    
+    
+    columns_to_exclude <- c("addressID", "enhed_id", "Coor", "Areas")
+    columns_to_select <- setdiff(names(df_Notflooded), columns_to_exclude)
+    df_Notflooded <- df_Notflooded[complete.cases(df_Notflooded[, columns_to_select]), ]
+    
+    
+    
+    filtered_df <- df[complete.cases(df[, -1]), ]
+    
+    Summary_statistics <- psych::describe(df_Notflooded)
+    stats <- summary(df_Notflooded)
+    
+    
+    
+
+    
+  #Rename problematic variables such as - " " 
     names(Total_df_14)[names(Total_df_14) == '<1940'] <- 'builtbefore1940'
     names(Total_df_14)[names(Total_df_14) == 'Renovated_1980-1990'] <- 'Renovated_1980_1990'
     names(Total_df_14)[names(Total_df_14) == 'Renovated_1940-1950'] <- 'Renovated_1940_1950'
@@ -1781,9 +1902,30 @@ library(psych)
     names(Total_df_14)[names(Total_df_14) == '2010'] <- 'builtafter_2010'
     names(Total_df_14)[names(Total_df_14) == 'Tidligere udbetalt byg/løs/afgrd'] <- 'Udbetalt'
     
+    
+    ## Narrow down zip codes 
+    results <- Total_df_14 %>%
+      group_by(postnr) %>%
+      summarize(count = sum(flooded == 1))
+    # 545 zipcodes may be to many
+    
+    # Put zipcodes together by taking first two digits 
+    Total_df_14$Areas <- substr(Total_df_14$postnr, 1, 2)
+    
+    results_flooded <- Total_df_14 %>%
+      group_by(Areas) %>%
+      summarize(flooded = sum(flooded == 1))
+    results_notflooded <- Total_df_14 %>%
+      group_by(Areas) %>%
+      summarize(notflooded = sum(flooded == 0))
+    
+    
+    Total_df_14$Areas <- as.factor(Total_df_14$Areas)
+    
+    
     # Save
-    save(Total_df_14, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
+    save(Total_df_14, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
     
     
     plot(Total_df_13$nominal_price)
