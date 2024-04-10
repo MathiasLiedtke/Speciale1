@@ -1749,6 +1749,8 @@ library(psych)
     # Subsetting last variables to final df
     Total_df_13 <- Total_df_12
     
+    
+    
     ## add nettoprisindeks ----
     Prisindeks <- read_excel("~/Downloads/Prisindeks.xlsx", col_types = c("date", "numeric"))
     Prisindeks$Dato <- as.Date(Prisindeks$Dato)
