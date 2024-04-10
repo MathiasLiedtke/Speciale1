@@ -8,25 +8,40 @@ library(stats) # For linear regression estimation, functions as lm
 library(gwmodel) # For Geographically weighted models
 library(xgboost) # For xgboosting
 library(tree) # vizualise trees 
+library(mice) # Impute missing 
 
 
 # Load in file ----
-load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
+load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
+
+
+# KNN imputation
+library(mice)
+
+TEST <- mice(Total_df_14)
 
 
 # Analysis ----
-
+ 
     ## Regression ----
 
         ### linear model with zip codes ----
         Total_df_14_df <- as.data.frame(Total_df_14)
         Total_df_14_df <- subset(Total_df_14_df, select = - Coor)
-        PredictorVariables <- colnames(subset(Total_df_14_df, select = - c(nominal_price, addressID)))
+        TEST <- mice(Total_df_14_df)
+        PredictorVariables <- colnames(subset(Total_df_14_df, select = - c(nominal_price, addressID, enhed_id, postnr)))
         Formula <- formula(paste("nominal_price ~", 
                                  paste(PredictorVariables, collapse=" + ")))
         
-        Formula <- formula(nominal_price ~ postnr)
-        lm_zipcodes <- stats::lm(formula = Formula, Total_df_14_df)
+        Formula <- formula(nominal_price ~ Car_Garage)
+        lm_areas <- stats::lm(formula = Formula, Total_df_14_df)
+        
+        Formula <- formula(nominal_price ~ m2 + district_heating + central_heating + electric_heating)
+        lm_areas <- stats::lm(formula = Formula, Total_df_14_df, na.action = NULL)
+        
+        Formula <- formula(nominal_price ~ m2 + district_heating + central_heating + electric_heating)
+        lm_areas <- stats::lm(formula = Formula, Total_df_14_df, na.action = NULL)
+        
 
         ### GWR model ----
 
