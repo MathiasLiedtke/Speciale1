@@ -40,11 +40,8 @@ print(iNO_UNIQUE_Entities)
 # Answer = 155.560
 
 # How many entities have been flooded - Variable of interest 
-iFlooded_Homes <- CitiesCombines %>%
-  filter(total_payout != 0) %>%
-  summarise(unique_count = n_distinct(Enhed_id))
-print(iFlooded_Homes)
-# Answer = 7331
+summary_result <- my_df %>%
+  summarise(count_above_threshold = sum(price > 2000))
 
 # Addition of more data from Toke----
 #   This is in csv format instead, following changes to Rdata

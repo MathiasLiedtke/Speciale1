@@ -11,12 +11,26 @@ library(tree) # vizualise trees
 
 
 # Load in file ----
-load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")
+load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
 
 
 # Analysis ----
 
     ## Regression ----
+
+        ### linear model with zip codes ----
+        Total_df_14_df <- as.data.frame(Total_df_14)
+        Total_df_14_df <- subset(Total_df_14_df, select = - Coor)
+        PredictorVariables <- colnames(subset(Total_df_14_df, select = - c(nominal_price, addressID)))
+        Formula <- formula(paste("nominal_price ~", 
+                                 paste(PredictorVariables, collapse=" + ")))
+        
+        Formula <- formula(nominal_price ~ postnr)
+        lm_zipcodes <- stats::lm(formula = Formula, Total_df_14_df)
+
+        ### GWR model ----
+
+        ### SAR model ----
 
     ## XGBoosting ----
 

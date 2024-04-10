@@ -21,6 +21,7 @@ library(spdep)
 library(spData)
 library(spDataLarge)
 library(pbapply)
+library(psych)
 
 
 
@@ -1696,18 +1697,103 @@ library(pbapply)
     Total_df_13$lag_price <- as.numeric(Total_df_13$lag_price)
     Total_df_13 <- as.data.frame(Total_df_13)
     
+    Total_df_13$Car_Garage <- NA
+    Total_df_13 <- Total_df_13 %>%
+      rowwise() %>%
+      mutate(Car_Garage = ifelse(Car_Park == 1 | Garage == 1, 1, 0))
+    
     save(Total_df_13, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_13.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_13.Rdata")
     
     
     
+# Clean data of outliers  ---- 
+    # Univariate outlier ------------------------------------------------------
+    varDelete <- c("Garage", "Car_Park")
+    Total_df_14 <- Total_df_13[, !(names(Total_df_13) %in% varDelete)]
+    
+    ## How many house prices are above 25 mil
+    prices <- Total_df_14 %>%
+      filter(nominal_price > 25000000) %>%
+      nrow()
+    # 3655 houses exceed price, we plot density
+    plot(density(Total_df_14$nominal_price)) # Too skewed
+    Density1 <- density(Total_df_14$nominal_price)
+    # we take subset and plot
+    Price_25 <- subset(Total_df_14, nominal_price < 25000000)
+    Density2 <- density(subset_Price$nominal_price)
+    plot(density(subset_Price$nominal_price)) # still too skewed
+    # Not enough we remove 1st and 99 percentile. 
+    # Check what thresholds are removed 
+    p1 <- quantile(Total_df_14$nominal_price, 0.01)
+    p99 <- quantile(Total_df_14$nominal_price, 0.99)
+    # we find to be above 99 percentile, price is 9.3 mil
+    # we find to be below 1 percentile, price is 72.500 dkk
+    # subset again 
+    Price_percentile <- subset(Total_df_14, nominal_price > p1)
+    Price_percentile <- subset(Price_percentile, nominal_price < p99)
+    Density3 <- density(Price_percentile$nominal_price)
+    plot(density(Price_percentile$nominal_price)) # accept for now 
+    Total_df_14 <- Price_percentile
+    
+    # Save plots for showcasing distribution of price
+    # Create the plot
+    x <- seq(1, 512)
+    df <- data.frame(x = x, Density1 = Density1$y, Density2 = Density2$y, Density3 = Density3$y)
+    Nominal_price_plot <- ggplot(df, aes(x)) +
+      geom_line(aes(y = Density1, color = "Density 1"), size = 1) +
+      geom_line(aes(y = Density2, color = "Density 2"), size = 1) +
+      geom_line(aes(y = Density3, color = "Density 3"), size = 1) +
+      labs(x = "Frequency", y = "Price", title = "Density for nominal price") +
+      scale_color_manual(name = "Legend", values = c("green", "orange", "purple")) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5),  # Center the title
+        legend.background = element_rect(fill = "white", color = "black")
+            )
+    plot(Nominal_price_plot)
+    
+    # Save plot 
+    ggsave("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Plots/Nominal_price.png", plot = Nominal_price_plot, width = 10, height = 6, dpi = 400)
+    
+    Summary_statistics <- psych::describe(Total_df_14)
+    
+    ## Mark variables as factors ----
+    Total_df_14$postnr <- as.factor(Total_df_14$postnr)
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(flooded = ifelse(flooded == 2 | flooded == 1, 1, 0))
+  
+    names(Total_df_14)[names(Total_df_14) == '<1940'] <- 'builtbefore1940'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1980-1990'] <- 'Renovated_1980_1990'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1940-1950'] <- 'Renovated_1940_1950'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1950-1960'] <- 'Renovated_1950_1960'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1960-1970'] <- 'Renovated_1960_1970'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1970-1980'] <- 'Renovated_1970_1980'
+    names(Total_df_14)[names(Total_df_14) == 'Renovated_1980_1990'] <- 'Renovated_1980_1990'
+    names(Total_df_14)[names(Total_df_14) == '1940-1950'] <- 'built_1940_1950'
+    names(Total_df_14)[names(Total_df_14) == '1950-1960'] <- 'built_1950_1960'
+    names(Total_df_14)[names(Total_df_14) == '1960-1970'] <- 'built_1960_1970'
+    names(Total_df_14)[names(Total_df_14) == '1980-1990'] <- 'built_1980_1990'
+    names(Total_df_14)[names(Total_df_14) == '1990-2000'] <- 'built_1990_2000'
+    names(Total_df_14)[names(Total_df_14) == '2000-2010'] <- 'built_2000_2010'
+    names(Total_df_14)[names(Total_df_14) == '1970-1980'] <- 'built_1970_1980'
+    names(Total_df_14)[names(Total_df_14) == '2010'] <- 'builtafter_2010'
+    names(Total_df_14)[names(Total_df_14) == 'Tidligere udbetalt byg/løs/afgrd'] <- 'Udbetalt'
+    
+    # Save
+    save(Total_df_14, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
+    
+    
+    plot(Total_df_13$nominal_price)
+
+    
     
     # hist(Total_df_13$nominal_price, main = "Histogram of Count Variable")
     
-# Clean data of outliers  ---- 
-    # Univariate outlier ------------------------------------------------------
-    plot(Total_df_13$nominal_price)
     
+        
 # Descriptives ----
     library(gt)
     library(gtExtras)
