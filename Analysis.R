@@ -5,20 +5,18 @@
 
 # Library ----
 library(stats) # For linear regression estimation, functions as lm
-library(gwmodel) # For Geographically weighted models
+library(tidyverse) # use to arrange sf objects
+library(GWmodel) # For Geographically weighted models
+library(spgwr) # For Geographically weighted models
+    library(rgdal)
+    library(maptools)
 library(xgboost) # For xgboosting
-library(tree) # vizualise trees 
-library(mice) # Impute missing 
+library(tree) # visualize trees 
+
 
 
 # Load in file ----
-load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
-
-
-# KNN imputation
-library(mice)
-
-TEST <- mice(Total_df_14)
+load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_15.Rdata")
 
 
 # Analysis ----
@@ -26,15 +24,14 @@ TEST <- mice(Total_df_14)
     ## Regression ----
 
         ### linear model with zip codes ----
-        Total_df_14_df <- as.data.frame(Total_df_14)
-        Total_df_14_df <- subset(Total_df_14_df, select = - Coor)
-        TEST <- mice(Total_df_14_df)
-        PredictorVariables <- colnames(subset(Total_df_14_df, select = - c(nominal_price, addressID, enhed_id, postnr)))
+        Total_df_15_df <- as.data.frame(Total_df_15)
+        Total_df_15_df <- subset(Total_df_15_df, select = - Coor)
+        PredictorVariables <- colnames(subset(Total_df_15_df, select = - c(nominal_price, addressID, enhed_id, postnr)))
         Formula <- formula(paste("nominal_price ~", 
                                  paste(PredictorVariables, collapse=" + ")))
         
         Formula <- formula(nominal_price ~ Car_Garage)
-        lm_areas <- stats::lm(formula = Formula, Total_df_14_df)
+        lm_areas <- stats::lm(formula = Formula, Total_df_15_df)
         
         Formula <- formula(nominal_price ~ m2 + district_heating + central_heating + electric_heating)
         lm_areas <- stats::lm(formula = Formula, Total_df_14_df, na.action = NULL)
@@ -44,8 +41,48 @@ TEST <- mice(Total_df_14)
         
 
         ### GWR model ----
+        Total_df_15_GWR <- Total_df_15
+        Total_df_15_GWR <- sf::st_as_sf(Total_df_15_GWR)
+        Total_df_15_GWR <- as(Total_df_15_GWR, "Spatial")
+        
+        # Total_df_15 <- sf::arrange(Total_df_15)
+        # Total_df_15$Coor <- Total_df_15[order(Total_df_15$Coor), ]
+        # Total_df_15_GWR_sf <- sf::st_as_sf(Total_df_15)
+        # Total_df_15_GWR_sp <- Total_df_15
+        # Total_df_15_GWR_sp <- sf::st_as_sf(Total_df_15_GWR_sp)
+        # Total_df_15_GWR_sp <- as(Total_df_15_GWR_sp, "Spatial")
+        
+        PredictorVariables_GWR <- colnames(subset(Total_df_15, select = - c(nominal_price, addressID, enhed_id, postnr, Coor, Areas)))
+        Formula_GWR <- formula(paste("nominal_price ~", 
+                                 paste(PredictorVariables_GWR, collapse=" + ")))
+        Formula_GWR <- formula(nominal_price ~ m2)
+        
+        # For spgwr package 
+        Starttime_BW_spgwr <- Sys.time()
+        bw <- gwr.sel(formula = Formula_GWR, data = Total_df_15_GWR[1:5000,], RMSE=TRUE, adapt = TRUE)
+        Endtime_BW_spgwr <- Sys.time()-Starttime_BW_spgwr
+        
+        # For GWmodel package 
+        Starttime_BW_GWmodel <- Sys.time()
+        bw_GWM <- bw.gwr(formula = Formula_GWR, data = Total_df_15_GWR[1:50000,], kernel = "gaussian",
+                     adaptive = TRUE, parallel.method = "cluster")
+        Endtime_BW_GWmodel <- Sys.time()-Starttime_BW_GWmodel
+        
+        
+        Startime.GWR <- Sys.time()
+        gwr.model<-gwr(formula = Formula_GWR, data = Total_df_15_GWR[1:round(nrow(Total_df_15_GWR)/2),], adapt = bw)
+        Endtime_GWR <- Sys.time()-Startime.GWR
+        
+        
+        bw <- gwr.sel(formula = Formula_GWR, data = Total_df_15_GWR[1:round(nrow(Total_df_15_GWR)/2),], adapt=T, RMSE=T)
+        
+        lm_areas <- stats::lm(formula = Formula, Total_df_15_df)
+        
 
         ### SAR model ----
+        
+        
+        
 
     ## XGBoosting ----
 

@@ -22,6 +22,7 @@ library(spData)
 library(spDataLarge)
 library(pbapply)
 library(psych)
+library(mice) # Impute missing 
 
 
 
@@ -1755,8 +1756,8 @@ library(psych)
     Prisindeks$year <- format(Prisindeks$Dato, "%Y")
     Prisindeks$month <- format(Prisindeks$Dato, "%m")
     
-    Total_df_12$year <- format(Total_df_12$dato.x, "%Y")
-    Total_df_12$month <- format(Total_df_12$dato.x, "%m")
+    Total_df_13$year <- format(Total_df_12$dato.x, "%Y")
+    Total_df_13$month <- format(Total_df_12$dato.x, "%m")
     
     joined_df <- Total_df_13 %>%
       left_join(Prisindeks, by = c("year", "month"))
@@ -1769,17 +1770,17 @@ library(psych)
     Total_df_13 <- Total_df_13 %>% tidyr::drop_na(sales_price)
     
     
-    ## add interest rate at time of purchase
-    obligationsrente <- read_excel("~/Downloads/obligationsrente_fida_uge13-2024.xlsx", 
-                                                    sheet = "Sheet1", col_types = c("date", "numeric"))
-    obligationsrente$Dato <- as.Date(obligationsrente$Dato)
-    obligationsrente$year <- format(obligationsrente$Dato, "%Y")
-    obligationsrente$month <- format(obligationsrente$Dato, "%m")
-    
-    monthly_mean <- aggregate(`Lang rente` ~ year + month, data = obligationsrente, FUN = mean)
-  
-    Total_df_13 <- Total_df_13 %>%
-      left_join(monthly_mean, by = c("year", "month"))
+    # ## add interest rate at time of purchase
+    # obligationsrente <- read_excel("~/Downloads/obligationsrente_fida_uge13-2024.xlsx", 
+    #                                                 sheet = "Sheet1", col_types = c("date", "numeric"))
+    # obligationsrente$Dato <- as.Date(obligationsrente$Dato)
+    # obligationsrente$year <- format(obligationsrente$Dato, "%Y")
+    # obligationsrente$month <- format(obligationsrente$Dato, "%m")
+    # 
+    # monthly_mean <- aggregate(`Lang rente` ~ year + month, data = obligationsrente, FUN = mean)
+    # 
+    # Total_df_13 <- Total_df_13 %>%
+    #   left_join(monthly_mean, by = c("year", "month"))
     
     # 
     varDelete <- c("vejnavn", "husnr", "floor", "kommunenavn", "side", "entryAddressID.x", "roofing", 
@@ -1891,51 +1892,96 @@ library(psych)
       mutate(heatpump_heating = ifelse(is.na(heatpump_heating), 0, heatpump_heating))
     Total_df_14 <- subset(Total_df_14, !is.na(coastline_distance))
     
+    # recreate variable built_1970_1980, if not 1 in other built years, then 1 in variable built_1970_1980
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(built_1970_1980 = ifelse(builtbefore1940 == 0 & built_1940_1950 == 0 & built_1950_1960 == 0 &
+                                      built_1960_1970 == 0 & built_1980_1990 == 0 & built_1990_2000 == 0 & 
+                                      built_2000_2010 == 0 & builtafter_2010 == 0, 1, 0))
     
-    df_Flooded <- subset(Total_df_14, flooded == 1) # Divide to remove some larger data set
-    df_Notflooded <- subset(Total_df_14, flooded != 1)
+    # Delete missing observations of built and bricks etc
+    Total_df_14 <- subset(Total_df_14, !is.na(builtbefore1940))
+    Total_df_14 <- subset(Total_df_14, !is.na(Brick))
+    # Total_df_14 <- subset(Total_df_14, select = - toilets)
+    # Total_df_14 <- subset(Total_df_14, select = - urban_size)
+    
+    # Only missing on m2 and rooms, prepare imputation of mean
+    mean_m2 <- mean(Total_df_14$m2, na.rm = TRUE)
+    mean_rooms <- mean(Total_df_14$rooms, na.rm = TRUE)
+    
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(m2 = ifelse(is.na(m2), mean_m2, m2))
+    
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(rooms = ifelse(is.na(rooms), mean_rooms, rooms))
+    
+    
+    #adjust sold variables 
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(Sold_0_0.5 = ifelse(Sold_0_0.5 == 5 | Sold_0_0.5 == 4 | Sold_0_0.5 == 3 | Sold_0_0.5 == 2, 1, Sold_0_0.5))
+    
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(Sold_1 = ifelse(Sold_1 == 5 | Sold_1 == 4 | Sold_1 == 3 | Sold_1 == 2, 1, Sold_1))
+    
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(Sold_2 = ifelse(Sold_2 == 5 | Sold_2 == 4 | Sold_2 == 3 | Sold_2 == 2, 1, Sold_2))
+    
+    Total_df_14 <- Total_df_14 %>%
+      rowwise() %>%
+      mutate(Sold_5 = ifelse(Sold_5 == 5 | Sold_5 == 4 | Sold_5 == 3 | Sold_5 == 2, 1, Sold_5))
+    
+    # save
+    save(Total_df_14, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
+    
+    # Shift to 15
+    Total_df_15 <- Total_df_14
+    
+    # summary 
+    df_Flooded <- subset(Total_df_15, flooded == 1) # Divide to remove some larger data set
+    df_Notflooded <- subset(Total_df_15, flooded != 1)
     df_Notflooded <- subset(df_Notflooded, !is.na(postnr))
-    columns_to_exclude <- c("addressID", "enhed_id", "Coor", "Areas") 
-    columns_to_select <- setdiff(names(df_Notflooded), columns_to_exclude)
-    df_Notflooded <- df_Notflooded[complete.cases(df_Notflooded[, columns_to_select]), ]
+    # columns_to_exclude <- c("addressID", "enhed_id", "Coor", "Areas") 
+    # columns_to_select <- setdiff(names(df_Notflooded), columns_to_exclude)
+    # df_Notflooded <- df_Notflooded[complete.cases(df_Notflooded[, columns_to_select]), ]
     summary(df_Notflooded)
+    summary(df_Flooded)
     
     Summary_statistics <- psych::describe(df_Notflooded)
     stats <- summary(df_Notflooded)
     
     
-    
-
-    
-
-    
-    
     ## Narrow down zip codes 
-    results <- Total_df_14 %>%
+    results <- Total_df_15 %>%
       group_by(postnr) %>%
       summarize(count = sum(flooded == 1))
     # 545 zipcodes may be to many
     
     # Put zipcodes together by taking first two digits 
-    Total_df_14$Areas <- substr(Total_df_14$postnr, 1, 2)
+    Total_df_15$Areas <- substr(Total_df_14$postnr, 1, 2)
     
-    results_flooded <- Total_df_14 %>%
+    results_flooded <- Total_df_15 %>%
       group_by(Areas) %>%
       summarize(flooded = sum(flooded == 1))
-    results_notflooded <- Total_df_14 %>%
+    results_notflooded <- Total_df_15 %>%
       group_by(Areas) %>%
       summarize(notflooded = sum(flooded == 0))
     
     
-    Total_df_14$Areas <- as.factor(Total_df_14$Areas)
+    Total_df_15$Areas <- as.factor(Total_df_15$Areas)
     
     
     # Save
-    save(Total_df_14, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
-    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_14.Rdata")
+    save(Total_df_15, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_15.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_15.Rdata")
     
     
-    plot(Total_df_13$nominal_price)
+    plot(Total_df_15$nominal_price)
 
     
     
