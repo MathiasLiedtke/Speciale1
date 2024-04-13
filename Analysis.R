@@ -10,6 +10,8 @@ library(GWmodel) # For Geographically weighted models
 library(spgwr) # For Geographically weighted models
     library(rgdal)
     library(maptools)
+library(spdep) #SAR model
+library(spatialreg) #SAR model
 library(xgboost) # For xgboosting
 library(tree) # visualize trees 
 
@@ -80,13 +82,40 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
         
 
         ### SAR model ----
+        PredictorVariables_SAR <- colnames(subset(Total_df_15, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, Coor, Areas)))
+        Formula_SAR <- formula(paste("nominal_price ~", 
+                                     paste(PredictorVariables_SAR, collapse=" + ")))
+        Formula_SAR <- formula(nominal_price ~ m2)
         
-        
-        
+        SAR_listwW <- spdep::nb2listw(Total_df_15_GWR, style = "W")
+        SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_15_GWR, listw = SAR_listwW)
+        SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_15_GWR)
+        summary(SAR_Lag)
 
     ## XGBoosting ----
 
- 
+        xgb_train <- xgb.DMatrix(data = as.matrix(X_train), label = y_train)
+        xgb_test <- xgb.DMatrix(data = Total_df_15)
+        xgb_params <- list(
+          booster = "gbtree",
+          eta = 0.01,
+          max_depth = 8,
+          gamma = 4,
+          subsample = 0.75,
+          colsample_bytree = 1,
+          objective = "multi:softprob",
+          eval_metric = "mlogloss",
+          num_class = length(levels(iris$Species))
+        )
+        
+        xgb_model <- xgb.train(
+          params = xgb_params,
+          data = xgb_train,
+          nrounds = 5000,
+          verbose = 1
+        )
+        
+        xgb_model
 
 
 
@@ -198,7 +227,7 @@ bag.boston
 # Instead, we can bootstrap, by taking repeated samples from the (single) training data set. In this approach 
 # we generate B different bootstrapped training data sets.
 
-yhat.bag = predict(bag.boston ,newdata=Boston[-train ,])
+yhat.bag = predict(bag.boston, newdata=Boston[-train ,])
 plot(yhat.bag, boston.test)
 abline(0,1)
 mean((yhat.bag-boston.test)^2)
