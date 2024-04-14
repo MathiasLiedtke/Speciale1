@@ -82,18 +82,108 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
         
 
         ### SAR model ----
+        # Make neighbor list
+        Total_df_15_SAR <- Total_df_15
+        Total_df_15_SAR_ds <- Total_df_15_SAR %>%
+                              distinct(Coor, .keep_all = TRUE)
+        Total_df_15_SAR_ds <- sf::st_as_sf(Total_df_15_SAR_ds)
+        Total_df_15_SAR_ds <- as(Total_df_15_SAR_ds, "Spatial")
+        Neighbor <- spdep::tri2nb(coordinates(Total_df_15_SAR_ds[1:10000,]))
+
+        
+        
+        Starttime <- Sys.time()
+        Neighbor <- spdep::knearneigh(coordinates(Total_df_15_SAR), longlat = TRUE)
+        Neighbor <- spdep::tri2nb(coordinates(Total_df_15_SAR[1:1000,]))
+        HowLongdidIttake <- Sys.time()-Starttime 
+        HowLongdidIttake
+        
         PredictorVariables_SAR <- colnames(subset(Total_df_15, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, Coor, Areas)))
         Formula_SAR <- formula(paste("nominal_price ~", 
                                      paste(PredictorVariables_SAR, collapse=" + ")))
         Formula_SAR <- formula(nominal_price ~ m2)
         
-        SAR_listwW <- spdep::nb2listw(Total_df_15_GWR, style = "W")
-        SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_15_GWR, listw = SAR_listwW)
+        SAR_listwW <- spdep::nb2listw(Neighbor, style = "W")
+        SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_15_SAR_ds[1:10000,], listw = SAR_listwW)
         SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_15_GWR)
         summary(SAR_Lag)
+        
+        install.packages("unix") 
+        library(unix)
+        rlimit_as(1e12)  #increases to ~12GB
+        rlimit_all()
 
+        # Load necessary libraries
+        library(spatialreg)
+        library(parallel)
+        
+        Total_df_15_SAR_ds <- Total_df_15_SAR_ds[1:100000,]
+        # Define a function to fit lagsarlm to each subset
+        fit_lagsarlm <- function(subset) {
+          lagsarlm(Formula_SAR, data = Total_df_15_SAR_ds, listw = SAR_listwW)
+        }
+        
+        # Apply lagsarlm in parallel
+        num_cores <- detectCores()-1
+        results <- mclapply(list(Total_df_15_SAR_ds), fit_lagsarlm, mc.cores = num_cores)
+        
+        # Combine results as needed
+        # ...
+        
+        
+        
     ## XGBoosting ----
-
+        # packages: xgboost and caret 
+        # Remove attributes from df
+        Total_df_15_XG <- Total_df_15
+        one_entry <- function(x) {
+          for (i in length(x)) attr(x[[i]], "names") <- NULL
+          return(x)
+        }
+        Total_df_15_XG <- lapply(Total_df_15_XG, FUN=one_entry)
+        TEST <- matrix(nrow = length(Total_df_15_XG), ncol = length(Total_df_15_XG[[1]]))
+        
+        for (i in seq_along(Total_df_15_XG)) {
+          TEST[i, ] <- Total_df_15_XG[[i]]
+          print(i)
+        }
+        
+        Total_df_15_XG$Coor <- sf::st_as_text(Total_df_15_XG$Coor)
+        TEST <- matrix(Total_df_15_XG)
+        
+        
+        Total_df_15_XG <- Total_df_15_XG[Total_df_15_XG != "Coor"] 
+        # my_matrix <- do.call(rbind, Total_df_15_XG)
+        my_matrix <- do.call(cbind, lapply(Total_df_15_XG, unlist))
+        names(Total_df_15_XG)
+        
+        
+        Total_df_15_XG <- unlist(Total_df_15_XG)
+        Total_df_15_XG <- as.matrix(Total_df_15_XG)
+        Total_df_15_XG <- unclass(Total_df_15_XG)
+        attr(Total_df_15_XG, "label") <- NULL
+        str(droplevels.data.frame(Total_df_15_XG))
+        
+        
+        # split data set, like on https://www.statology.org/xgboost-in-r/#:~:text=XGBoost%20in%20R%3A%20A%20Step-by-Step%20Example%201%20Step,5%3A%20Use%20the%20Model%20to%20Make%20Predictions%20
+        parts = createDataPartition(Total_df_15_XG$nominal_price, p = .8, list = F)
+        train = Total_df_15_XG[parts, ]
+        test = Total_df_15_XG[-parts, ]
+        
+        # Define predictor and response variable
+        PredictorVariables_XG <- colnames(subset(Total_df_15, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, Coor, Areas)))
+        train_x = data.matrix(train[, PredictorVariables_XG])
+        train_y = train[,"nominal_price"]
+        
+        # For test set 
+        PredictorVariables_XG <- colnames(subset(Total_df_15_XG, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, Coor, Areas)))
+        test_x = data.matrix(test[, PredictorVariables_XG])
+        test_y = test[,"nominal_price"]
+        
+        # Define training and test sets 
+        xgb_train = xgb.DMatrix(data = train_x, label = train_y)
+        xgb_test = xgb.DMatrix(data = test_x, label = test_y)
+        
         xgb_train <- xgb.DMatrix(data = as.matrix(X_train), label = y_train)
         xgb_test <- xgb.DMatrix(data = Total_df_15)
         xgb_params <- list(
