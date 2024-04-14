@@ -141,42 +141,43 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
           return(x)
         }
         Total_df_15_XG <- lapply(Total_df_15_XG, FUN=one_entry)
-        TEST <- matrix(nrow = length(Total_df_15_XG), ncol = length(Total_df_15_XG[[1]]))
+        Total_df_15_XG$Coor <- sf::st_as_text(Total_df_15_XG$Coor)
+        TEST <- matrix(ncol = length(Total_df_15_XG), nrow = length(Total_df_15_XG[[1]]))
         
         for (i in seq_along(Total_df_15_XG)) {
-          TEST[i, ] <- Total_df_15_XG[[i]]
+          TEST[, i] <- Total_df_15_XG[[i]]
           print(i)
         }
+        DF <- TEST
+        rm(TEST)
+        colnames(DF) <- names(Total_df_15_XG)
         
-        Total_df_15_XG$Coor <- sf::st_as_text(Total_df_15_XG$Coor)
-        TEST <- matrix(Total_df_15_XG)
+        # Delete character variables to change to numeric matrix 
+        Total_df_15_XG <- DF
+        rm(DF)
+        Total_df_15_XG <- subset(Total_df_15_XG, select = -c(addressID, enhed_id, Coor))
+        Total_df_15_XG <- as.data.frame(Total_df_15_XG)
+        
+        # Change to numeric
+        library(dplyr)
+        Total_df_15_XG <- Total_df_15_XG %>% mutate_if(is.character, as.numeric)
         
         
-        Total_df_15_XG <- Total_df_15_XG[Total_df_15_XG != "Coor"] 
-        # my_matrix <- do.call(rbind, Total_df_15_XG)
-        my_matrix <- do.call(cbind, lapply(Total_df_15_XG, unlist))
-        names(Total_df_15_XG)
-        
-        
-        Total_df_15_XG <- unlist(Total_df_15_XG)
-        Total_df_15_XG <- as.matrix(Total_df_15_XG)
-        Total_df_15_XG <- unclass(Total_df_15_XG)
-        attr(Total_df_15_XG, "label") <- NULL
-        str(droplevels.data.frame(Total_df_15_XG))
-        
+        save(Total_df_15_XG, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_15_XG.Rdata")
+        load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_15_XG.Rdata")
         
         # split data set, like on https://www.statology.org/xgboost-in-r/#:~:text=XGBoost%20in%20R%3A%20A%20Step-by-Step%20Example%201%20Step,5%3A%20Use%20the%20Model%20to%20Make%20Predictions%20
-        parts = createDataPartition(Total_df_15_XG$nominal_price, p = .8, list = F)
+        parts = caret::createDataPartition(Total_df_15_XG$nominal_price, p = .8, list = F)
         train = Total_df_15_XG[parts, ]
         test = Total_df_15_XG[-parts, ]
         
         # Define predictor and response variable
-        PredictorVariables_XG <- colnames(subset(Total_df_15, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, Coor, Areas)))
+        PredictorVariables_XG <- colnames(subset(Total_df_15_XG, select = - c(nominal_price, lag_price, Areas)))
         train_x = data.matrix(train[, PredictorVariables_XG])
         train_y = train[,"nominal_price"]
         
         # For test set 
-        PredictorVariables_XG <- colnames(subset(Total_df_15_XG, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, Coor, Areas)))
+        PredictorVariables_XG <- colnames(subset(Total_df_15_XG, select = - c(nominal_price, lag_price, Areas)))
         test_x = data.matrix(test[, PredictorVariables_XG])
         test_y = test[,"nominal_price"]
         
@@ -184,28 +185,18 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
         xgb_train = xgb.DMatrix(data = train_x, label = train_y)
         xgb_test = xgb.DMatrix(data = test_x, label = test_y)
         
-        xgb_train <- xgb.DMatrix(data = as.matrix(X_train), label = y_train)
-        xgb_test <- xgb.DMatrix(data = Total_df_15)
-        xgb_params <- list(
-          booster = "gbtree",
-          eta = 0.01,
-          max_depth = 8,
-          gamma = 4,
-          subsample = 0.75,
-          colsample_bytree = 1,
-          objective = "multi:softprob",
-          eval_metric = "mlogloss",
-          num_class = length(levels(iris$Species))
-        )
+        xgb_train = xgb.DMatrix(data = train_x, label = train_y)
+        xgb_test = xgb.DMatrix(data = test_x, label = test_y)
         
-        xgb_model <- xgb.train(
-          params = xgb_params,
-          data = xgb_train,
-          nrounds = 5000,
-          verbose = 1
-        )
+        watchlist = list(train=xgb_train, test=xgb_test)
         
-        xgb_model
+        # fit model 
+        model_25 = xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 50) # 384863.487543
+        model_5 = xgb.train(data = xgb_train, max.depth = 5, watchlist=watchlist, nrounds = 50) # 908575.294794
+        model_51 = xgb.train(data = xgb_train, max.depth = 51, watchlist=watchlist, nrounds = 50) # 379630.054265
+        model_7 = xgb.train(data = xgb_train, max.depth = 10, watchlist=watchlist, nrounds = 50) # 379630.054265
+        
+       
 
 
 
