@@ -35,23 +35,3 @@ for (i in 1:585) {
   # assign(paste("bygning", i, sep = '_'), bygning)
 }
 
-
-bygning0 <- sf::read_sf("/Users/mathiasliedtke/GeoDanmark60_SHP_20240310201607/Tema/bygning/bygning_0000/bygning.shp")
-bygning0 <- subset(bygning0, select = geometry)
-bygning0$centroid <- sf::st_centroid(bygning0$geometry)
-mHeight <- matrix(nrow = nrow(bygning0), ncol = 1)
-colnames(mHeight) <- "Height"
-for (i in 1:nrow(bygning0)) {
-  heights <- bygning0[[1]][[i]][[1]]  
-  height <- mean(heights[, 3])       
-  mHeight[i, 1] <- height
-}
-bygning0 <- cbind(bygning0, mHeight)
-
-
-bygning0 <- sf::read_sf("/Users/mathiasliedtke/GeoDanmark60_SHP_20240310201607/Tema/bygning/bygning_0000/bygning.shp")
-bygning0 <- subset(bygning0, select = geometry)
-bygning0$centroid <- sf::st_centroid(bygning0$geometry)
-heights <- bygning0[[1]][[2]][[1]] 
-height <- mean(heights[,3])
-
