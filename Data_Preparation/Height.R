@@ -35,3 +35,4 @@ for (i in 1:585) {
   # assign(paste("bygning", i, sep = '_'), bygning)
 }
 
+save(Bygning_Total, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Hoejde_Total.Rdata")
