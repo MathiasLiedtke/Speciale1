@@ -36,3 +36,6 @@ for (i in 1:585) {
 }
 
 save(Bygning_Total, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Hoejde_Total.Rdata")
+load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Hoejde_Total.Rdata")
+
+sf::st_write(Bygning_Total, "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Hoejde_Total.shp",layer_options = "SHPT=POLYGON")

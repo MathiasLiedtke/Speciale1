@@ -25,6 +25,9 @@ for (i in 0:10) {
 }
 
 save(Dige_Total, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Dige_Total.Rdata")
+load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Dige_Total.Rdata")
+
+sf::st_write(Dige_Total, "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Dige_Total.shp",layer_options = "SHPT=ARC")
 
 
 

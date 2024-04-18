@@ -1980,6 +1980,12 @@ library(mice) # Impute missing
     save(Total_df_15, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_15.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_15.Rdata")
     
+    sf::st_write(Total_df_15, "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_15.shp",layer_options = "SHPT=POINTS")
+    # load in with heights from file 
+    Total_df_16 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_hoejde.shp")
+    save(Total_df_16, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_16.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_16.Rdata")
+    
     
     plot(Total_df_15$nominal_price)
 
