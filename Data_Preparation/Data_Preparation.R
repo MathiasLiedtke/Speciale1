@@ -2036,14 +2036,66 @@ library(mice) # Impute missing
       mutate(Built = ifelse(built_1990_2000 == 1, 7, Built)) %>%
       mutate(Built = ifelse(built_2000_2010 == 1, 8, Built)) %>%
       mutate(Built = ifelse(builtafter_2010 == 1, 9, Built)) 
+    
     Total_df_17 <- subset(Total_df_17, select = - c(builtbefore1940, built_1940_1950, built_1950_1960,
                                                     built_1960_1970, built_1970_1980, built_1980_1990,
                                                     built_1990_2000, built_2000_2010, builtafter_2010))
     Total_df_17$Built <- as.factor(Total_df_17$Built)
+    
+    
+    #same with renovation
+    Total_df_17$Renovated <- 0
+    Total_df_17 <- Total_df_17 %>% rowwise() %>%
+      mutate(Renovated = ifelse(Renovated_1940_1950 == 1, 1, Renovated)) %>%
+      mutate(Renovated = ifelse(Renovated_1950_1960 == 1, 2, Renovated)) %>%
+      mutate(Renovated = ifelse(Renovated_1960_1970 == 1, 3, Renovated)) %>%
+      mutate(Renovated = ifelse(Renovated_1970_1980 == 1, 4, Renovated)) %>%
+      mutate(Renovated = ifelse(Renovated_1980_1990 == 1, 5, Renovated))
+    Total_df_17$Renovated <- as.factor(Total_df_17$Renovated)
+    
+    Total_df_17 <- subset(Total_df_17, select = - c(Renovated_1940_1950, Renovated_1950_1960, Renovated_1960_1970,
+                                                    Renovated_1970_1980, Renovated_1980_1990))
+    
+    
+    #Heating
+    Total_df_17$Heating <- 0
+    Total_df_17 <- Total_df_17 %>% rowwise() %>%
+      mutate(Heating = ifelse(district_heating == 1, 1, Heating)) %>%
+      mutate(Heating = ifelse(central_heating == 1, 2, Heating)) %>%
+      mutate(Heating = ifelse(electric_heating == 1, 3, Heating))
+    
+    Total_df_17 <- subset(Total_df_17, select = - c(district_heating, 
+                                            central_heating, electric_heating))
+                          
+    Total_df_17$Heating <- as.factor(Total_df_17$Heating)
+    
+    #Roof
+    Total_df_17$Roof <- 0
+    Total_df_17 <- Total_df_17 %>% rowwise() %>%
+      mutate(Roof = ifelse(tile_roof == 1, 1, Roof)) %>%
+      mutate(Roof = ifelse(thatch_roof == 1, 2, Roof)) %>%
+      mutate(Roof = ifelse(fibercement_asbestos_roof == 1, 3, Roof))
+    
+    Total_df_17 <- subset(Total_df_17, select = - c(tile_roof, 
+                                        thatch_roof, fibercement_asbestos_roof))
+    
+    Total_df_17$Roof <- as.factor(Total_df_17$Roof)
+    
+    #Builtmaterial
+    Total_df_17$BMaterial <- NA
+    Total_df_17 <- Total_df_17 %>% rowwise() %>%
+      mutate(BMaterial = ifelse(Brick == 1, 1, BMaterial)) %>%
+      mutate(BMaterial = ifelse(wood == 1, 2, BMaterial)) %>%
+      mutate(BMaterial = ifelse(lightweight_concrete == 1, 3, BMaterial))
+    
+    Total_df_17 <- subset(Total_df_17, select = - c(Brick, 
+                                            wood, lightweight_concrete))
+    
+    Total_df_17$BMaterial <- as.factor(Total_df_17$BMaterial)
+    
     Total_df_18 <- Total_df_17
     
     save(Total_df_18, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18.Rdata")
-    
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18.Rdata")
     
     plot(Total_df_15$nominal_price)
