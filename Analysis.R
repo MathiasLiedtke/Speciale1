@@ -29,34 +29,51 @@ sf::st_write(Total_df_15, "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-A
 # Load in with heights ----
 load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_16.Rdata")
 Total_df_16$Coor <- centroid <- sf::st_centroid(Total_df_16$geometry)
+rm(centroid)
 # QGIS renamed columns, so we change them back 
 colnames(Total_df_16)
 colnames(Total_df_15)[1:51] # The first 51 variables are aligned 
 colnames(Total_df_16)[1:51] <- colnames(Total_df_15)[1:51]
 Total_df_16$geometry <- sf::st_as_text(Total_df_16$geometry)
 Total_df_16 <- sf::st_set_geometry(Total_df_16, Total_df_16$Coor)
-st_agr(Total_df_16) <- "Coor"
+sf::st_agr(Total_df_16) <- "Coor"
 Total_df_16 <- subset(Total_df_16, select = -Coor)
 Total_df_16$Areas <- as.factor(Total_df_16$Areas)
 
-# Change variables to desired form like relevant literature ----
+# Test for linearity
+matrix <- Total_df_16_SAR
+matrix <- sf::st_drop_geometry(matrix)
+matrix <- subset(matrix, select = - c(Areas, enhed_id, addressID))
+results <- plm::detect.lindep(matrix)
+
+# Remove heatpump_heating, and sold variables 
+matrix <- subset(matrix, select = - c(heatpump_heating, Sold_0_0.5, Sold_1, Sold_2))
+results <- plm::detect.lindep(matrix)
+# No linear dependent columns detected, we delete the variable above from data set and save in new df
+Total_df_17 <- subset(Total_df_16, select = - c(heatpump_heating, Sold_0_0.5, Sold_1, Sold_2))
+
+save(Total_df_17, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17.Rdata")
+load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17.Rdata")
+
+
+# Partition of training and data set ----
     # Create training sets ----
     # Partition 60% for training 
     p <- 0.6    
-    iT <- p*nrow(Total_df_16)
+    iT <- p*nrow(Total_df_17)
     ## Train 1
     set.seed(13)
-    train_seq_1 <- sample(nrow(Total_df_16), size = iT, replace = FALSE)
-    train_set_1 <- Total_df_16[train_seq_1, , drop = FALSE]
+    train_seq_1 <- sample(nrow(Total_df_17), size = iT, replace = FALSE)
+    train_set_1 <- Total_df_17[train_seq_1, , drop = FALSE]
     ## Test 1
-    test_set_1 <- Total_df_16[-train_seq_1, , drop = FALSE]
+    test_set_1 <- Total_df_17[-train_seq_1, , drop = FALSE]
     
     ## Train 2
     set.seed(200)
-    train_seq_2 <- sample(nrow(Total_df_16), size = iT, replace = FALSE)
-    train_set_2 <- Total_df_16[train_seq_2, , drop = FALSE]
+    train_seq_2 <- sample(nrow(Total_df_17), size = iT, replace = FALSE)
+    train_set_2 <- Total_df_17[train_seq_2, , drop = FALSE]
     ## Test 2
-    test_set_2 <- Total_df_16[-train_seq_2, , drop = FALSE]
+    test_set_2 <- Total_df_17[-train_seq_2, , drop = FALSE]
     
 
 # Preliminary analysis ----
@@ -65,40 +82,42 @@ Total_df_16$Areas <- as.factor(Total_df_16$Areas)
         # Train 1
         T1 <- Sys.time()
         train_set_1_df <- train_set_1 %>%
-          distinct(Coor, .keep_all = TRUE)
+          distinct(geometry, .keep_all = TRUE)
         train_set_1_df <- sf::st_as_sf(train_set_1_df)
         train_set_1_df <- as(train_set_1_df, "Spatial")
         points_train_1 <- sp::coordinates(train_set_1_df)
-        Neighbor_train <- spdep::tri2nb(points_train_1)
-        save(Neighbor_train, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train.Rdata")
+        # Neighbor_train <- spdep::tri2nb(points_train_1) When calculate neighbor
+        # save(Neighbor_train, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train.Rdata")
         T2 <- Sys.time() - T1 # 1.513962 hours
+        load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train.Rdata")
         
         # Test 1
         T3 <- Sys.time()
         test_set_1_df <- test_set_1 %>%
-          distinct(Coor, .keep_all = TRUE)
-        test_set_1_df <- sf::st_as_sf(test_set_1_df)
-        test_set_1_df <- as(test_set_1_df, "Spatial")
-        points_test_1 <- sp::coordinates(test_set_1_df)
-        Neighbor_test <- spdep::tri2nb(points_test_1)
-        save(Neighbor_test, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test.Rdata")
+          distinct(geometry, .keep_all = TRUE) # Necesarry to run neighbor
+        test_set_1_df <- sf::st_as_sf(test_set_1_df)  # Necesarry to run neighbor
+        test_set_1_df <- as(test_set_1_df, "Spatial")  # Necesarry to run neighbor
+        points_test_1 <- sp::coordinates(test_set_1_df) # Necesarry to run neighbor
+        # Neighbor_test <- spdep::tri2nb(points_test_1)
+        # save(Neighbor_test, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test.Rdata")
         T4 <- Sys.time() - T3 # 53.89177 mins
+        load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test.Rdata")
         
         # Spatial weights object 
         summary(Neighbor_train) # see how many neighbors per observation. 
-        Neighbor_train_weight <- nb2listw(Neighbor_train)
+        Neighbor_train_weight <- spdep::nb2listw(Neighbor_train)
         Neighbor_train_weight # summary of weights
         # Global Moran 
         Moran <- spdep::moran.test(train_set_1_df$nmnl_pr, listw = Neighbor_train_weight)
         lmtest::bptest(train_set_1_df)
         # Spatial autocorrelation in model, correct with heteroscedasticity. Applied spatial data analysis with R, P. 275- 
-        PredictorVariables <- colnames(subset(Total_df_16, select = - c(nominal_price, addressID, enhed_id, postnr, 
+        PredictorVariables <- colnames(subset(Total_df_17, select = - c(nominal_price, addressID, enhed_id, postnr, 
                                                                         geometry, Areas, lag_price)))
         Formula <- formula(paste("nominal_price ~", 
                                  paste(PredictorVariables[1:48], collapse=" + ")))
         
-        train_set_1
-        lm_SPAUTO <- stats::lm(formula = Formula, Total_df_16)
+        
+        lm_SPAUTO <- stats::lm(formula = Formula, Total_df_17) # does not fit of observations in lmmorantest
         lm_SPAUTO <- stats::lm(formula = Formula, train_set_1_df)
         
         summary(lm_SPAUTO)
@@ -114,6 +133,10 @@ Total_df_16$Areas <- as.factor(Total_df_16$Areas)
         
         
         # Remember to merge on before distinct coordinates
+        train_set_1_test <- train_set_1
+        train_set_1_test$neighbor
+        # Problem will occur with nb class later of weights. We keep it with distinct, 
+        # but maybe select 'more important' observations
     
 
 
@@ -122,96 +145,127 @@ Total_df_16$Areas <- as.factor(Total_df_16$Areas)
     ## Regression ----
 
         ### linear model with zip codes ----
-        Total_df_16_df <- as.data.frame(Total_df_16)
-        Total_df_16_df <- subset(Total_df_16_df, select = - Coor)
-        PredictorVariables <- colnames(subset(Total_df_16_df, select = - c(nominal_price, addressID, enhed_id, postnr)))
+        # train_set_1 
+        PredictorVariables <- colnames(subset(Total_df_17, select = - c(nominal_price, addressID, enhed_id, postnr)))
         Formula <- formula(paste("nominal_price ~", 
-                                 paste(PredictorVariables, collapse=" + ")))
+                                 paste(PredictorVariables[1:50], collapse=" + ")))
+        lm_areas <- stats::lm(formula = Formula, train_set_1)
         
-        Formula <- formula(nominal_price ~ Car_Garage)
-        lm_areas <- stats::lm(formula = Formula, Total_df_16_df)
+        # Is this treated completely right? Do i need to test something og adjust standard errors. 
         
-        Formula <- formula(nominal_price ~ m2 + district_heating + central_heating + electric_heating)
-        lm_areas <- stats::lm(formula = Formula, Total_df_14_df, na.action = NULL)
-        
-        Formula <- formula(nominal_price ~ m2 + district_heating + central_heating + electric_heating)
-        lm_areas <- stats::lm(formula = Formula, Total_df_14_df, na.action = NULL)
-        
-
         ### GWR model ----
-        Total_df_16_GWR <- Total_df_16
-        Total_df_16_GWR <- sf::st_as_sf(Total_df_16_GWR)
-        Total_df_16_GWR <- as(Total_df_16_GWR, "Spatial")
+        # train_set_1
+        coords <- sf::st_coordinates(train_set_1_df)
+        coords <- sp::coordinates(train_set_1_df)
         
-        # Total_df_16 <- sf::arrange(Total_df_16)
-        # Total_df_16$Coor <- Total_df_16[order(Total_df_16$Coor), ]
-        # Total_df_16_GWR_sf <- sf::st_as_sf(Total_df_16)
-        # Total_df_16_GWR_sp <- Total_df_16
-        # Total_df_16_GWR_sp <- sf::st_as_sf(Total_df_16_GWR_sp)
-        # Total_df_16_GWR_sp <- as(Total_df_16_GWR_sp, "Spatial")
         
-        PredictorVariables_GWR <- colnames(subset(Total_df_16, select = - c(nominal_price, addressID, enhed_id, postnr, Coor, Areas)))
+        Total_df_17_GWR <- Total_df_17
+        Total_df_17_GWR <- sf::st_as_sf(Total_df_17_GWR)
+        Total_df_17_GWR <- as(Total_df_17_GWR, "Spatial")
+        
+        # Total_df_17 <- sf::arrange(Total_df_17)
+        # Total_df_17$Coor <- Total_df_17[order(Total_df_17$Coor), ]
+        # Total_df_17_GWR_sf <- sf::st_as_sf(Total_df_17)
+        # Total_df_17_GWR_sp <- Total_df_17
+        # Total_df_17_GWR_sp <- sf::st_as_sf(Total_df_17_GWR_sp)
+        # Total_df_17_GWR_sp <- as(Total_df_17_GWR_sp, "Spatial")
+        
+        PredictorVariables_GWR <- colnames(subset(Total_df_17, select = - c(nominal_price, addressID, enhed_id, postnr, geometry, Areas)))
         Formula_GWR <- formula(paste("nominal_price ~", 
-                                 paste(PredictorVariables_GWR, collapse=" + ")))
+                                 paste(PredictorVariables_GWR[1:45], collapse=" + ")))
         Formula_GWR <- formula(nominal_price ~ m2)
         
         # For spgwr package 
         Starttime_BW_spgwr <- Sys.time()
-        bw <- gwr.sel(formula = Formula_GWR, data = Total_df_16_GWR[1:5000,], RMSE=TRUE, adapt = TRUE)
+        bw <- gwr.sel(formula = Formula_GWR, data = train_set_1_df, coords = coords, 
+                            RMSE=TRUE, adapt = TRUE)
         Endtime_BW_spgwr <- Sys.time()-Starttime_BW_spgwr
         
         # For GWmodel package 
         Starttime_BW_GWmodel <- Sys.time()
-        bw_GWM <- bw.gwr(formula = Formula_GWR, data = Total_df_16_GWR[1:50000,], kernel = "gaussian",
-                     adaptive = TRUE, parallel.method = "cluster")
+        bw_GWM <- GWmodel::bw.gwr(formula = Formula_GWR, data = train_set_1_df, 
+                  kernel = "gaussian", adaptive = TRUE, parallel.method = "cluster")
         Endtime_BW_GWmodel <- Sys.time()-Starttime_BW_GWmodel
         
         
         Startime.GWR <- Sys.time()
-        gwr.model<-gwr(formula = Formula_GWR, data = Total_df_16_GWR[1:round(nrow(Total_df_16_GWR)/2),], adapt = bw)
+        gwr.model <- GWmodel::gwr(formula = Formula_GWR, data = train_set_1_df, adapt = bw)
         Endtime_GWR <- Sys.time()-Startime.GWR
         
         
-        bw <- gwr.sel(formula = Formula_GWR, data = Total_df_16_GWR[1:round(nrow(Total_df_16_GWR)/2),], adapt=T, RMSE=T)
+        bw <- gwr.sel(formula = Formula_GWR, data = Total_df_17_GWR[1:round(nrow(Total_df_17_GWR)/2),], adapt=T, RMSE=T)
         
-        lm_areas <- stats::lm(formula = Formula, Total_df_16_df)
+        lm_areas <- stats::lm(formula = Formula, Total_df_17_df)
         
 
         ### SAR model ----
-        # Make neighbor list
+        # train_set_1
+        # I think the train set should be changed to a regular data frame. 
+        train_set_1_dataframe <- train_set_1 %>%
+          distinct(geometry, .keep_all = TRUE)
+        train_set_1_dataframe <- sf::st_drop_geometry(train_set_1_dataframe) 
+        cov <- cov(subset(train_set_1_dataframe, select = - c(postnr, Areas, enhed_id, addressID)))
+        det(cov) # Large determinant no problem of changing 
+        
+        PredictorVariables <- colnames(subset(train_set_1_dataframe, 
+                                select = - c(nominal_price, postnr, addressID, enhed_id,
+                                             Areas, built_1970_1980)))
+        Formula <- formula(paste("nominal_price ~", 
+                                 paste(PredictorVariables[1:44], collapse=" + ")))
+        
+        SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
+                        listw = Neighbor_train_weight, method = "Matrix_J")
+        
+        
+        cov <- cov(train_set_1_TEST_Sub)
+        det(cov)
+        library(plm)
+        result <- plm::detect.lindep(train_set_1_TEST_Sub)
+        
+        PredictorVariables <- colnames(subset(Total_df_17, 
+                              select = - c(nominal_price, addressID, enhed_id, postnr,
+                                          Areas, built_1970_1980)))
+        Formula <- formula(paste("nominal_price ~", 
+                                 paste(PredictorVariables[1:44], collapse=" + ")))
+        Formula_SAR <- formula(nominal_price ~ m2)
+        
         SAR_DF <- spatialreg::spautolm(formula = Formula, data = train_set_1_df, 
                                        listw = Neighbor_train_weight, method = "Matrix_J") # Took some hours, about 2
         Time <- Sys.time()
-        SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_df, 
+        SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_df,
                       listw = Neighbor_train_weight, method = "Matrix_J", interval = c(-1, 1))
+        # Try with LU
+        # SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_df,
+        #           listw = Neighbor_train_weight, method = "LU", interval = c(-1, 1))
         Stoptime <- Sys.time() - Time
         
+        # Matrix 
+        mat <- as.matrix(subset(train_set_1_df, select = PredictorVariables))
         
         lm_SPAUTO <- stats::lm(formula = Formula, train_set_1_df)
         
-        Total_df_16_SAR <- Total_df_16
-        Total_df_16_SAR_ds <- Total_df_16_SAR %>%
-                              distinct(Coor, .keep_all = TRUE)
-        Total_df_16_SAR_ds <- sf::st_as_sf(Total_df_16_SAR_ds)
-        Total_df_16_SAR_ds <- as(Total_df_16_SAR_ds, "Spatial")
-        Neighbor <- spdep::tri2nb(coordinates(Total_df_16_SAR_ds[1:10000,]))
+        Total_df_17_SAR <- Total_df_17
+        Total_df_17_SAR_ds <- Total_df_17_SAR %>%
+                              distinct(geometry, .keep_all = TRUE)
+        Total_df_17_SAR_ds <- sf::st_as_sf(Total_df_17_SAR_ds)
+        Total_df_17_SAR_ds <- as(Total_df_17_SAR_ds, "Spatial")
+        Neighbor <- spdep::tri2nb(coordinates(Total_df_17_SAR_ds[1:1000,]))
 
-        
-        
         Starttime <- Sys.time()
-        Neighbor <- spdep::knearneigh(coordinates(Total_df_16_SAR), longlat = TRUE)
-        Neighbor <- spdep::tri2nb(coordinates(Total_df_16_SAR[1:1000,]))
+        Neighbor <- spdep::knearneigh(coordinates(Total_df_17_SAR), longlat = TRUE)
+        Neighbor <- spdep::tri2nb(coordinates(Total_df_17_SAR[1:1000,]))
         HowLongdidIttake <- Sys.time()-Starttime 
         HowLongdidIttake
         
-        PredictorVariables_SAR <- colnames(subset(Total_df_16, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, Coor, Areas)))
+        PredictorVariables_SAR <- colnames(subset(Total_df_17, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, geometry, Areas)))
         Formula_SAR <- formula(paste("nominal_price ~", 
                                      paste(PredictorVariables_SAR, collapse=" + ")))
-        Formula_SAR <- formula(nominal_price ~ m2)
+        Formula_SAR <- formula(nominal_price ~ forest_distance, coastline_distance)
         
         SAR_listwW <- spdep::nb2listw(Neighbor, style = "W")
-        SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_16_SAR_ds[1:10000,], listw = SAR_listwW)
-        SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_16_GWR)
+        SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_17_SAR_ds[1:1000,], 
+                                        listw = SAR_listwW, method = "LU")
+        SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_17_GWR)
         summary(SAR_Lag)
         
         install.packages("unix") 
@@ -223,15 +277,15 @@ Total_df_16$Areas <- as.factor(Total_df_16$Areas)
         library(spatialreg)
         library(parallel)
         
-        Total_df_16_SAR_ds <- Total_df_16_SAR_ds[1:100000,]
+        Total_df_17_SAR_ds <- Total_df_17_SAR_ds[1:100000,]
         # Define a function to fit lagsarlm to each subset
         fit_lagsarlm <- function(subset) {
-          lagsarlm(Formula_SAR, data = Total_df_16_SAR_ds, listw = SAR_listwW)
+          lagsarlm(Formula_SAR, data = Total_df_17_SAR_ds, listw = SAR_listwW)
         }
         
         # Apply lagsarlm in parallel
         num_cores <- detectCores()-1
-        results <- mclapply(list(Total_df_16_SAR_ds), fit_lagsarlm, mc.cores = num_cores)
+        results <- mclapply(list(Total_df_17_SAR_ds), fit_lagsarlm, mc.cores = num_cores)
         
         # Combine results as needed
         # ...
@@ -241,49 +295,49 @@ Total_df_16$Areas <- as.factor(Total_df_16$Areas)
     ## XGBoosting ----
         # packages: xgboost and caret 
         # Remove attributes from df
-        Total_df_16_XG <- Total_df_16
+        Total_df_17_XG <- Total_df_17
         one_entry <- function(x) {
           for (i in length(x)) attr(x[[i]], "names") <- NULL
           return(x)
         }
-        Total_df_16_XG <- lapply(Total_df_16_XG, FUN=one_entry)
-        Total_df_16_XG$Coor <- sf::st_as_text(Total_df_16_XG$Coor)
-        TEST <- matrix(ncol = length(Total_df_16_XG), nrow = length(Total_df_16_XG[[1]]))
+        Total_df_17_XG <- lapply(Total_df_17_XG, FUN=one_entry)
+        Total_df_17_XG$Coor <- sf::st_as_text(Total_df_17_XG$Coor)
+        TEST <- matrix(ncol = length(Total_df_17_XG), nrow = length(Total_df_17_XG[[1]]))
         
-        for (i in seq_along(Total_df_16_XG)) {
-          TEST[, i] <- Total_df_16_XG[[i]]
+        for (i in seq_along(Total_df_17_XG)) {
+          TEST[, i] <- Total_df_17_XG[[i]]
           print(i)
         }
         DF <- TEST
         rm(TEST)
-        colnames(DF) <- names(Total_df_16_XG)
+        colnames(DF) <- names(Total_df_17_XG)
         
         # Delete character variables to change to numeric matrix 
-        Total_df_16_XG <- DF
+        Total_df_17_XG <- DF
         rm(DF)
-        Total_df_16_XG <- subset(Total_df_16_XG, select = -c(addressID, enhed_id, Coor))
-        Total_df_16_XG <- as.data.frame(Total_df_16_XG)
+        Total_df_17_XG <- subset(Total_df_17_XG, select = -c(addressID, enhed_id, Coor))
+        Total_df_17_XG <- as.data.frame(Total_df_17_XG)
         
         # Change to numeric
         library(dplyr)
-        Total_df_16_XG <- Total_df_16_XG %>% mutate_if(is.character, as.numeric)
+        Total_df_17_XG <- Total_df_17_XG %>% mutate_if(is.character, as.numeric)
         
         
-        save(Total_df_16_XG, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_16_XG.Rdata")
-        load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_16_XG.Rdata")
+        save(Total_df_17_XG, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_17_XG.Rdata")
+        load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_17_XG.Rdata")
         
         # split data set, like on https://www.statology.org/xgboost-in-r/#:~:text=XGBoost%20in%20R%3A%20A%20Step-by-Step%20Example%201%20Step,5%3A%20Use%20the%20Model%20to%20Make%20Predictions%20
-        parts = caret::createDataPartition(Total_df_16_XG$nominal_price, p = .8, list = F)
-        train = Total_df_16_XG[parts, ]
-        test = Total_df_16_XG[-parts, ]
+        parts = caret::createDataPartition(Total_df_17_XG$nominal_price, p = .8, list = F)
+        train = Total_df_17_XG[parts, ]
+        test = Total_df_17_XG[-parts, ]
         
         # Define predictor and response variable
-        PredictorVariables_XG <- colnames(subset(Total_df_16_XG, select = - c(nominal_price, lag_price, Areas)))
+        PredictorVariables_XG <- colnames(subset(Total_df_17_XG, select = - c(nominal_price, lag_price, Areas)))
         train_x = data.matrix(train[, PredictorVariables_XG])
         train_y = train[,"nominal_price"]
         
         # For test set 
-        PredictorVariables_XG <- colnames(subset(Total_df_16_XG, select = - c(nominal_price, lag_price, Areas)))
+        PredictorVariables_XG <- colnames(subset(Total_df_17_XG, select = - c(nominal_price, lag_price, Areas)))
         test_x = data.matrix(test[, PredictorVariables_XG])
         test_y = test[,"nominal_price"]
         
