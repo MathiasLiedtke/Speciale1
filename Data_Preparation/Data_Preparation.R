@@ -1987,6 +1987,65 @@ library(mice) # Impute missing
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_16.Rdata")
     
     
+    
+    
+    # Load in file ----
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_15.Rdata")
+    
+    # Export to QGIS ----
+    Total_df_15 <- sf::st_as_sf(Total_df_15)
+    sf::st_write(Total_df_15, "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_15.shp")
+    
+    # Load in with heights ----
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_16.Rdata")
+    Total_df_16$Coor <- centroid <- sf::st_centroid(Total_df_16$geometry)
+    rm(centroid)
+    # QGIS renamed columns, so we change them back 
+    colnames(Total_df_16)
+    colnames(Total_df_15)[1:51] # The first 51 variables are aligned 
+    colnames(Total_df_16)[1:51] <- colnames(Total_df_15)[1:51]
+    Total_df_16$geometry <- sf::st_as_text(Total_df_16$geometry)
+    Total_df_16 <- sf::st_set_geometry(Total_df_16, Total_df_16$Coor)
+    sf::st_agr(Total_df_16) <- "Coor"
+    Total_df_16 <- subset(Total_df_16, select = -Coor)
+    Total_df_16$Areas <- as.factor(Total_df_16$Areas)
+    
+    # Test for linearity
+    matrix <- Total_df_16_SAR
+    matrix <- sf::st_drop_geometry(matrix)
+    matrix <- subset(matrix, select = - c(Areas, enhed_id, addressID))
+    results <- plm::detect.lindep(matrix)
+    
+    # Remove heatpump_heating, and sold variables 
+    matrix <- subset(matrix, select = - c(heatpump_heating, Sold_0_0.5, Sold_1, Sold_2))
+    results <- plm::detect.lindep(matrix)
+    # No linear dependent columns detected, we delete the variable above from data set and save in new df
+    Total_df_17 <- subset(Total_df_16, select = - c(heatpump_heating, Sold_0_0.5, Sold_1, Sold_2))
+    
+    save(Total_df_17, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17.Rdata")
+    # Change built variable to factor 
+    Total_df_17$Built <- NA
+    Total_df_17 <- Total_df_17 %>% rowwise() %>%
+      mutate(Built = ifelse(builtbefore1940 == 1, 1, Built)) %>%
+      mutate(Built = ifelse(built_1940_1950 == 1, 2, Built)) %>%
+      mutate(Built = ifelse(built_1950_1960 == 1, 3, Built)) %>%
+      mutate(Built = ifelse(built_1960_1970 == 1, 4, Built)) %>%
+      mutate(Built = ifelse(built_1970_1980 == 1, 5, Built)) %>%
+      mutate(Built = ifelse(built_1980_1990 == 1, 6, Built)) %>%
+      mutate(Built = ifelse(built_1990_2000 == 1, 7, Built)) %>%
+      mutate(Built = ifelse(built_2000_2010 == 1, 8, Built)) %>%
+      mutate(Built = ifelse(builtafter_2010 == 1, 9, Built)) 
+    Total_df_17 <- subset(Total_df_17, select = - c(builtbefore1940, built_1940_1950, built_1950_1960,
+                                                    built_1960_1970, built_1970_1980, built_1980_1990,
+                                                    built_1990_2000, built_2000_2010, builtafter_2010))
+    Total_df_17$Built <- as.factor(Total_df_17$Built)
+    Total_df_18 <- Total_df_17
+    
+    save(Total_df_18, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18.Rdata")
+    
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18.Rdata")
+    
     plot(Total_df_15$nominal_price)
 
     

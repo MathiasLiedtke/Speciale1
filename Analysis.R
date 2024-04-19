@@ -17,50 +17,14 @@ library(tree) # visualize trees
 library(dplyr) # for practical functions
 library(lmtest) # test for heteroscedasticity
 
-
-
-# Load in file ----
-load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_15.Rdata")
-
-# Export to QGIS ----
-Total_df_15 <- sf::st_as_sf(Total_df_15)
-sf::st_write(Total_df_15, "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_15.shp")
-
-# Load in with heights ----
-load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_16.Rdata")
-Total_df_16$Coor <- centroid <- sf::st_centroid(Total_df_16$geometry)
-rm(centroid)
-# QGIS renamed columns, so we change them back 
-colnames(Total_df_16)
-colnames(Total_df_15)[1:51] # The first 51 variables are aligned 
-colnames(Total_df_16)[1:51] <- colnames(Total_df_15)[1:51]
-Total_df_16$geometry <- sf::st_as_text(Total_df_16$geometry)
-Total_df_16 <- sf::st_set_geometry(Total_df_16, Total_df_16$Coor)
-sf::st_agr(Total_df_16) <- "Coor"
-Total_df_16 <- subset(Total_df_16, select = -Coor)
-Total_df_16$Areas <- as.factor(Total_df_16$Areas)
-
-# Test for linearity
-matrix <- Total_df_16_SAR
-matrix <- sf::st_drop_geometry(matrix)
-matrix <- subset(matrix, select = - c(Areas, enhed_id, addressID))
-results <- plm::detect.lindep(matrix)
-
-# Remove heatpump_heating, and sold variables 
-matrix <- subset(matrix, select = - c(heatpump_heating, Sold_0_0.5, Sold_1, Sold_2))
-results <- plm::detect.lindep(matrix)
-# No linear dependent columns detected, we delete the variable above from data set and save in new df
-Total_df_17 <- subset(Total_df_16, select = - c(heatpump_heating, Sold_0_0.5, Sold_1, Sold_2))
-
-save(Total_df_17, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17.Rdata")
-load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17.Rdata")
-
+load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18.Rdata")
 
 # Partition of training and data set ----
     # Create training sets ----
     # Partition 60% for training 
     p <- 0.6    
     iT <- p*nrow(Total_df_17)
+    iT <- 10000
     ## Train 1
     set.seed(13)
     train_seq_1 <- sample(nrow(Total_df_17), size = iT, replace = FALSE)
@@ -82,11 +46,11 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
         # Train 1
         T1 <- Sys.time()
         train_set_1_df <- train_set_1 %>%
-          distinct(geometry, .keep_all = TRUE)
+          dplyr::distinct(geometry, .keep_all = TRUE)
         train_set_1_df <- sf::st_as_sf(train_set_1_df)
         train_set_1_df <- as(train_set_1_df, "Spatial")
         points_train_1 <- sp::coordinates(train_set_1_df)
-        # Neighbor_train <- spdep::tri2nb(points_train_1) When calculate neighbor
+        Neighbor_train <- spdep::tri2nb(points_train_1)  #When calculate neighbor
         # save(Neighbor_train, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train.Rdata")
         T2 <- Sys.time() - T1 # 1.513962 hours
         load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train.Rdata")
@@ -204,14 +168,25 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
         train_set_1_dataframe <- train_set_1 %>%
           distinct(geometry, .keep_all = TRUE)
         train_set_1_dataframe <- sf::st_drop_geometry(train_set_1_dataframe) 
-        cov <- cov(subset(train_set_1_dataframe, select = - c(postnr, Areas, enhed_id, addressID)))
-        det(cov) # Large determinant no problem of changing 
+        cov <- cov(subset(train_set_1_dataframe, select = - c(postnr, Areas, lag_price,
+                                                              enhed_id, addressID, Car_Grg, Trainstation_distance)))
+        det(cov) # Large determinant no problem of changing
+        result <- plm::detect.lindep(subset(train_set_1_dataframe, 
+                                select = - c(nominal_price, postnr, addressID, enhed_id,
+                                             Areas, built_1970_1980, lag_price, Car_Grg, Trainstation)))
+        
         
         PredictorVariables <- colnames(subset(train_set_1_dataframe, 
                                 select = - c(nominal_price, postnr, addressID, enhed_id,
-                                             Areas, built_1970_1980)))
+                                             Areas, built_1970_1980, lag_price, Car_Grg, Trainstation_distance)))
         Formula <- formula(paste("nominal_price ~", 
-                                 paste(PredictorVariables[1:44], collapse=" + ")))
+                                 paste(PredictorVariables, collapse=" + ")))
+        Formula <- formula(nominal_price ~ district_heating + m2 + central_heating + 
+                             electric_heating + tile_roof + thatch_roof + fibercement_asbestos_roof + 
+                             Outbuilding + TerracedHouse + builtbefore1940 + built_1940_1950 + 
+                             built_1950_1960 + built_1960_1970 + built_1970_1980 + built_1950_1960)
+        
+        # Outbuilding, built_1950_1960
         
         SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
                         listw = Neighbor_train_weight, method = "Matrix_J")
