@@ -1762,10 +1762,13 @@ library(mice) # Impute missing
     joined_df <- Total_df_13 %>%
       left_join(Prisindeks, by = c("year", "month"))
     
+    
     Total_df_13 <- joined_df %>%
       mutate(indeks = Prisindeks / 100,
-             sales_price = indeks * nominal_price)
+             sales_price = indeks * nominal_price,
+             Udbetaling = indeks * `Tidligere udbetalt byg/løs/afgrd`)
     
+
     Total_df_13 <- as.data.frame(Total_df_13)
     Total_df_13 <- Total_df_13 %>% tidyr::drop_na(sales_price)
     
@@ -1784,14 +1787,13 @@ library(mice) # Impute missing
     
     # 
     varDelete <- c("vejnavn", "husnr", "floor", "kommunenavn", "side", "entryAddressID.x", "roofing", 
-                   "dato.x", "adr_etrs89_oest", "adr_etrs89_nord", "Hændelsesdato", "Coor", "nabolag_list",
+                   "adr_etrs89_oest", "adr_etrs89_nord", "nabolag_list",
                    "urban", "lag_price1", "forest_size", "habour_distance", "highway_distance", "market_name", 
-                   "year", "month", "Dato.x", "Prisindeks", "indeks", "sales_price", "Dato.y", "Lang rente.x", 
-                   "Bluespot_0cm","Bluespot_10cm","Bluespot_20cm")
+                   "year", "month", "Dato.x", "Prisindeks", "indeks", "Dato.y", "Lang rente.x", 
+                   "Bluespot_0cm","Bluespot_10cm","Bluespot_20cm", "lag_price")
     
-    Total_df_13 <- Total_df_12[, !(names(Total_df_12) %in% varDelete)]
+    Total_df_13 <- Total_df_13[, !(names(Total_df_13) %in% varDelete)]
     
-    Total_df_13$lag_price <- as.numeric(Total_df_13$lag_price)
     Total_df_13 <- as.data.frame(Total_df_13)
     
     Total_df_13$Car_Garage <- NA
@@ -1827,31 +1829,30 @@ library(mice) # Impute missing
     names(Total_df_14)[names(Total_df_14) == '2000-2010'] <- 'built_2000_2010'
     names(Total_df_14)[names(Total_df_14) == '1970-1980'] <- 'built_1970_1980'
     names(Total_df_14)[names(Total_df_14) == '2010'] <- 'builtafter_2010'
-    names(Total_df_14)[names(Total_df_14) == 'Tidligere udbetalt byg/løs/afgrd'] <- 'Udbetalt'
     
     ## Pricecleaning ---- 
     ## How many house prices are above 25 mil
     prices <- Total_df_14 %>%
-      filter(nominal_price > 25000000) %>%
+      filter(sales_price > 25000000) %>%
       nrow()
     # 3655 houses exceed price, we plot density
-    plot(density(Total_df_14$nominal_price)) # Too skewed
-    Density1 <- density(Total_df_14$nominal_price)
+    plot(density(Total_df_14$sales_price)) # Too skewed
+    Density1 <- density(Total_df_14$sales_price)
     # we take subset and plot
-    Price_25 <- subset(Total_df_14, nominal_price < 25000000)
-    Density2 <- density(Price_25$nominal_price)
-    plot(density(Price_25$nominal_price)) # still too skewed
+    Price_25 <- subset(Total_df_14, sales_price < 25000000)
+    Density2 <- density(Price_25$sales_price)
+    plot(density(Price_25$sales_price)) # still too skewed
     # Not enough we remove 1st and 99 percentile. 
     # Check what thresholds are removed 
-    p1 <- quantile(Total_df_14$nominal_price, 0.01)
-    p99 <- quantile(Total_df_14$nominal_price, 0.99)
+    p1 <- quantile(Total_df_14$sales_price, 0.01)
+    p99 <- quantile(Total_df_14$sales_price, 0.99)
     # we find to be above 99 percentile, price is 9.3 mil
     # we find to be below 1 percentile, price is 72.500 dkk
     # subset again 
-    Price_percentile <- subset(Total_df_14, nominal_price > p1)
-    Price_percentile <- subset(Price_percentile, nominal_price < p99)
-    Density3 <- density(Price_percentile$nominal_price)
-    plot(density(Price_percentile$nominal_price)) # accept for now 
+    Price_percentile <- subset(Total_df_14, sales_price > p1)
+    Price_percentile <- subset(Price_percentile, sales_price < p99)
+    Density3 <- density(Price_percentile$sales_price)
+    plot(density(Price_percentile$sales_price)) # accept for now 
     Total_df_14 <- Price_percentile
     
     # Save plots for showcasing distribution of price
@@ -1883,7 +1884,6 @@ library(mice) # Impute missing
     Total_df_14 <- Total_df_14 %>%
       rowwise() %>%
       mutate(coastline_distance = ifelse(coastline_distance == Inf, NA, coastline_distance))
-    Total_df_14 <- subset(Total_df_14, !is.na(lag_price))
     Total_df_14 <- Total_df_14 %>%
       rowwise() %>%
       mutate(Outbuilding = ifelse(is.na(Outbuilding), 0, Outbuilding))
@@ -1942,6 +1942,8 @@ library(mice) # Impute missing
     # Shift to 15
     Total_df_15 <- Total_df_14
     
+    # For DF_15 skipped because data is reduced automatically later for unique neighbors
+    
     # summary 
     df_Flooded <- subset(Total_df_15, flooded == 1) # Divide to remove some larger data set
     df_Notflooded <- subset(Total_df_15, flooded != 1)
@@ -1975,19 +1977,125 @@ library(mice) # Impute missing
     
     Total_df_15$Areas <- as.factor(Total_df_15$Areas)
     
+    Total_df_15$rowname <- rownames(Total_df_15)
+    Total_df_15_2 <- subset(Total_df_15, select = c("rowname", "Coor"))
+    
+    
     
     # Save
     save(Total_df_15, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_15.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_15.Rdata")
     
-    sf::st_write(Total_df_15, "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_15.shp",layer_options = "SHPT=POINTS")
+    sf::st_write(Total_df_15_2, "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_15_v2.shp")
+    
+    Total_df_15_2 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_hoejde_v2.shp")
+    
+    #Merge with exisiting DF_15
+    Total_df_15 <- merge(subset(Total_df_15_2, select = - geometry), Total_df_15, by = "rowname")
+
+    
+    Total_df_16 <- Total_df_15
+    
+    Total_df_16$Built <- NA
+    Total_df_16 <- Total_df_16 %>% rowwise() %>%
+      mutate(Built = ifelse(builtbefore1940 == 1, 1, Built)) %>%
+      mutate(Built = ifelse(built_1940_1950 == 1, 2, Built)) %>%
+      mutate(Built = ifelse(built_1950_1960 == 1, 3, Built)) %>%
+      mutate(Built = ifelse(built_1960_1970 == 1, 4, Built)) %>%
+      mutate(Built = ifelse(built_1970_1980 == 1, 5, Built)) %>%
+      mutate(Built = ifelse(built_1980_1990 == 1, 6, Built)) %>%
+      mutate(Built = ifelse(built_1990_2000 == 1, 7, Built)) %>%
+      mutate(Built = ifelse(built_2000_2010 == 1, 8, Built)) %>%
+      mutate(Built = ifelse(builtafter_2010 == 1, 9, Built)) 
+    
+    Total_df_16 <- subset(Total_df_16, select = - c(builtbefore1940, built_1940_1950, built_1950_1960,
+                                                    built_1960_1970, built_1970_1980, built_1980_1990,
+                                                    built_1990_2000, built_2000_2010, builtafter_2010))
+    Total_df_16$Built <- as.factor(Total_df_16$Built)
+    
+    # check NA for columns 
+    na_count <- colSums(is.na(Total_df_16))
+    
+    #same with renovation
+    Total_df_16$Renovated <- 0
+    Total_df_16 <- Total_df_16 %>% rowwise() %>%
+      mutate(Renovated = ifelse(Renovated_1940_1950 == 1, 1, Renovated)) %>%
+      mutate(Renovated = ifelse(Renovated_1950_1960 == 1, 2, Renovated)) %>%
+      mutate(Renovated = ifelse(Renovated_1960_1970 == 1, 3, Renovated)) %>%
+      mutate(Renovated = ifelse(Renovated_1970_1980 == 1, 4, Renovated)) %>%
+      mutate(Renovated = ifelse(Renovated_1980_1990 == 1, 5, Renovated))
+    Total_df_16$Renovated <- as.factor(Total_df_16$Renovated)
+    
+    Total_df_16 <- subset(Total_df_16, select = - c(Renovated_1940_1950, Renovated_1950_1960, Renovated_1960_1970,
+                                                    Renovated_1970_1980, Renovated_1980_1990))
+    
+    
+    #Heating
+    Total_df_16$Heating <- 0
+    Total_df_16 <- Total_df_16 %>% rowwise() %>%
+      mutate(Heating = ifelse(district_heating == 1, 1, Heating)) %>%
+      mutate(Heating = ifelse(central_heating == 1, 2, Heating)) %>%
+      mutate(Heating = ifelse(electric_heating == 1, 3, Heating))
+    
+    Total_df_16 <- subset(Total_df_16, select = - c(district_heating, 
+                                                    central_heating, electric_heating))
+    
+    Total_df_16$Heating <- as.factor(Total_df_16$Heating)
+    
+    #Roof
+    Total_df_16$Roof <- 0
+    Total_df_16 <- Total_df_16 %>% rowwise() %>%
+      mutate(Roof = ifelse(tile_roof == 1, 1, Roof)) %>%
+      mutate(Roof = ifelse(thatch_roof == 1, 2, Roof)) %>%
+      mutate(Roof = ifelse(fibercement_asbestos_roof == 1, 3, Roof))
+    
+    Total_df_16 <- subset(Total_df_16, select = - c(tile_roof, 
+                                                    thatch_roof, fibercement_asbestos_roof))
+    
+    Total_df_16$Roof <- as.factor(Total_df_16$Roof)
+    
+    #Builtmaterial
+    Total_df_16$BMaterial <- NA
+    Total_df_16 <- Total_df_16 %>% rowwise() %>%
+      mutate(BMaterial = ifelse(Brick == 1, 1, BMaterial)) %>%
+      mutate(BMaterial = ifelse(wood == 1, 2, BMaterial)) %>%
+      mutate(BMaterial = ifelse(lightweight_concrete == 1, 3, BMaterial))
+    
+    Total_df_16 <- subset(Total_df_16, select = - c(Brick, 
+                                                    wood, lightweight_concrete))
+    
+    Total_df_16 <- Total_df_16 %>% rowwise() %>%
+      mutate(BMaterial = ifelse(is.na(BMaterial), 0, BMaterial))
+    Total_df_16$BMaterial <- as.factor(Total_df_16$BMaterial)
+    
+    Total_df_16$BMaterial <- as.factor(Total_df_16$BMaterial)
+  
+    
+    #define Total df 20 
+    Total_df_17_v2 <- Total_df_16
+    
+    # Prerequisite for neighbors is to have distinct coordinates 
+        # Change sfc multipoint to point
+        Total_df_17_v2$Coor <- sf::st_cast(Total_df_17_v2$Coor, "POINT")
+        
+    Total_df_17_v2 <- Total_df_17_v2 %>%
+      dplyr::distinct(Coor, .keep_all = TRUE) 
+    
+    save(Total_df_17_v2, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17_v2.Rdata")
+    
+    
+    # Test for linearity
+    matrix <- Total_df_16
+    matrix <- sf::st_drop_geometry(matrix)
+    matrix <- subset(matrix, select = - c(Areas, enhed_id, addressID))
+    results <- plm::detect.lindep(matrix)
+    
+    
+    
     # load in with heights from file 
     Total_df_16 <- sf::read_sf("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_hoejde.shp")
     save(Total_df_16, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_16.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_16.Rdata")
-    
-    
-    
     
     # Load in file ----
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_15.Rdata")
@@ -2000,15 +2108,20 @@ library(mice) # Impute missing
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_16.Rdata")
     Total_df_16$Coor <- centroid <- sf::st_centroid(Total_df_16$geometry)
     rm(centroid)
-    # QGIS renamed columns, so we change them back 
-    colnames(Total_df_16)
-    colnames(Total_df_15)[1:51] # The first 51 variables are aligned 
-    colnames(Total_df_16)[1:51] <- colnames(Total_df_15)[1:51]
-    Total_df_16$geometry <- sf::st_as_text(Total_df_16$geometry)
-    Total_df_16 <- sf::st_set_geometry(Total_df_16, Total_df_16$Coor)
-    sf::st_agr(Total_df_16) <- "Coor"
-    Total_df_16 <- subset(Total_df_16, select = -Coor)
-    Total_df_16$Areas <- as.factor(Total_df_16$Areas)
+    # # QGIS renamed columns, so we change them back 
+    # colnames(Total_df_16)
+    # Total_df_16 <- subset(Total_df_16, select = Height)
+    # colnames(Total_df_15)[1:51] # The first 31 variables are aligned 
+    # colnames(Total_df_16)[1:51] <- colnames(Total_df_15)[1:51]
+    # Total_df_16$geometry <- sf::st_as_text(Total_df_16$geometry)
+    # Total_df_16 <- sf::st_set_geometry(Total_df_16, Total_df_16$Coor)
+    # sf::st_agr(Total_df_16) <- "Coor"
+    # Total_df_16 <- subset(Total_df_16, select = -Coor)
+    # Total_df_16$Areas <- as.factor(Total_df_16$Areas)
+    
+    # substitution, i retrrieved heights but keep df15 and map heights from df 16 and save as new df16
+    test <- merge(Total_df_15, subset(Total_df_16, select = c("addrsID", "enhed_d", "Height")), by.x = c("addressID", "enhed_id"), by.y = c("addrsID", "enhed_d"))
+    test <- test[!duplicated(test), ]
     
     # Test for linearity
     matrix <- Total_df_16_SAR
@@ -2024,6 +2137,7 @@ library(mice) # Impute missing
     
     save(Total_df_17, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17.Rdata")
+    
     # Change built variable to factor 
     Total_df_17$Built <- NA
     Total_df_17 <- Total_df_17 %>% rowwise() %>%
@@ -2093,10 +2207,46 @@ library(mice) # Impute missing
     
     Total_df_17$BMaterial <- as.factor(Total_df_17$BMaterial)
     
+    #Event
+    Total_df_17$Event <- 0
+    Total_df_17 <- Total_df_17 %>% rowwise() %>%
+      mutate(Event = ifelse(EV1 == 1, 1, Event)) %>%
+      mutate(Event = ifelse(EV2 == 1, 2, Event)) %>%
+      mutate(Event = ifelse(EV3 == 1, 3, Event)) %>%
+      mutate(Event = ifelse(EV4 == 1, 4, Event)) %>%
+      mutate(Event = ifelse(EV5 == 1, 5, Event))
+    
+    Total_df_17 <- subset(Total_df_17, select = - c(EV1, EV2, EV3, EV4,EV5))
+    
+    Total_df_17$Event <- as.factor(Total_df_17$Event)
+    
+    
     Total_df_18 <- Total_df_17
+    
     
     save(Total_df_18, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18.Rdata")
+    
+    results <- Total_df_18 %>%
+      group_by(postnr) %>%
+      summarize(count = sum(flooded == 1))
+    
+    r50 <- subset(results, count > 50) # 172 zip codes
+    r100 <- subset(results, count > 100) # 82
+    r250 <- subset(results, count > 250) # 10
+    
+    zipcodes <- as.vector(r50$postnr)
+    
+    # Now 886.312 observations, that is half of before. Hopefully easier to do computations
+    Total_df_18 <- Total_df_18[Total_df_18$postnr %in% zipcodes, ]
+    
+    Total_df_19 <- Total_df_18
+    
+    save(Total_df_19, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_19.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_19.Rdata")
+    
+    
+    
     
     plot(Total_df_15$nominal_price)
 
