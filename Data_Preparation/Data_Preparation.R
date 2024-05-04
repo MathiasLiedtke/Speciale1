@@ -22,7 +22,8 @@ library(spData)
 library(spDataLarge)
 library(pbapply)
 library(psych)
-library(mice) # Impute missing 
+library(ggplot2)
+library(ggmap)
 
 
 
@@ -2082,7 +2083,125 @@ library(mice) # Impute missing
       dplyr::distinct(Coor, .keep_all = TRUE) 
     
     save(Total_df_17_v2, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17_v2.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17_v2.Rdata")
     
+    summary_17 <- as.data.frame(summary(Total_df_17_v2))
+    # I note following variables are to be deleted 
+    # heatpumpp_heating no variation
+    Total_df_17_v2 <- subset(Total_df_17_v2, select = - heatpump_heating)
+    # Correct height, rooms 
+    Height_mean <- mean(Total_df_17_v2$Height)
+    Room_mean <- mean(Total_df_17_v2$rooms)
+    Total_df_17_v2 <- Total_df_17_v2 %>% rowwise() %>%
+          mutate(Height = ifelse(Height <= 0, Height_mean, Height)) %>%
+          mutate(rooms = ifelse(rooms <= 0 , Room_mean, rooms))
+    
+    summary(Total_df_17_v2)
+    
+    Total_df_18_v2 <- subset(Total_df_17_v2, 
+                      select = -c(EV1, EV2, EV3, EV4, EV5, Sold_0_0.5, 
+                                      Sold_1, Sold_2, Sold_5, dato.x))
+    
+    
+    #Add interaction variable if sold after event and before next and so on. 
+    Events <- as.data.frame(table(Total_df_18_v2$Hændelsesdato))
+    Events$Var1 <- as.Date(Events$Var1)
+    
+    # We skip event 3, only 6 observations
+    Total_df_18_v2 <- Total_df_18_v2 %>% rowwise() %>%
+      mutate(SA_EV1 = ifelse(Dato < Events[2,1] & Dato > Events[1,1], 1, 0)) %>%
+      mutate(SA_EV2 = ifelse(Dato < Events[4,1] & Dato > Events[2,1], 1, 0)) %>%
+      mutate(SA_EV3 = ifelse(Dato < Events[5,1] & Dato > Events[4,1], 1, 0)) %>%
+      mutate(SA_EV4 = ifelse(Dato < Events[6,1] & Dato > Events[5,1], 1, 0)) %>%
+      mutate(SA_EV5 = ifelse(Dato > Events[6,1], 1, 0))
+  # Husk at undlade sidste, altså før første event.    
+    
+  
+  # Make lag price of neighbors 
+    coords <- st_coordinates(Total_df_18_v2)
+    Neighbor <- spdep::tri2nb(coords = coords)
+    #Define nb object 
+    neighbor_list <- spdep::nb2listw(Neighbor)
+    # Add lagged variable to xg boosting
+    Total_df_18_v2$Lag_price <- spdep::lag.listw(neighbor_list, Total_df_18_v2$nominal_price)
+    lagged_price <- lag.listw(listw, price_vector)
+    
+    save(Total_df_18_v2, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18_v2.Rdata")
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18_v2.Rdata")
+    
+    
+    # Data summery ----
+    # Map of inundations in Denmark 
+    Flooded <- subset(subset(Total_df_18_v2, select = c(Coor, flooded)), flooded == 1)
+    Flooded$Coor <- sf::st_transform(Flooded$Coor, crs = "EPSG:4326") # Change crs to same as map of Denmark 
+    Flooded$lon <- sf::st_coordinates(Flooded$Coor)[,1]
+    Flooded$lat <- sf::st_coordinates(Flooded$Coor)[,2]
+    Not_flooded <- subset(subset(Total_df_18_v2, select = c(Coor, flooded)), flooded != 1)
+    Flooded$Coor <- sf::st_transform(Flooded$Coor, crs = "EPSG:4326") # Change crs to same as map of Denmark
+    Not_flooded$lon <- sf::st_coordinates(Not_flooded$Coor)[,1]
+    Not_flooded$lat <- sf::st_coordinates(Not_flooded$Coor)[,2]
+    
+    plot(Flooded)
+    
+    # Retrive map from dataforsyningen. 
+    library(leaflet)
+    API_GEO <- "https://api.dataforsyningen.dk/topo_skaermkort_DAF?service=WMS&request=GetCapabilities&token="
+    token <- readline(prompt="Please enter token: ")
+    url <- paste0(API_GEO,token)
+    response <- httr::GET(url)
+    httr::status_code(response)
+  
+    # Flooded
+    m <- leaflet(data = Flooded) %>%
+      setView(lng = 12.6, lat = 55.7, zoom = 6) %>% 
+      addWMSTiles(
+        baseUrl = url,
+        layers = "dtk_skaermkort",
+        options = WMSTileOptions(format = "image/png", transparent = TRUE, opacity = 0.90)) %>%
+      addCircleMarkers(
+        lng = ~lon,
+        lat = ~lat,
+        color = "red",  # All houses are flooded
+        fillOpacity = 1,
+        radius = 0.1)
+
+    # Not flooded
+    m <- leaflet(data = Flooded) %>%
+      setView(lng = 12.6, lat = 55.7, zoom = 6) %>% 
+      addWMSTiles(
+        baseUrl = url,
+        layers = "dtk_skaermkort",
+        options = WMSTileOptions(format = "image/png", transparent = TRUE, opacity = 0.90)) %>%
+      addCircleMarkers(
+        lng = ~lon,
+        lat = ~lat,
+        color = "green",  # All houses are flooded
+        fillOpacity = 1,
+        radius = 0.1)
+    
+      
+  
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    # TO BE DELETED LATER IF NOT USEFUL       ----  
+
     
     # Test for linearity
     matrix <- Total_df_16
