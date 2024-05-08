@@ -1852,20 +1852,19 @@ library(ggmap)
     # subset again 
     Price_percentile <- subset(Total_df_14, sales_price > p1)
     Price_percentile <- subset(Price_percentile, sales_price < p99)
-    Density3 <- density(Price_percentile$sales_price)
+    Density2 <- density(Price_percentile$sales_price)
     plot(density(Price_percentile$sales_price)) # accept for now 
     Total_df_14 <- Price_percentile
     
     # Save plots for showcasing distribution of price
     # Create the plot
     x <- seq(1, 512)
-    df <- data.frame(x = x, Density1 = Density1$y, Density2 = Density2$y, Density3 = Density3$y)
+    df <- data.frame(x = x, Density1 = Density1$y, Density2 = Density2$y)
     Nominal_price_plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
       ggplot2::geom_line(aes(y = Density1, color = "Density 1"), size = 1) +
       ggplot2::geom_line(aes(y = Density2, color = "Density 2"), size = 1) +
-      ggplot2::geom_line(aes(y = Density3, color = "Density 3"), size = 1) +
       labs(x = "Frequency", y = "Price", title = "Density for nominal price") +
-      scale_color_manual(name = "Legend", values = c("green", "orange", "purple")) +
+      scale_color_manual(name = "Legend", values = c("green", "orange")) +
       theme_minimal() +
       theme(
         plot.title = element_text(hjust = 0.5),  # Center the title
@@ -2120,9 +2119,11 @@ library(ggmap)
   # Make lag price of neighbors 
     coords <- st_coordinates(Total_df_18_v2)
     Neighbor <- spdep::tri2nb(coords = coords)
+    
+    
     #Define nb object 
     neighbor_list <- spdep::nb2listw(Neighbor)
-    # Add lagged variable to xg boosting
+    # Add lagged variable to xg boosting and GWR 
     Total_df_18_v2$Lag_price <- spdep::lag.listw(neighbor_list, Total_df_18_v2$nominal_price)
     lagged_price <- lag.listw(listw, price_vector)
     
@@ -2256,6 +2257,10 @@ library(ggmap)
     
     save(Total_df_17, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17.Rdata")
+    
+    
+    # Add lagged variable again 
+    load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_10.Rdata")
     
     # Change built variable to factor 
     Total_df_17$Built <- NA

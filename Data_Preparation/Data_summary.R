@@ -355,7 +355,93 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
                    summary_statistics[j,8] <- nrow(Total_df_18_v2_df)
                    rownames(summary_statistics)[j] <- "Distance to wet area"
                    
-      
+                # Flooded 
+                   i = "flooded" 
+                   j = 37
+                   summary_statistics[j,2] <- quantile(Total_df_18_v2_df[,i], probs = 0, na.rm = TRUE)
+                   summary_statistics[j,3] <- quantile(Total_df_18_v2_df[,i], probs = 0.25, na.rm = TRUE)
+                   summary_statistics[j,4] <- quantile(Total_df_18_v2_df[,i], probs = 0.5, na.rm = TRUE)
+                   summary_statistics[j,5] <- colMeans(Total_df_18_v2_df[,i])
+                   summary_statistics[j,6] <- quantile(Total_df_18_v2_df[,i], probs = 0.75, na.rm = TRUE)
+                   summary_statistics[j,7] <- quantile(Total_df_18_v2_df[,i], probs = 1, na.rm = TRUE)
+                   summary_statistics[j,8] <- nrow(Total_df_18_v2_df)
+                   rownames(summary_statistics)[j] <- "Flooded"
+                   
+                #Insurance
+                   i = "Udbetaling" 
+                   j = 38
+                   summary_statistics[j,2] <- quantile(Total_df_18_v2_df[,i], probs = 0, na.rm = TRUE)
+                   summary_statistics[j,3] <- quantile(Total_df_18_v2_df[,i], probs = 0.25, na.rm = TRUE)
+                   summary_statistics[j,4] <- quantile(Total_df_18_v2_df[,i], probs = 0.5, na.rm = TRUE)
+                   summary_statistics[j,5] <- colMeans(Total_df_18_v2_df[,i])
+                   summary_statistics[j,6] <- quantile(Total_df_18_v2_df[,i], probs = 0.75, na.rm = TRUE)
+                   summary_statistics[j,7] <- quantile(Total_df_18_v2_df[,i], probs = 1, na.rm = TRUE)
+                   summary_statistics[j,8] <- nrow(Total_df_18_v2_df)
+                   rownames(summary_statistics)[j] <- "Insurance Payout"
+                   
+                   
+              #Sold after   
+                   i = "SA_EV1" 
+                   j = 39
+                   summary_statistics[j,2] <- quantile(Total_df_18_v2_df[,i], probs = 0, na.rm = TRUE)
+                   summary_statistics[j,3] <- quantile(Total_df_18_v2_df[,i], probs = 0.25, na.rm = TRUE)
+                   summary_statistics[j,4] <- quantile(Total_df_18_v2_df[,i], probs = 0.5, na.rm = TRUE)
+                   summary_statistics[j,5] <- colMeans(Total_df_18_v2_df[,i])
+                   summary_statistics[j,6] <- quantile(Total_df_18_v2_df[,i], probs = 0.75, na.rm = TRUE)
+                   summary_statistics[j,7] <- quantile(Total_df_18_v2_df[,i], probs = 1, na.rm = TRUE)
+                   summary_statistics[j,8] <- nrow(Total_df_18_v2_df)
+                   rownames(summary_statistics)[j] <- "Sold after E1"
+                   
+                #Sold after   
+                   i = "SA_EV2" 
+                   j = 40
+                   summary_statistics[j,2] <- quantile(Total_df_18_v2_df[,i], probs = 0, na.rm = TRUE)
+                   summary_statistics[j,3] <- quantile(Total_df_18_v2_df[,i], probs = 0.25, na.rm = TRUE)
+                   summary_statistics[j,4] <- quantile(Total_df_18_v2_df[,i], probs = 0.5, na.rm = TRUE)
+                   summary_statistics[j,5] <- colMeans(Total_df_18_v2_df[,i])
+                   summary_statistics[j,6] <- quantile(Total_df_18_v2_df[,i], probs = 0.75, na.rm = TRUE)
+                   summary_statistics[j,7] <- quantile(Total_df_18_v2_df[,i], probs = 1, na.rm = TRUE)
+                   summary_statistics[j,8] <- nrow(Total_df_18_v2_df)
+                   rownames(summary_statistics)[j] <- "Sold after E2"
+                   
+                   
+                #Sold after     
+                   i = "SA_EV3" 
+                   j = 41
+                   summary_statistics[j,2] <- quantile(Total_df_18_v2_df[,i], probs = 0, na.rm = TRUE)
+                   summary_statistics[j,3] <- quantile(Total_df_18_v2_df[,i], probs = 0.25, na.rm = TRUE)
+                   summary_statistics[j,4] <- quantile(Total_df_18_v2_df[,i], probs = 0.5, na.rm = TRUE)
+                   summary_statistics[j,5] <- colMeans(Total_df_18_v2_df[,i])
+                   summary_statistics[j,6] <- quantile(Total_df_18_v2_df[,i], probs = 0.75, na.rm = TRUE)
+                   summary_statistics[j,7] <- quantile(Total_df_18_v2_df[,i], probs = 1, na.rm = TRUE)
+                   summary_statistics[j,8] <- nrow(Total_df_18_v2_df)
+                   rownames(summary_statistics)[j] <- "Sold after E3"  
+                   
+              #Sold after     
+                   i = "SA_EV4" 
+                   j = 42
+                   summary_statistics[j,2] <- quantile(Total_df_18_v2_df[,i], probs = 0, na.rm = TRUE)
+                   summary_statistics[j,3] <- quantile(Total_df_18_v2_df[,i], probs = 0.25, na.rm = TRUE)
+                   summary_statistics[j,4] <- quantile(Total_df_18_v2_df[,i], probs = 0.5, na.rm = TRUE)
+                   summary_statistics[j,5] <- colMeans(Total_df_18_v2_df[,i])
+                   summary_statistics[j,6] <- quantile(Total_df_18_v2_df[,i], probs = 0.75, na.rm = TRUE)
+                   summary_statistics[j,7] <- quantile(Total_df_18_v2_df[,i], probs = 1, na.rm = TRUE)
+                   summary_statistics[j,8] <- nrow(Total_df_18_v2_df)
+                   rownames(summary_statistics)[j] <- "Sold after E4" 
+                   
+                #Sold after     
+                   i = "SA_EV5" 
+                   j = 43
+                   summary_statistics[j,2] <- quantile(Total_df_18_v2_df[,i], probs = 0, na.rm = TRUE)
+                   summary_statistics[j,3] <- quantile(Total_df_18_v2_df[,i], probs = 0.25, na.rm = TRUE)
+                   summary_statistics[j,4] <- quantile(Total_df_18_v2_df[,i], probs = 0.5, na.rm = TRUE)
+                   summary_statistics[j,5] <- colMeans(Total_df_18_v2_df[,i])
+                   summary_statistics[j,6] <- quantile(Total_df_18_v2_df[,i], probs = 0.75, na.rm = TRUE)
+                   summary_statistics[j,7] <- quantile(Total_df_18_v2_df[,i], probs = 1, na.rm = TRUE)
+                   summary_statistics[j,8] <- nrow(Total_df_18_v2_df)
+                   rownames(summary_statistics)[j] <- "Sold after E5"   
+                   
+                   
                    
               
       
@@ -456,7 +542,7 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
       # Define the typename for the feature you want to load
       typename <- "Postnummerinddeling"
       
-      wfs_client <- WFSClient$new(url, serviceVersion = "2.0.0")
+      wfs_client <- ows4R::WFSClient$new(url, serviceVersion = "2.0.0")
       
       # Build the URL for the GetFeature request
       request_url <- httr::parse_url(wfs_client$url)
@@ -473,34 +559,89 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
       feature <- sf::read_sf(httr::build_url(request_url))
       
       postnr <- subset(feature, select = c(navn, postnummer, geometri))
-      postnr <- sf::st_zm(postnr)
+      postnr$centroid <- sf::st_centroid(postnr$geometri)
+      postnr$coords <- sf::st_coordinates(postnr$centroid)
+      postnr1 <- sf::st_drop_geometry(postnr)
       
+      library(dplyr)
       mean_postnr <- Total_df_18_v2 %>%
         group_by(postnr) %>%
         summarise(mean_price = mean(sales_price, na.rm = TRUE))
+      mean_postnr <- sf::st_drop_geometry(mean_postnr)
+      
+      summary_postnr <- merge(postnr1, mean_postnr, by.x = "postnummer", by.y = "postnr")
+      # merge back with sfc point to get multipolygon of postnr 
+      summary_postnr <- sf::st_as_sf(summary_postnr)
+      intersect_postnr <- sf::st_join(postnr, summary_postnr)
+      intersect_postnr <- intersect_postnr[!is.na(intersect_postnr$postnummer.y),]
+      intersect_postnr <- subset(intersect_postnr, select = c(navn.x, postnummer.x, geometri, mean_price))
+      intersect_postnr$geometri <- sf::st_transform(intersect_postnr$geometri, crs = "EPSG:4326") # Change coordinates to same of map of Denmark
+      
+      #Get polygon of Denmark
+      # Define the typename for the feature you want to load
+      API_GEO <- "https://api.dataforsyningen.dk/DAGI_10MULTIGEOM_GMLSFP_DAF?service=WFS&request=GetCapabilities&token="
+      token <- readline(prompt="Please enter token: ")
+      url <- paste0(API_GEO,token)
+      response <- httr::GET(url)
+      httr::status_code(response)
+      typename <- "Landsdel"
+      
+      wfs_client <- ows4R::WFSClient$new(url, serviceVersion = "2.0.0")
+      
+      # Build the URL for the GetFeature request
+      request_url <- httr::parse_url(wfs_client$url)
+      request_url$query <- list(
+        service = "wfs",
+        version = "2.0.0",
+        request = "GetFeature",
+        typenames = typename,
+        srsName = "EPSG:25832",
+        token = "043c0c7bbb4086890a5c6ef6dd2075e4"
+      )
+      
+      Denmark <- sf::read_sf(httr::build_url(request_url))
+      Denmark <- sf::st_zm(Denmark)
+      Denmark <- sf::st_union(Denmark)
+      Denmark <- sf::st_transform(Denmark, crs = "EPSG:4326")
+      
+      #Intersect border of Denmark with postnr
+      intersect_postnr1 <- sf::st_intersection(intersect_postnr,Denmark)
+      intersect_postnr1 <- subset(intersect_postnr1, postnummer.x != 4682)
       
       
-      mean_postnr <- as(mean_postnr, "Spatial")
-      postnr <- sf::st_zm(postnr)
-      postnr <- as(postnr, "Spatial")
       
-      summary_postnr <- merge(postnr, mean_postnr, by.x = postnummer, by.y = postnr)
-
+      library(leaflet)
+      API_GEO <- "https://api.dataforsyningen.dk/topo_skaermkort_DAF?service=WMS&request=GetCapabilities&token="
+      token <- readline(prompt="Please enter token: ")
+      url <- paste0(API_GEO,token)
+      response <- httr::GET(url)
+      httr::status_code(response)
       
-      # Flooded
-      m <- leaflet(data = Flooded) %>%
-        setView(lng = 12.6, lat = 55.7, zoom = 6) %>% 
+      # Add to maps 
+      m <- leaflet() %>%
+        setView(lng = 12.6, lat = 55.7, zoom = 6) %>%
         addWMSTiles(
           baseUrl = url,
           layers = "dtk_skaermkort",
-          options = WMSTileOptions(format = "image/png", transparent = TRUE, opacity = 0.90)) %>%
-        addCircleMarkers(
-          lng = ~lon,
-          lat = ~lat,
-          color = "red",  # All houses are flooded
-          fillOpacity = 1,
-          radius = 0.1)
-      
+          options = WMSTileOptions(format = "image/png", transparent = TRUE, opacity = 0.70)
+        ) %>%
+        addPolygons(
+          data = intersect_postnr1,
+          fillColor = ~colorQuantile("YlOrRd", mean_price)(mean_price),
+          weight = 2,
+          opacity = 1,
+          color = "white",
+          dashArray = "3",
+          fillOpacity = 0.7,
+          highlight = highlightOptions(
+            weight = 5,
+            color = "#666",
+            dashArray = "",
+            fillOpacity = 1,
+            bringToFront = TRUE
+          ),
+          label = ~paste0("Municipality: ", intersect_postnr$postnummer.x, "<br/>", "Mean Price: ", intersect_postnr$mean_price)
+        )
       
     
       
