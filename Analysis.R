@@ -20,6 +20,8 @@ library(lmtest) # test for heteroscedasticity
 load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18_v2.Rdata")
 
 Total_df <-  Total_df_18_v2
+Total_df <- subset(Total_df, select = - `Tidligere udbetalt byg/løs/afgrd`)
+Total_df$sales_price <- log(Total_df$sales_price)
 rm(Total_df_18_v2)
 
 
@@ -52,12 +54,12 @@ rm(Total_df_18_v2)
         T1 <- Sys.time()
         # train_set_1_df <- train_set_1 %>% Done previously in data_preparation
         #   dplyr::distinct(geometry, .keep_all = TRUE) Done previously in data_preparation
-        train_set_1 <- sf::st_as_sf(train_set_1)
-        train_set_1 <- as(train_set_1, "Spatial")
-        points_train_1 <- sp::coordinates(train_set_1)
-        Neighbor_train <- spdep::tri2nb(points_train_1)  #When calculate neighbor
-        T2 <- Sys.time() - T1 # 20 min
-        # save(Neighbor_train, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train.Rdata")
+        # train_set_1 <- sf::st_as_sf(train_set_1)
+        # train_set_1 <- as(train_set_1, "Spatial")
+        # points_train_1 <- sp::coordinates(train_set_1)
+        # Neighbor_train <- spdep::tri2nb(points_train_1)  #When calculate neighbor
+        # T2 <- Sys.time() - T1 # 20 min
+        # # save(Neighbor_train, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train.Rdata")
         load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train.Rdata")
         
         # Test 1
@@ -128,9 +130,11 @@ rm(Total_df_18_v2)
 
         ### Linear model with zip codes ----
         # train_set_1 
-        PredictorVariables <- colnames(subset(Total_df, select = - c(nominal_price, addressID, enhed_id, postnr)))
-        Formula <- formula(paste("nominal_price ~", 
-                                 paste(PredictorVariables[1:50], collapse=" + ")))
+        PredictorVariables <- colnames(subset(Total_df, 
+                                  select = - c(rowname, nominal_price, sales_price, addressID, enhed_id, 
+                                  flooded, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, Coor)))
+        Formula <- as.formula(paste("sales_price ~", 
+                                    paste(c(PredictorVariables[1:21], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
         lm_areas <- stats::lm(formula = Formula, train_set_1)
         
         # Is this treated completely right? Do i need to test something og adjust standard errors. 
@@ -138,12 +142,17 @@ rm(Total_df_18_v2)
         ### GWR model ----
         # train_set_1
             # Define formula 
-            PredictorVariables_GWR <- colnames(subset(Total_df, select = - c(nominal_price, addressID, enhed_id, postnr, geometry)))
-            Formula_GWR <- formula(paste("nominal_price ~", 
-                                 paste(PredictorVariables_GWR[1:21], collapse=" + ")))
-            coords <- sp::coordinates(train_set_1_df) # Retrive coordinates
+            PredictorVariables_GWR <- colnames(subset(Total_df, 
+                                          select = - c(rowname, nominal_price, sales_price, addressID, enhed_id, Areas, Lag_price,
+                                          flooded, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, Coor)))
+            Formula_GWR <- formula(paste("sales_price ~", 
+                                 paste(PredictorVariables_GWR[1:19], collapse=" + ")))
+            coords <- sf::st_coordinates(train_set_1) # Retrive coordinates
             train_set_1_data <- as(train_set_1_df, "data.frame")
             train_set_1_df <- droplevels(train_set_1_df)
+            train_set_1_sp <- as(train_set_1, "Spatial")
+            train_set_1_sp$sales_price <- log(train_set_1_sp$sales_price)
+            train_set_1$sales_price <- log(train_set_1$sales_price)
             
             # For spgwr package 
                 Starttime_BW_spgwr <- Sys.time()
@@ -155,13 +164,18 @@ rm(Total_df_18_v2)
             
             # Use bandwidth to calculate gwr 
             Startime.GWR <- Sys.time()
-            gwr.model <- spgwr::gwr(formula = Formula_GWR, data = train_set_1_df, bandwidth = bw)
+            gwr.model <- spgwr::gwr(formula = Formula_GWR, coords = coords[1:10000,], data = train_set_1[1:10000,], bandwidth = bw)
             Endtime_GWR <- Sys.time()-Startime.GWR
+            # TEst with formula
+            gwr.model <- spgwr::gwr(formula = Formula_GWR, data = train_set_1_df, bandwidth = bw)
+            
+            Formula <- "sales_price ~ Built"
             
             Startime.GWR <- Sys.time()
-            gwr.model <- GWmodel::gwr.basic(formula = Formula_GWR, 
-                                            data = train_set_1_df[1:1000,], bw = bw)
+            gwr.model <- GWmodel::gwr.basic(formula = Formula, 
+                                            data = train_set_1_sp, bw = bw, adaptive = TRUE, longlat = TRUE)
             Endtime_GWR <- Sys.time()-Startime.GWR
+            
             gw_reg_all
         
         train_set_1_dataframe <- train_set_1 %>%
@@ -190,7 +204,7 @@ rm(Total_df_18_v2)
         
         
         Startime.GWR <- Sys.time()
-        gwr.model <- GWmodel::gwr(formula = Formula_GWR, data = train_set_1_df, adapt = bw)
+        gwr.model <- GWmodel::gwr(formula = Formula, data = train_set_1_df, adapt = bw)
         Endtime_GWR <- Sys.time()-Startime.GWR
         
         
@@ -202,132 +216,151 @@ rm(Total_df_18_v2)
         ### SAR model ----
         # train_set_1
         # I think the train set should be changed to a regular data frame. 
-        train_set_1_dataframe <- train_set_1 %>%
-          distinct(geometry, .keep_all = TRUE)
-        train_set_1_dataframe <- sf::st_drop_geometry(train_set_1_dataframe) 
-        cov <- cov(subset(train_set_1_dataframe, 
-                          select = - c(addressID, postnr, enhed_id, lag_price, Areas))) #Cannot take cov of factor
-        result <- plm::detect.lindep(subset(train_set_1_dataframe, 
-                                            select = - c(addressID, postnr, enhed_id, lag_price, Areas)))
+        train_set_1_dataframe <- sf::st_drop_geometry(train_set_1) 
         
-        det(cov) # Large determinant no problem of changing
-        result <- plm::detect.lindep(subset(train_set_1_dataframe, 
-                                select = - c(nominal_price, postnr, addressID, enhed_id,
-                                             Areas, built_1970_1980, lag_price, Car_Grg, Trainstation)))
+        # Predictors
+        PredictorVariables <- colnames(subset(Total_df, 
+                            select = - c(rowname, nominal_price, sales_price, addressID, enhed_id, Lag_price, Areas,
+                            flooded, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, Coor, Trainstation_distance)))
         
+        # Formula 
+        Formula <- as.formula(paste("sales_price ~", 
+                        paste(c(PredictorVariables[1:18], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
+        Formula <- as.formula(sales_price ~ BMaterial + Built + Heating + Height + m2 + Outbuilding + TerracedHouse + rooms +
+                                forest_distance)
+        train_set_1_dataframe$sales_price <- train_set_1_dataframe$sales_price*1000000
+        train_set_1_dataframe$sales_price <- log(train_set_1_dataframe$sales_price)
         
-        PredictorVariables <- colnames(subset(train_set_1_dataframe, 
-                                select = - c(nominal_price, postnr, addressID, enhed_id,
-                                             Areas, Car_Grg)))
-        Formula <- formula(paste("nominal_price ~", 
-                                 paste(PredictorVariables, collapse=" + ")))
-        Formula <- formula(nominal_price ~ m2 + Outbuilding + TerracedHouse + rooms + Udbetalt + flooded + forest_distance +
-                           coastline_distance + powerline_distance + railway_distance + lake_distance + Trainstation_distance)
-        NA_DF <- subset(train_set_1_dataframe, is.na(train_set_1_dataframe$nominal_price))
+        # Outbuilding, built
         
-        # Outbuilding, built_1950_1960
+        [1] "Height"              "m2"                  "Outbuilding"         "TerracedHouse"       "rooms"               "forest_distance"    
+        [7] "coastline_distance"  "powerline_distance"  "railway_distance"    "lake_distance"       "Wateryarea_distance" "Udbetaling"         
+        [13] "Car_Garage"          "Built"               "Renovated"           "Heating"             "Roof"                "BMaterial"          
+        [19] "Coor"  
+        
+        # Model
+        Time <- Sys.time()
+        SAR_DF_log <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
+                                       listw = Neighbor_train_weight, method = "LU", zero.policy = TRUE)
+        Stoptime <- Sys.time() - Time  # 1.346548 hours
         
         SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
-                        listw = Neighbor_train_weight, method = "Matrix_J", zero.policy = TRUE)
+                                       listw = Neighbor_train_weight, method = "Matrix_J", zero.policy = TRUE, tol.solve = 1e-12)
         
         
-        cov <- cov(train_set_1_TEST_Sub)
-        det(cov)
-        library(plm)
-        result <- plm::detect.lindep(train_set_1_TEST_Sub)
-        
-        PredictorVariables <- colnames(subset(Total_df, 
-                              select = - c(nominal_price, addressID, enhed_id, postnr,
-                                          Areas, built_1970_1980)))
-        Formula <- formula(paste("nominal_price ~", 
-                                 paste(PredictorVariables[1:44], collapse=" + ")))
-        Formula_SAR <- formula(nominal_price ~ m2)
-        
-        SAR_DF <- spatialreg::spautolm(formula = Formula, data = train_set_1_df, 
-                                       listw = Neighbor_train_weight, method = "Matrix_J") # Took some hours, about 2
-        Time <- Sys.time()
-        SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_df,
-                      listw = Neighbor_train_weight, method = "Matrix_J", interval = c(-1, 1))
-        # Try with LU
-        # SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_df,
-        #           listw = Neighbor_train_weight, method = "LU", interval = c(-1, 1))
-        Stoptime <- Sys.time() - Time
-        
-        # Matrix 
-        mat <- as.matrix(subset(train_set_1_df, select = PredictorVariables))
-        
-        lm_SPAUTO <- stats::lm(formula = Formula, train_set_1_df)
-        
-        Total_df_SAR <- Total_df
-        Total_df_SAR_ds <- Total_df_SAR %>%
-                              distinct(geometry, .keep_all = TRUE)
-        Total_df_SAR_ds <- sf::st_as_sf(Total_df_SAR_ds)
-        Total_df_SAR_ds <- as(Total_df_SAR_ds, "Spatial")
-        Neighbor <- spdep::tri2nb(coordinates(Total_df_SAR_ds[1:1000,]))
-
-        Starttime <- Sys.time()
-        Neighbor <- spdep::knearneigh(coordinates(Total_df_SAR), longlat = TRUE)
-        Neighbor <- spdep::tri2nb(coordinates(Total_df_SAR[1:1000,]))
-        HowLongdidIttake <- Sys.time()-Starttime 
-        HowLongdidIttake
-        
-        PredictorVariables_SAR <- colnames(subset(Total_df, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, geometry, Areas)))
-        Formula_SAR <- formula(paste("nominal_price ~", 
-                                     paste(PredictorVariables_SAR, collapse=" + ")))
-        Formula_SAR <- formula(nominal_price ~ forest_distance, coastline_distance)
-        
-        SAR_listwW <- spdep::nb2listw(Neighbor, style = "W")
-        SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_SAR_ds[1:1000,], 
-                                        listw = SAR_listwW, method = "LU")
-        SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_GWR)
-        summary(SAR_Lag)
-        
-        install.packages("unix") 
-        library(unix)
-        rlimit_as(1e12)  #increases to ~12GB
-        rlimit_all()
-
-        # Load necessary libraries
-        library(spatialreg)
-        library(parallel)
-        
-        Total_df_SAR_ds <- Total_df_SAR_ds[1:100000,]
-        # Define a function to fit lagsarlm to each subset
-        fit_lagsarlm <- function(subset) {
-          lagsarlm(Formula_SAR, data = Total_df_SAR_ds, listw = SAR_listwW)
-        }
-        
-
         
     ## XGBoosting ----
         # packages: xgboost and caret 
         # Remove attributes from df
-        Total_df_XG <- Total_df
-        one_entry <- function(x) {
-          for (i in length(x)) attr(x[[i]], "names") <- NULL
-          return(x)
-        }
-        Total_df_XG <- lapply(Total_df_XG, FUN=one_entry)
-        Total_df_XG$Coor <- sf::st_as_text(Total_df_XG$Coor)
-        TEST <- matrix(ncol = length(Total_df_XG), nrow = length(Total_df_XG[[1]]))
+                      
+                      ### Train ----
+                        train_set_1_xg <- train_set_1
+                        one_entry <- function(x) {
+                          for (i in length(x)) attr(x[[i]], "names") <- NULL
+                          return(x)
+                        }
+                        train_set_1_xg <- lapply(train_set_1_xg, FUN=one_entry)
+                        train_set_1_xg$Coor <- sf::st_as_text(train_set_1_xg$Coor)
+                        TEST <- matrix(ncol = length(train_set_1_xg), nrow = length(train_set_1_xg[[1]]))
+                        
+                        for (i in seq_along(train_set_1_xg)) {
+                          TEST[, i] <- train_set_1_xg[[i]]
+                          print(i)
+                        }
+                        DF <- TEST
+                        rm(TEST)
+                        colnames(DF) <- names(train_set_1_xg)
+                        
+                        # Delete character variables to change to numeric matrix 
+                        train_set_1_xg <- DF
+                        rm(DF)
+                        train_set_1_xg <- subset(train_set_1_xg, select = -c(addressID, enhed_id, Coor))
+                        train_set_1_xg <- as.data.frame(train_set_1_xg)
+                        
+                        # Change to numeric
+                        library(dplyr)
+                        train_set_1_xg <- train_set_1_xg %>% mutate_if(is.character, as.numeric)
+                        
+                        train_set_1_xg$Areas <- as.factor(train_set_1_xg$Areas)
+                        train_set_1_xg$Built <- as.factor(train_set_1_xg$Built)
+                        train_set_1_xg$Renovated <- as.factor(train_set_1_xg$Renovated)
+                        train_set_1_xg$BMaterial <- as.factor(train_set_1_xg$BMaterial)
+                        train_set_1_xg$Roof <- as.factor(train_set_1_xg$Roof)
+                        train_set_1_xg$Heating <- as.factor(train_set_1_xg$Heating)
+                        
+                        ### Test ----
+                        test_set_1_xg <- test_set_1
+                        one_entry <- function(x) {
+                          for (i in length(x)) attr(x[[i]], "names") <- NULL
+                          return(x)
+                        }
+                        test_set_1_xg <- lapply(test_set_1_xg, FUN=one_entry)
+                        test_set_1_xg$Coor <- sf::st_as_text(test_set_1_xg$Coor)
+                        TEST <- matrix(ncol = length(test_set_1_xg), nrow = length(test_set_1_xg[[1]]))
+                        
+                        for (i in seq_along(test_set_1_xg)) {
+                          TEST[, i] <- test_set_1_xg[[i]]
+                          print(i)
+                        }
+                        DF <- TEST
+                        rm(TEST)
+                        colnames(DF) <- names(test_set_1_xg)
+                        
+                        # Delete character variables to change to numeric matrix 
+                        test_set_1_xg <- DF
+                        rm(DF)
+                        test_set_1_xg <- subset(test_set_1_xg, select = -c(addressID, enhed_id, Coor))
+                        test_set_1_xg <- as.data.frame(test_set_1_xg)
+                        
+                        # Change to numeric
+                        library(dplyr)
+                        test_set_1_xg <- test_set_1_xg %>% mutate_if(is.character, as.numeric)
+                        
+                        test_set_1_xg$Areas <- as.factor(test_set_1_xg$Areas)
+                        test_set_1_xg$Built <- as.factor(test_set_1_xg$Built)
+                        test_set_1_xg$Renovated <- as.factor(test_set_1_xg$Renovated)
+                        test_set_1_xg$BMaterial <- as.factor(test_set_1_xg$BMaterial)
+                        test_set_1_xg$Roof <- as.factor(test_set_1_xg$Roof)
+                        test_set_1_xg$Heating <- as.factor(test_set_1_xg$Heating)
         
-        for (i in seq_along(Total_df_XG)) {
-          TEST[, i] <- Total_df_XG[[i]]
-          print(i)
-        }
-        DF <- TEST
-        rm(TEST)
-        colnames(DF) <- names(Total_df_XG)
+                        
+        # Run model ----                
+        # Define predictors 
+        PredictorVariables_Areas <- colnames(subset(train_set_1_xg, select = - c(nominal_price, sales_price, rowname, postnr, 
+                                                                     Hændelsesdato, Dato, Lag_price, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5)))
+        PredictorVariables_Lag_price <- colnames(subset(train_set_1_xg, select = - c(nominal_price, sales_price, rowname, postnr, 
+                                                                                 Hændelsesdato, Dato, Areas, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5)))
         
-        # Delete character variables to change to numeric matrix 
-        Total_df_XG <- DF
-        rm(DF)
-        Total_df_XG <- subset(Total_df_XG, select = -c(addressID, enhed_id, Coor))
-        Total_df_XG <- as.data.frame(Total_df_XG)
+        train_x = data.matrix(train_set_1_xg[, PredictorVariables_Areas]) # for one with areas
+        train_x = data.matrix(train_set_1_xg[, PredictorVariables_Lag_price]) # for one with lag price
+        train_y = train_set_1_xg[,"sales_price"]
         
-        # Change to numeric
-        library(dplyr)
-        Total_df_XG <- Total_df_XG %>% mutate_if(is.character, as.numeric)
+        # For test set 
+        test_x = data.matrix(test_set_1_xg[, PredictorVariables_Areas])
+        test_y = test_set_1_xg[,"sales_price"]
+        
+        # Define training and test sets 
+        xgb_train = xgb.DMatrix(data = train_x, label = train_y)
+        xgb_test = xgb.DMatrix(data = test_x, label = test_y)
+        
+        # Watchlist that evaluates the performance 
+        watchlist = list(train=xgb_train, test=xgb_test)
+        
+        # Fit model 
+        model_6 <-  xgb.train(data = xgb_train, max.depth = 6, watchlist=watchlist, nrounds = 10) #
+        model_26_Area <-  xgb.train(data = xgb_train, max.depth = 26, watchlist=watchlist, nrounds = 500) # 59902.649660
+        model_26_Lagprice <-  xgb.train(data = xgb_train, max.depth = 26, watchlist=watchlist, nrounds = 500) # 59902.649660
+
+      
+        # Importance matrix 
+        importance_matrix <- xgb.importance(
+          feature_names = colnames(xgb_train), 
+          model = model_26_Lagprice
+        )
+        importance_matrix
+        xgb.plot.importance(importance_matrix)
+        
+        
         
         
         save(Total_df_XG, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Total_df_XG.Rdata")
@@ -338,22 +371,7 @@ rm(Total_df_18_v2)
         train = Total_df_XG[parts, ]
         test = Total_df_XG[-parts, ]
         
-        # Define predictor and response variable
-        PredictorVariables_XG <- colnames(subset(Total_df_XG, select = - c(nominal_price, lag_price, Areas)))
-        train_x = data.matrix(train[, PredictorVariables_XG])
-        train_y = train[,"nominal_price"]
-        
-        # For test set 
-        PredictorVariables_XG <- colnames(subset(Total_df_XG, select = - c(nominal_price, lag_price, Areas)))
-        test_x = data.matrix(test[, PredictorVariables_XG])
-        test_y = test[,"nominal_price"]
-        
-        # Define training and test sets 
-        xgb_train = xgb.DMatrix(data = train_x, label = train_y)
-        xgb_test = xgb.DMatrix(data = test_x, label = test_y)
-        
-        xgb_train = xgb.DMatrix(data = train_x, label = train_y)
-        xgb_test = xgb.DMatrix(data = test_x, label = test_y)
+
         
         watchlist = list(train=xgb_train, test=xgb_test)
         
@@ -571,3 +589,119 @@ summary(boost.boston)
   importance_matrix
   
   xgb.plot.importance(importance_matrix)
+  
+  
+  
+      # DO DELETE ----
+        # SAR 
+                # Model not working because multicollinearity
+                test <- subset(train_set_1_dataframe, select = c(railway_distance, Trainstation_distance))
+                det(cov(test)) # No problem 
+                
+                # Use multicoll to detect 
+                test <- train_set_1_dataframe[sapply(train_set_1_dataframe, is.numeric)]
+                # add interaction terms 
+                multiCol(test)
+                
+                
+                det(cov(test))
+                plm::detect.lindep(test)
+                
+                
+                cov <- cov(subset(train_set_1_dataframe, 
+                                  select = - c(addressID, postnr, enhed_id, Lag_price, Areas))) #Cannot take cov of factor
+                result <- plm::detect.lindep(subset(train_set_1_dataframe, 
+                                                    select = - c(rowname, nominal_price, sales_price, addressID, enhed_id, Lag_price, Areas,
+                                                                 flooded, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato)))
+                
+                det(cov) # Large determinant no problem of changing
+                result <- plm::detect.lindep(subset(train_set_1_dataframe, 
+                                                    select = - c(nominal_price, postnr, addressID, enhed_id,
+                                                                 Areas, built_1970_1980, lag_price, Car_Grg, Trainstation)))
+                
+                
+                PredictorVariables <- colnames(subset(train_set_1_dataframe, 
+                                                      select = - c(nominal_price, postnr, addressID, enhed_id,
+                                                                   Areas, Car_Grg)))
+                
+                Formula <- formula(paste("sales_price ~", 
+                                         paste(PredictorVariables, collapse=" + ")))
+                Formula <- formula(nominal_price ~ m2 + Outbuilding + TerracedHouse + rooms + Udbetalt + flooded + forest_distance +
+                                     coastline_distance + powerline_distance + railway_distance + lake_distance + Trainstation_distance)
+                NA_DF <- subset(train_set_1_dataframe, is.na(train_set_1_dataframe$nominal_price))
+                
+                # Outbuilding, built_1950_1960
+                
+                
+                
+                
+                cov <- cov(train_set_1_TEST_Sub)
+                det(cov)
+                library(plm)
+                result <- plm::detect.lindep(train_set_1_TEST_Sub)
+                
+                PredictorVariables <- colnames(subset(Total_df, 
+                                                      select = - c(nominal_price, addressID, enhed_id, postnr,
+                                                                   Areas, built_1970_1980)))
+                Formula <- formula(paste("nominal_price ~", 
+                                         paste(PredictorVariables[1:44], collapse=" + ")))
+                Formula_SAR <- formula(nominal_price ~ m2)
+                Formula <- as.formula(paste("nominal_price ~", 
+                                            paste(c(PredictorVariables[1:19], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
+                
+                
+                SAR_DF <- spatialreg::spautolm(formula = Formula, data = train_set_1_df, 
+                                               listw = Neighbor_train_weight, method = "Matrix_J") # Took some hours, about 2
+                Time <- Sys.time()
+                SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_df,
+                                               listw = Neighbor_train_weight, method = "Matrix_J", interval = c(-1, 1))
+                # Try with LU
+                # SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_df,
+                #           listw = Neighbor_train_weight, method = "LU", interval = c(-1, 1))
+                Stoptime <- Sys.time() - Time
+                
+                # Matrix 
+                mat <- as.matrix(subset(train_set_1_df, select = PredictorVariables))
+                
+                lm_SPAUTO <- stats::lm(formula = Formula, train_set_1_df)
+                
+                Total_df_SAR <- Total_df
+                Total_df_SAR_ds <- Total_df_SAR %>%
+                  distinct(geometry, .keep_all = TRUE)
+                Total_df_SAR_ds <- sf::st_as_sf(Total_df_SAR_ds)
+                Total_df_SAR_ds <- as(Total_df_SAR_ds, "Spatial")
+                Neighbor <- spdep::tri2nb(coordinates(Total_df_SAR_ds[1:1000,]))
+                
+                Starttime <- Sys.time()
+                Neighbor <- spdep::knearneigh(coordinates(Total_df_SAR), longlat = TRUE)
+                Neighbor <- spdep::tri2nb(coordinates(Total_df_SAR[1:1000,]))
+                HowLongdidIttake <- Sys.time()-Starttime 
+                HowLongdidIttake
+                
+                PredictorVariables_SAR <- colnames(subset(Total_df, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, geometry, Areas)))
+                Formula_SAR <- formula(paste("nominal_price ~", 
+                                             paste(PredictorVariables_SAR, collapse=" + ")))
+                Formula_SAR <- formula(nominal_price ~ forest_distance, coastline_distance)
+                
+                SAR_listwW <- spdep::nb2listw(Neighbor, style = "W")
+                SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_SAR_ds[1:1000,], 
+                                                listw = SAR_listwW, method = "LU")
+                SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_GWR)
+                summary(SAR_Lag)
+                
+                install.packages("unix") 
+                library(unix)
+                rlimit_as(1e12)  #increases to ~12GB
+                rlimit_all()
+                
+                # Load necessary libraries
+                library(spatialreg)
+                library(parallel)
+                
+                Total_df_SAR_ds <- Total_df_SAR_ds[1:100000,]
+                # Define a function to fit lagsarlm to each subset
+                fit_lagsarlm <- function(subset) {
+                  lagsarlm(Formula_SAR, data = Total_df_SAR_ds, listw = SAR_listwW)
+                }
+                
+  
