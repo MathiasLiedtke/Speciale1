@@ -92,8 +92,17 @@ rm(Total_df_18_v2)
         Neighbor_train_weight <- spdep::nb2listw(Neighbor_train)
         Neighbor_train_weight # summary of weights
         # Global Moran 
-        Moran <- spdep::moran.test(train_set_1_df$nmnl_pr, listw = Neighbor_train_weight)
+            # Test for normality 
+            data <- train_set_1$sales_price
+            qqnorm(data, main = 'Q-Q Plot for Normality', xlab = 'Theoretical Dist',
+                   ylab = 'Sample dist', col = 'steelblue')
+            qqline(data, col = 'red', lwd = 2, lty = 2)
+            
+        Moran <- spdep::moran.test(train_set_1$sales_price, listw = Neighbor_train_weight)
+        Geary <- spdep::geary.test(train_set_1$sales_price, Neighbor_train_weight)
+        
         lmtest::bptest(train_set_1_df)
+        
         # Spatial autocorrelation in model, correct with heteroscedasticity. Applied spatial data analysis with R, P. 275- 
         PredictorVariables <- colnames(subset(Total_df, select = - c(nominal_price, addressID, enhed_id, postnr, 
                                                                         geometry, Areas, lag_price)))
@@ -132,10 +141,38 @@ rm(Total_df_18_v2)
         # train_set_1 
         PredictorVariables <- colnames(subset(Total_df, 
                                   select = - c(rowname, nominal_price, sales_price, addressID, enhed_id, 
-                                  flooded, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, Coor)))
+                                  flooded, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, Coor, Lag_price)))
         Formula <- as.formula(paste("sales_price ~", 
-                                    paste(c(PredictorVariables[1:21], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
+                                    paste(c(PredictorVariables[1:20], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
         lm_areas <- stats::lm(formula = Formula, train_set_1)
+        summary <- summary(lm_areas)[["coefficients"]]
+        
+        # Input the coefficients and t value + Probability significance into table 
+        Area_coef <- summary[16:91,]
+        summary <- summary[-(16:91),]
+        summary <- summary[-(39:43),]
+        
+        Predictor_rows <- c("Intercept", "Height", "# m2", "Outbuilding", "Terraced house", "# Rooms", "Forest Distance", 
+                            "Coastline Distance", "Powerline Distance", "Railway Distance", "Lake Distance", "Trainstation Distance", 
+                            "Wateryarea distance", "Udbetaling", "Car/Garage", "Built 1940-1950", "Built 1950-1960", "Built 1960-1970",
+                            "Built 1970-1980", "Built 1980-1990", "Built 1990-2000", "Built 2000-2010", "Built after 2010",
+                            "Renovated 1940-1950", "Renovated 1950-1960", "Renovated 1960-1970", "Renovated 1970-1980", "Renovated 1980-1990", 
+                            "District Heating", "Central Heating", "Electric Heating", "Tile", "Thatch", "Fibercement", "Brick", "Wood", 
+                            "Concrete", "Flooded", "f·SA_EV1", "f·SA_EV2", "f·SA_EV3", "f·SA_EV4", "f·SA_EV5")
+        
+        rownames(summary) <- Predictor_rows
+        summary <- as.data.frame(summary)
+        summary$Predictor <- rownames(summary)
+        summary <- summary[,-2]
+        summary <- summary[, c(4, 1:3)] 
+        lm_coef <- gt::gt(summary) %>%
+                      gt::fmt_number(
+                      columns = c("Estimate", "t value", "Pr(>|t|)"), 
+                      decimals = 4 
+                      )
+        
+        #test spatial auto correlation again 
+        moran_lm_area <- spdep::moran.test(lm_areas$fitted.values, listw = Neighbor_train_weight)
         
         # Is this treated completely right? Do i need to test something og adjust standard errors. 
         
