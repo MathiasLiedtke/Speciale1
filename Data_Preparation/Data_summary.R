@@ -460,74 +460,93 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
       write.csv(Total_df_18_v2_df, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Deskrivtive/Data.csv", row.names = TRUE)
       write.csv(summary_statistics, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Deskrivtive/summary_statistics.csv", row.names = TRUE)
       
-      Data_Descriptives <- read_excel("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Deskrivtive/Data_Descriptives.xlsx")
+      Data_Descriptives <- readxl::read_excel("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Deskrivtive/Data_Descriptives.xlsx")
       
-      Density_Height <- density(Data_Descriptives$Height)
+
       x <- seq(1, 512)
+
+      
+      Densities <- matrix(data = NA, nrow = length(x), ncol = 14)
+      colnames <- c("Height", "m2", "price", "Outbuilding", "rooms", "forest_d", "coast_dist", 
+                    "powerline", "railway", "lake", "train", "watery", "sales", "udbeta")
+      colnames(Densities) <- colnames
+      
+      Density_Height <- density(Total_df_18_v2$Height)
       df <- data.frame(x = x, Density1 = Density_Height$y)
-      
-      Densities <- matrix(data = NA, nrow = length(x), ncol = ncol(Data_Descriptives))
-      colnames(Densities) <- colnames(Data_Descriptives)
-      colnames <- colnames(Densities)
-      
       Densities[,1] <- df[,2]
       
-      Density_m2 <- density(Data_Descriptives$m2)
+      Density_m2 <- density(Total_df_18_v2$m2)
       df <- data.frame(x = x, Density1 = Density_m2$y)
       Densities[,2] <- df[,2]
       
-      Density_nominal_price <- density(Data_Descriptives$nominal_price)
+      Density_nominal_price <- density(Total_df_18_v2$nominal_price)
       df <- data.frame(x = x, Density1 = Density_nominal_price$y)
       Densities[,3] <- df[,2]
       
-      Density_Outbuilding <- density(Data_Descriptives$Outbuilding)
+      Density_Outbuilding <- density(Total_df_18_v2$Outbuilding)
       df <- data.frame(x = x, Density1 = Density_Outbuilding$y)
       Densities[,4] <- df[,2]
       
-      Density_rooms <- density(Data_Descriptives$rooms)
+      Density_rooms <- density(Total_df_18_v2$rooms)
       df <- data.frame(x = x, Density1 = Density_rooms$y)
       Densities[,5] <- df[,2]
       
-      Density_forest_distance <- density(Data_Descriptives$forest_distance)
+      Density_forest_distance <- density(Total_df_18_v2$forest_distance)
       df <- data.frame(x = x, Density1 = Density_forest_distance$y)
+      Densities[,6] <- df[,2]
+      
+      Density_coastline_distance <- density(Total_df_18_v2$coastline_distance)
+      df <- data.frame(x = x, Density1 = Density_coastline_distance$y)
+      Densities[,7] <- df[,2]
+      
+      Density_powerline_distance <- density(Total_df_18_v2$powerline_distance)
+      df <- data.frame(x = x, Density1 = Density_powerline_distance$y)
       Densities[,8] <- df[,2]
       
-      Density_coastline_distance <- density(Data_Descriptives$coastline_distance)
-      df <- data.frame(x = x, Density1 = Density_coastline_distance$y)
+      Density_railway_distance <- density(Total_df_18_v2$railway_distance)
+      df <- data.frame(x = x, Density1 = Density_railway_distance$y)
       Densities[,9] <- df[,2]
       
-      Density_powerline_distance <- density(Data_Descriptives$powerline_distance)
-      df <- data.frame(x = x, Density1 = Density_powerline_distance$y)
+      Density_lake_distance <- density(Total_df_18_v2$lake_distance)
+      df <- data.frame(x = x, Density1 = Density_lake_distance$y)
       Densities[,10] <- df[,2]
       
-      Density_railway_distance <- density(Data_Descriptives$railway_distance)
-      df <- data.frame(x = x, Density1 = Density_railway_distance$y)
+      Density_Trainstation_distance <- density(Total_df_18_v2$Trainstation_distance)
+      df <- data.frame(x = x, Density1 = Density_Trainstation_distance$y)
       Densities[,11] <- df[,2]
       
-      Density_lake_distance <- density(Data_Descriptives$lake_distance)
-      df <- data.frame(x = x, Density1 = Density_lake_distance$y)
+      Density_Wateryarea_distance <- density(Total_df_18_v2$Wateryarea_distance)
+      df <- data.frame(x = x, Density1 = Density_Wateryarea_distance$y)
       Densities[,12] <- df[,2]
       
-      Density_Trainstation_distance <- density(Data_Descriptives$Trainstation_distance)
-      df <- data.frame(x = x, Density1 = Density_Trainstation_distance$y)
+      Density_sales_price <- density(Total_df_18_v2$sales_price)
+      df <- data.frame(x = x, Density1 = Density_sales_price$y)
       Densities[,13] <- df[,2]
       
-      Density_Wateryarea_distance <- density(Data_Descriptives$Wateryarea_distance)
-      df <- data.frame(x = x, Density1 = Density_Wateryarea_distance$y)
+      Density_Udbetaling <- density(subset$Udbetaling)
+      df <- data.frame(x = x, Density1 = Density_Udbetaling$y)
       Densities[,14] <- df[,2]
       
-      Density_sales_price <- density(Data_Descriptives$sales_price)
-      df <- data.frame(x = x, Density1 = Density_sales_price$y)
-      Densities[,15] <- df[,2]
-      
-      Density_Udbetaling <- density(Data_Descriptives$Udbetaling)
-      df <- data.frame(x = x, Density1 = Density_Udbetaling$y)
-      Densities[,15] <- df[,2]
-      
-      
+      Densities <- Densities[1:200,]
+
       write.csv(Densities, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Deskrivtive/Densities.csv", row.names = TRUE)
 
+      # Density for only flooded 
+      Total_df_18_v2_df <- sf::st_drop_geometry(Total_df_18_v2)
+      subset <- subset(Total_df_18_v2, flooded == 1)
+      mean(subset$Udbetaling)
+      Density_UDB <- density(subset$Udbetaling)
+      plot(Density_UDB)
       
+      x <- seq(1, 512)
+      df <- data.frame(x = x, Density1 = Density_UDB$y)
+      df <- df[1:200,]
+      plot(df)
+      
+      median(subset$Udbetaling)
+      mean(subset$Udbetaling)
+      quantile(subset$Udbetaling, 0.75)
+      min(subset$Udbetaling)
       
       
       # Map of Denmark with different sales prices. 
@@ -659,6 +678,11 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
                   title = "Mean Price",
                   opacity = 1)
       
+      
+      
+      
+      
+      # Plot for coefficients for linear regression with market area
       
       
       
