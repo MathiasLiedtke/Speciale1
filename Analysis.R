@@ -165,6 +165,9 @@ rm(Total_df_18_v2)
         summary$Predictor <- rownames(summary)
         summary <- summary[,-2]
         summary <- summary[, c(4, 1:3)] 
+        gt_table1 <- gt(summary[1:(nrow(summary)/2),]) %>% as_raw_html()
+        gt_table2 <- gt(summary[(nrow(summary)/2):nrow(summary),]) %>% as_raw_html()
+
         lm_coef <- gt::gt(summary) %>%
                       gt::fmt_number(
                       columns = c("Estimate", "t value", "Pr(>|t|)"), 
