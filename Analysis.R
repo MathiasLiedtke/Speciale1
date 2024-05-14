@@ -254,16 +254,15 @@ train_set_1_dataframe <- sf::st_drop_geometry(train_set_1)
 
 # Predictors
 PredictorVariables <- colnames(subset(Total_df, 
-                                      select = - c(rowname, nominal_price, sales_price, addressID, enhed_id, Lag_price, Areas,
-                                                   flooded, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, Coor, Trainstation_distance)))
+                      select = - c(rowname, nominal_price, sales_price, addressID, 
+                                   enhed_id, Lag_price, Areas, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, 
+                                   postnr, Dato, Hændelsesdato, Coor)))
 
 # Formula 
 Formula <- as.formula(paste("sales_price ~", 
-                            paste(c(PredictorVariables[1:18], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
-Formula <- as.formula(sales_price ~ BMaterial + Built + Heating + Height + m2 + Outbuilding + TerracedHouse + rooms +
-                        forest_distance)
-train_set_1_dataframe$sales_price <- train_set_1_dataframe$sales_price*1000000
+                            paste(c(PredictorVariables[1:20], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
 train_set_1_dataframe$sales_price <- log(train_set_1_dataframe$sales_price)
+train_set_1_dataframe$sales_price <- exp(train_set_1_dataframe$sales_price)
 
 # Outbuilding, built
 
@@ -274,12 +273,21 @@ train_set_1_dataframe$sales_price <- log(train_set_1_dataframe$sales_price)
 
 # Model
 Time <- Sys.time()
-SAR_DF_log <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
-                                   listw = Neighbor_train_weight, method = "LU", zero.policy = TRUE)
+SAR_DF_log_tol_14 <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
+                                   listw = Neighbor_train_weight, method = "LU", zero.policy = TRUE, tol = 1e-14)
 Stoptime <- Sys.time() - Time  # 1.346548 hours
 
-SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
-                               listw = Neighbor_train_weight, method = "Matrix_J", zero.policy = TRUE, tol.solve = 1e-12)
+# some missing Standard errors 
+fd_hess <- SAR_DF_log[["fdHess"]]
+var_hess <- solve(fd_hess)
+se <- sqrt(diag(var_hess))
+
+
+
+
+Formula <- as.formula(sales_price ~ flooded*SA_EV5)
+SAR_DF_log_1 <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
+                                   listw = Neighbor_train_weight, method = "LU", zero.policy = TRUE)
 
 
 

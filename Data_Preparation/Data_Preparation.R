@@ -2077,11 +2077,45 @@ library(ggmap)
     # Prerequisite for neighbors is to have distinct coordinates 
         # Change sfc multipoint to point
         Total_df_17_v2$Coor <- sf::st_cast(Total_df_17_v2$Coor, "POINT")
-        
-    Total_df_17_v2 <- Total_df_17_v2 %>%
-      dplyr::distinct(Coor, .keep_all = TRUE) 
     
-    save(Total_df_17_v2, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17_v2.Rdata")
+        # Recreate variable of precitipation and flooding from sea level
+        # There should be no problem with the mapping, as the existing observations in the main df are mapped from before, this is just to identify if event is precitipation or flooding
+        # Precitipation (enhedid)
+        load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Precipitation_subset.Rdata")
+        # Keep only observation with !NA in paid out
+        Precipitation_subset <- Precipitation_subset[!is.na(Precipitation_subset$total_payout),]
+        Precipitation_subset <- subset(Precipitation_subset, flooded == 1)
+        # Flooding (addressid)
+        load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Skader_Subset.Rdata")
+        # Keep only observation with !NA in paid out
+        Skader_subset <- Skader_subset[!is.na(Skader_subset$`Tidligere udbetalt byg/løs/afgrd`),]
+        # 18005 observations - keep only distinct 
+        Skader_subset <- unique(subset(Skader_subset, select = - dato))
+        # 13552 obs left 
+        
+        # See overlap 
+        Total_df_17_v2$in_both <- Total_df_17_v2$enhed_id %in% Precipitation_subset$Enhed_id
+        Total_df_17_v2$in_both_skader <- Total_df_17_v2$addressID %in% Skader_subset$adresseIdentificerer
+        
+        # Subset the df to keep valuable observations with payout and bind them by rows. 
+        Total_df_17_v2_Skader <- Total_df_17_v2[Total_df_17_v2$Udbetaling != 0,]
+        Total_df_17_v2_MinusSkader <- Total_df_17_v2[Total_df_17_v2$Udbetaling == 0,]
+                
+        # Keep unique observations for each data set
+        Total_df_17_v2_Skader <- Total_df_17_v2_Skader %>%
+              dplyr::distinct(Coor, .keep_all = TRUE) 
+        
+        Total_df_17_v2_MinusSkader <- Total_df_17_v2_MinusSkader %>%
+          dplyr::distinct(Coor, .keep_all = TRUE)
+        
+        # bind rows 
+        Total_df_17_v2 <- rbind(Total_df_17_v2_Skader, Total_df_17_v2_MinusSkader)
+          # Take distinct values
+        Total_df_17_v2 <- Total_df_17_v2 %>% 
+          dplyr::distinct(Coor, .keep_all = TRUE)
+        
+    
+    save(Total_17_v2_unique, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17_v2.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17_v2.Rdata")
     
     summary_17 <- as.data.frame(summary(Total_df_17_v2))
@@ -2369,7 +2403,9 @@ library(ggmap)
     save(Total_df_19, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_19.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_19.Rdata")
     
+
     
+            
     
     
     plot(Total_df_15$nominal_price)
