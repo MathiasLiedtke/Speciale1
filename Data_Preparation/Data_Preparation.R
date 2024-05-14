@@ -2115,7 +2115,7 @@ library(ggmap)
           dplyr::distinct(Coor, .keep_all = TRUE)
         
     
-    save(Total_17_v2_unique, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17_v2.Rdata")
+    save(Total_df_17_v2, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17_v2.Rdata")
     load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_17_v2.Rdata")
     
     summary_17 <- as.data.frame(summary(Total_df_17_v2))
@@ -2151,14 +2151,15 @@ library(ggmap)
     
   
   # Make lag price of neighbors 
-    coords <- st_coordinates(Total_df_18_v2)
-    Neighbor <- spdep::tri2nb(coords = coords)
+    coords <- sf::st_coordinates(Total_df_18_v2)
+    Neighbor <- spdep::tri2nb(coords = coords) 
+    save(Neighbor, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_Total_df_18_v2.Rdata")
     
     
     #Define nb object 
     neighbor_list <- spdep::nb2listw(Neighbor)
     # Add lagged variable to xg boosting and GWR 
-    Total_df_18_v2$Lag_price <- spdep::lag.listw(neighbor_list, Total_df_18_v2$nominal_price)
+    Total_df_18_v2$Lag_price <- spdep::lag.listw(neighbor_list, Total_df_18_v2$sales_price)
     lagged_price <- lag.listw(listw, price_vector)
     
     save(Total_df_18_v2, file = "~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18_v2.Rdata")
@@ -2171,12 +2172,21 @@ library(ggmap)
     Flooded$Coor <- sf::st_transform(Flooded$Coor, crs = "EPSG:4326") # Change crs to same as map of Denmark 
     Flooded$lon <- sf::st_coordinates(Flooded$Coor)[,1]
     Flooded$lat <- sf::st_coordinates(Flooded$Coor)[,2]
+    # Precipitation
+    Precipitation <- subset(subset(Total_df_18_v2, select = c(Coor, in_both)), in_both == 1)
+    Precipitation$Coor <- sf::st_transform(Precipitation$Coor, crs = "EPSG:4326") # Change crs to same as map of Denmark 
+    Precipitation$lon <- sf::st_coordinates(Precipitation$Coor)[,1]
+    Precipitation$lat <- sf::st_coordinates(Precipitation$Coor)[,2]
+    # Flood
+    Flooding <- subset(subset(Total_df_18_v2, select = c(Coor, in_both_skader)), in_both_skader == 1)
+    Flooding$Coor <- sf::st_transform(Flooding$Coor, crs = "EPSG:4326") # Change crs to same as map of Denmark 
+    Flooding$lon <- sf::st_coordinates(Flooding$Coor)[,1]
+    Flooding$lat <- sf::st_coordinates(Flooding$Coor)[,2]
+    
     Not_flooded <- subset(subset(Total_df_18_v2, select = c(Coor, flooded)), flooded != 1)
     Flooded$Coor <- sf::st_transform(Flooded$Coor, crs = "EPSG:4326") # Change crs to same as map of Denmark
     Not_flooded$lon <- sf::st_coordinates(Not_flooded$Coor)[,1]
     Not_flooded$lat <- sf::st_coordinates(Not_flooded$Coor)[,2]
-    
-    plot(Flooded)
     
     # Retrive map from dataforsyningen. 
     library(leaflet)
@@ -2199,6 +2209,35 @@ library(ggmap)
         color = "red",  # All houses are flooded
         fillOpacity = 1,
         radius = 0.1)
+    
+    # Precitipation
+    m <- leaflet(data = Precipitation) %>%
+      setView(lng = 12.6, lat = 55.7, zoom = 6) %>% 
+      addWMSTiles(
+        baseUrl = url,
+        layers = "dtk_skaermkort",
+        options = WMSTileOptions(format = "image/png", transparent = TRUE, opacity = 0.90)) %>%
+      addCircleMarkers(
+        lng = ~lon,
+        lat = ~lat,
+        color = "red",  # All houses are flooded
+        fillOpacity = 1,
+        radius = 0.1)
+  
+    # flooded
+    m <- leaflet(data = Flooding) %>%
+      setView(lng = 12.6, lat = 55.7, zoom = 6) %>% 
+      addWMSTiles(
+        baseUrl = url,
+        layers = "dtk_skaermkort",
+        options = WMSTileOptions(format = "image/png", transparent = TRUE, opacity = 0.90)) %>%
+      addCircleMarkers(
+        lng = ~lon,
+        lat = ~lat,
+        color = "red",  # All houses are flooded
+        fillOpacity = 1,
+        radius = 0.1)
+    
 
     # Not flooded
     m <- leaflet(data = Flooded) %>%
