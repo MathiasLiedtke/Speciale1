@@ -17,13 +17,17 @@ library(tree) # visualize trees
 library(dplyr) # for practical functions
 library(lmtest) # test for heteroscedasticity
 
+------------------------------------------------------------------------
+
+# Load in data ----
+
 load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Raw Data/Toke/Total_df_18_v2.Rdata")
 
 Total_df <-  Total_df_18_v2
 Total_df <- subset(Total_df, select = - `Tidligere udbetalt byg/løs/afgrd`)
 Total_df$sales_price <- log(Total_df$sales_price)
 rm(Total_df_18_v2)
-
+------------------------------------------------------------------------
 
 
 # Partition of training and data set ----
@@ -46,12 +50,312 @@ train_set_2 <- Total_df[train_seq_2, , drop = FALSE]
 ## Test 2
 test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
 
+------------------------------------------------------------------------
 
 # Preliminary analysis ----
-## Test for spatial autocorrelation ----
-### First part ----
+    ## Test for spatial autocorrelation ----
+        ### Train Set 1  ----
+        T1 <- Sys.time()
+        train_set_1 <- sf::st_as_sf(train_set_1)
+        train_set_1 <- as(train_set_1, "Spatial")
+        points_train_1 <- sp::coordinates(train_set_1)
+        Neighbor_train1 <- spdep::tri2nb(points_train_1)  #When calculate neighbor
+        T2 <- Sys.time() - T1 # 20 min
+        save(Neighbor_train1, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1.Rdata")
+        load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1.Rdata")
+
+        ### Train Set 2 ----
+        T3 <- Sys.time()
+        train_set_2 <- sf::st_as_sf(train_set_2)
+        train_set_2 <- as(train_set_2, "Spatial")
+        points_train_2 <- sp::coordinates(train_set_2)
+        Neighbor_train2 <- spdep::tri2nb(points_train_2)  #When calculate neighbor
+        T4 <- Sys.time() - T1 # 20 min
+        save(Neighbor_train2, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2.Rdata")
+        # load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2.Rdata")
+        
+        
+        ### Test Set 1  ----
+        T5 <- Sys.time()
+        test_set_1 <- sf::st_as_sf(test_set_1)
+        test_set_1 <- as(test_set_1, "Spatial")
+        points_test_1 <- sp::coordinates(test_set_1)
+        Neighbor_test1 <- spdep::tri2nb(points_test_1)  #When calculate neighbor
+        T6 <- Sys.time() - T1 # 20 min
+        save(Neighbor_test1, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1.Rdata")
+        # load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1.Rdata")
+        
+        ### Test Set 2 ----
+        T7 <- Sys.time()
+        test_set_2 <- sf::st_as_sf(test_set_2)
+        test_set_2 <- as(test_set_2, "Spatial")
+        points_test_2 <- sp::coordinates(test_set_2)
+        Neighbor_test2 <- spdep::tri2nb(points_test_2)  #When calculate neighbor
+        T8 <- Sys.time() - T1 # 20 min
+        save(Neighbor_test2, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2.Rdata")
+        # load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2.Rdata")
+        
+        ### Moran and geary test ----
+            #### Neighbor_train1 ----
+                # Test for normality
+                data <- train_set_1$sales_price
+                qqnorm(data, main = 'Q-Q Plot for Normality', xlab = 'Theoretical Dist',
+                       ylab = 'Sample dist', col = 'steelblue')
+                qqline(data, col = 'red', lwd = 2, lty = 2)
+                  
+                # Seems fairly normal in distribution, continue to tests 
+                Neighbor_train1_weight <- spdep::nb2listw(Neighbor_train1) # Define nb2listw object 
+                Moran <- spdep::moran.test(train_set_1$sales_price, listw = Neighbor_train1_weight)
+                Geary <- spdep::geary.test(train_set_1$sales_price, Neighbor_train1_weight)    
+                # Sign of auto-correlation 
+                # Test for normality
+            #### Neighbor_train2 ----
+                data <- train_set_2$sales_price
+                qqnorm(data, main = 'Q-Q Plot for Normality', xlab = 'Theoretical Dist',
+                       ylab = 'Sample dist', col = 'steelblue')
+                qqline(data, col = 'red', lwd = 2, lty = 2)
+                
+                # Seems fairly normal in distribution, continue to tests 
+                Neighbor_train2_weight <- spdep::nb2listw(Neighbor_train2) # Define nb2listw object 
+                Moran <- spdep::moran.test(train_set_1$sales_price, listw = Neighbor_train2_weight)
+                Geary <- spdep::geary.test(train_set_1$sales_price, Neighbor_train2_weight)    
+                # Sign of auto-correlation 
+
+# Analysis ----
+                
+    ## Regression ----  
+        ### Linear regression with zip codes ----
+            #### Train set 1 ----  
+                pred_lm <- colnames(subset(Total_df, 
+                                      select = - c(rowname, nominal_price, sales_price, 
+                                                   addressID, enhed_id, flooded, SA_EV1, 
+                                                   SA_EV2, SA_EV3, SA_EV4, SA_EV5, postnr, 
+                                                   Dato, Hændelsesdato, Coor, Lag_price))) #Variables to not include as predictors
+                
+                Formula <- as.formula(paste("sales_price ~", 
+                          paste(c(pred_lm[1:20], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
+                
+                lm_areas <- stats::lm(formula = Formula, train_set_1) # Estimate model
+                summary <- summary(lm_areas)[["coefficients"]]
+                      # See if heteroscedistic
+                      #create residual vs. fitted plot
+                      plot(fitted(fit), resid(fit))
+                      #add a horizontal line at y=0 
+                      abline(0,0)
+                      
+                      #For heteroscedasticty 
+                      library(lmtest)
+                      library(sandwich)
+                      #calculate robust standard errors for model coefficients
+                      coeftest(fit, vcov = vcovHC(fit, type = 'HC0'))
+                
+                                  
+                                  # This is for retrieving coefficients and statistics and put in table 
+                              
+                                  # Input the coefficients and t value + Probability significance into table 
+                                  Area_coef <- as.data.frame(summary[16:91,])
+                                  summary <- summary[-(16:91),]
+                                  summary <- summary[-(39:43),]
+                                  
+                                  Predictor_rows <- c("Intercept", "Height", "# m2", "Outbuilding", "Terraced house", "# Rooms", "Forest Distance", 
+                                                      "Coastline Distance", "Powerline Distance", "Railway Distance", "Lake Distance", "Trainstation Distance", 
+                                                      "Wateryarea distance", "Udbetaling", "Car/Garage", "Built 1940-1950", "Built 1950-1960", "Built 1960-1970",
+                                                      "Built 1970-1980", "Built 1980-1990", "Built 1990-2000", "Built 2000-2010", "Built after 2010",
+                                                      "Renovated 1940-1950", "Renovated 1950-1960", "Renovated 1960-1970", "Renovated 1970-1980", "Renovated 1980-1990", 
+                                                      "District Heating", "Central Heating", "Electric Heating", "Tile", "Thatch", "Fibercement", "Brick", "Wood", 
+                                                      "Concrete", "Flooded", "f·SA_EV1", "f·SA_EV2", "f·SA_EV3", "f·SA_EV4", "f·SA_EV5")
+                                  
+                                  rownames(summary) <- Predictor_rows
+                                  summary <- as.data.frame(summary)
+                                  summary$Predictor <- rownames(summary)
+                                  summary <- summary[,-2]
+                                  summary <- summary[, c(4, 1:3)] 
+                
+                
+                # Is this treated completely right? Do i need to test something og adjust standard errors. 
+                
+                
+                
+            #### Train set 2 ----
+                                  
+                                  
+        ### SAR ----
+            #### Train set 1 ----  
+            # I think the train set should be changed to a regular data frame. 
+            train_set_1_dataframe <- sf::st_drop_geometry(train_set_1) 
+            
+            # Predictors
+            pred_sar <- colnames(subset(Total_df, select = - c(rowname, 
+                                  nominal_price, sales_price, addressID, enhed_id, 
+                                  Lag_price, Areas, SA_EV1, SA_EV2, SA_EV3, SA_EV4, 
+                                  SA_EV5, postnr, Dato, Hændelsesdato, Coor)))
+            
+            # Formula 
+            Formula <- as.formula(paste("sales_price ~", 
+                      paste(c(pred_sar[1:20], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
+            
+            # Model Estimation
+            Time <- Sys.time()
+            SAR_DF_log_tol_14 <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
+                                                      listw = Neighbor_train_weight, method = "LU", zero.policy = TRUE)
+            Stoptime <- Sys.time() - Time  # 1.346548 hours
+            
+            # Look at standard errors again
+            
+            train_set_1_dataframe$sales_price <- log(train_set_1_dataframe$sales_price)
+            train_set_1_dataframe$sales_price <- exp(train_set_1_dataframe$sales_price)
+                                  
+                                  
+            #### Train set 2 ----
+        ### GWR ----
+            #### Train set 1 ----  
+            pred_GWR <- colnames(subset(Total_df, select = - c(rowname,
+                          nominal_price, sales_price, addressID, enhed_id, 
+                          Areas, Lag_price, flooded, SA_EV1, SA_EV2, SA_EV3, 
+                          SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, Coor)))
+            
+            Formula_GWR <- formula(paste("sales_price ~", 
+                          paste(c(pred_GWR[1:19],"flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
+            
+            coords <- sf::st_coordinates(train_set_1) # Retrive coordinates
+            train_set_1_data <- as(train_set_1_df, "data.frame")
+            train_set_1_df <- droplevels(train_set_1_df)
+            train_set_1_sp <- as(train_set_1, "Spatial")
+            train_set_1_sp$sales_price <- log(train_set_1_sp$sales_price)
+            train_set_1$sales_price <- log(train_set_1$sales_price)
+            
+            # For spgwr package 
+            Starttime_BW_spgwr <- Sys.time()
+            # bw <- spgwr::gwr.sel(formula = Formula_GWR, data = train_set_1_df, coords = coords, 
+            # RMSE=TRUE, adapt = TRUE)
+            bw = 0.999933893038648
+            # Took 10.2 days to run.
+            Endtime_BW_spgwr <- Sys.time()-Starttime_BW_spgwr
+            
+            # Use bandwidth to calculate gwr 
+            Startime.GWR <- Sys.time()
+            gwr.model <- spgwr::gwr(formula = Formula_GWR, coords = coords, data = train_set_1, bandwidth = bw)
+            Endtime_GWR <- Sys.time()-Startime.GWR
+            
+            #### Train set 2 ----       
+    
+    ## XGBoost ---- 
+        ## Train set + test  1 ----
+            ### Train set ----
+            # The data frame is not suitable as data for xgbosting, remove attributes from df
+            train_set_1_xg <- train_set_1 # make a new data frame 
+                # Function to remove attributes
+                one_entry <- function(x) {
+                  for (i in length(x)) attr(x[[i]], "names") <- NULL
+                  return(x)
+                }
+            train_set_1_xg <- lapply(train_set_1_xg, FUN=one_entry) 
+            train_set_1_xg$Coor <- sf::st_as_text(train_set_1_xg$Coor)
+            TEST <- matrix(ncol = length(train_set_1_xg), nrow = length(train_set_1_xg[[1]])) #define matrix that contains value
+            
+            # Print values into data frame without attributes
+                    for (i in seq_along(train_set_1_xg)) {
+                      TEST[, i] <- train_set_1_xg[[i]]
+                      print(i)
+                    }
+                    DF <- TEST # rename df 
+                    rm(TEST)
+                    colnames(DF) <- names(train_set_1_xg)
+            
+                    # Delete character variables to change to numeric matrix 
+                    train_set_1_xg <- DF
+                    rm(DF)
+                    train_set_1_xg <- subset(train_set_1_xg, select = -c(addressID, enhed_id, Coor))
+                    train_set_1_xg <- as.data.frame(train_set_1_xg)
+            
+                    # Change to numeric
+                    library(dplyr)
+                    train_set_1_xg <- train_set_1_xg %>% mutate_if(is.character, as.numeric)
+                    
+                    train_set_1_xg$Areas <- as.factor(train_set_1_xg$Areas)
+                    train_set_1_xg$Built <- as.factor(train_set_1_xg$Built)
+                    train_set_1_xg$Renovated <- as.factor(train_set_1_xg$Renovated)
+                    train_set_1_xg$BMaterial <- as.factor(train_set_1_xg$BMaterial)
+                    train_set_1_xg$Roof <- as.factor(train_set_1_xg$Roof)
+                    train_set_1_xg$Heating <- as.factor(train_set_1_xg$Heating)
+            
+            ### Test ----
+            test_set_1_xg <- test_set_1
+            one_entry <- function(x) {
+              for (i in length(x)) attr(x[[i]], "names") <- NULL
+              return(x)
+            }
+            test_set_1_xg <- lapply(test_set_1_xg, FUN=one_entry)
+            test_set_1_xg$Coor <- sf::st_as_text(test_set_1_xg$Coor)
+            TEST <- matrix(ncol = length(test_set_1_xg), nrow = length(test_set_1_xg[[1]]))
+            
+            for (i in seq_along(test_set_1_xg)) {
+              TEST[, i] <- test_set_1_xg[[i]]
+              print(i)
+            }
+            DF <- TEST
+            rm(TEST)
+            colnames(DF) <- names(test_set_1_xg)
+            
+            # Delete character variables to change to numeric matrix 
+            test_set_1_xg <- DF
+            rm(DF)
+            test_set_1_xg <- subset(test_set_1_xg, select = -c(addressID, enhed_id, Coor))
+            test_set_1_xg <- as.data.frame(test_set_1_xg)
+            
+            # Change to numeric
+            library(dplyr)
+            test_set_1_xg <- test_set_1_xg %>% mutate_if(is.character, as.numeric)
+            
+            test_set_1_xg$Areas <- as.factor(test_set_1_xg$Areas)
+            test_set_1_xg$Built <- as.factor(test_set_1_xg$Built)
+            test_set_1_xg$Renovated <- as.factor(test_set_1_xg$Renovated)
+            test_set_1_xg$BMaterial <- as.factor(test_set_1_xg$BMaterial)
+            test_set_1_xg$Roof <- as.factor(test_set_1_xg$Roof)
+            test_set_1_xg$Heating <- as.factor(test_set_1_xg$Heating)
+            
+            
+            ### Run model ----                
+            # Define predictors 
+            PredictorVariables_Areas <- colnames(subset(train_set_1_xg, select = - c(nominal_price, sales_price, rowname, postnr, 
+                                                                                     Hændelsesdato, Dato, Lag_price, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5)))
+            PredictorVariables_Lag_price <- colnames(subset(train_set_1_xg, select = - c(nominal_price, sales_price, rowname, postnr, 
+                                                                                         Hændelsesdato, Dato, Areas, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5)))
+            
+            train_x = data.matrix(train_set_1_xg[, PredictorVariables_Areas]) # for one with areas
+            train_x = data.matrix(train_set_1_xg[, PredictorVariables_Lag_price]) # for one with lag price
+            train_y = train_set_1_xg[,"sales_price"]
+            
+            # For test set 
+            test_x = data.matrix(test_set_1_xg[, PredictorVariables_Areas])
+            test_y = test_set_1_xg[,"sales_price"]
+            
+            # Define training and test sets 
+            xgb_train = xgb.DMatrix(data = train_x, label = train_y)
+            xgb_test = xgb.DMatrix(data = test_x, label = test_y)
+            
+            # Watchlist that evaluates the performance 
+            watchlist = list(train=xgb_train, test=xgb_test)
+            
+            # Fit model 
+            model_6 <-  xgb.train(data = xgb_train, max.depth = 6, watchlist=watchlist, nrounds = 10) #
+            model_26_Area <-  xgb.train(data = xgb_train, max.depth = 26, watchlist=watchlist, nrounds = 500) # 59902.649660
+            model_26_Lagprice <-  xgb.train(data = xgb_train, max.depth = 26, watchlist=watchlist, nrounds = 500) # 59902.649660
+            
+            
+            # Importance matrix 
+            importance_matrix <- xgb.importance(
+              feature_names = colnames(xgb_train), 
+              model = model_26_Lagprice
+            )
+            importance_matrix
+            xgb.plot.importance(importance_matrix)
+            
+        ## Train set 2 ----    
+
+      
 # Train 1
-T1 <- Sys.time()
+
 # train_set_1_df <- train_set_1 %>% Done previously in data_preparation
 #   dplyr::distinct(geometry, .keep_all = TRUE) Done previously in data_preparation
 # train_set_1 <- sf::st_as_sf(train_set_1)

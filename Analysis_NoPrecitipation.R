@@ -26,6 +26,7 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
 Total_df <-  Total_df_18_v2
 Total_df <- subset(Total_df, select = - `Tidligere udbetalt byg/løs/afgrd`)
 Total_df$sales_price <- log(Total_df$sales_price)
+Total_df <- subset(Total_df, in_both == FALSE)
 rm(Total_df_18_v2)
 ------------------------------------------------------------------------
   
@@ -39,16 +40,16 @@ iT <- p*nrow(Total_df)
 ## Train 1
 set.seed(13)
 train_seq_1 <- sample(nrow(Total_df), size = iT, replace = FALSE)
-train_set_1 <- Total_df[train_seq_1, , drop = FALSE]
+train_set_1_NP <- Total_df[train_seq_1, , drop = FALSE]
 ## Test 1
-test_set_1 <- Total_df[-train_seq_1, , drop = FALSE]
+test_set_1_NP <- Total_df[-train_seq_1, , drop = FALSE]
 
 ## Train 2
 set.seed(200)
 train_seq_2 <- sample(nrow(Total_df), size = iT, replace = FALSE)
-train_set_2 <- Total_df[train_seq_2, , drop = FALSE]
+train_set_2_NP <- Total_df[train_seq_2, , drop = FALSE]
 ## Test 2
-test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
+test_set_2_NP <- Total_df[-train_seq_2, , drop = FALSE]
 
 ------------------------------------------------------------------------
   
@@ -56,43 +57,44 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
 ## Test for spatial autocorrelation ----
 ### Train Set 1  ----
 T1 <- Sys.time()
-train_set_1 <- sf::st_as_sf(train_set_1)
-train_set_1 <- as(train_set_1, "Spatial")
-points_train_1 <- sp::coordinates(train_set_1)
-Neighbor_train1 <- spdep::tri2nb(points_train_1)  #When calculate neighbor
+train_set_1_NP <- sf::st_as_sf(train_set_1_NP)
+train_set_1_NP <- as(train_set_1_NP, "Spatial")
+points_train_1_NP <- sp::coordinates(train_set_1_NP)
+Neighbor_train1_NP <- spdep::tri2nb(points_train_1_NP)  #When calculate neighbor
 T2 <- Sys.time() - T1 # 20 min
-save(Neighbor_train1, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1.Rdata")
-load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1.Rdata")
+save(Neighbor_train1_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_NP.Rdata")
+# load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_NP.Rdata")
 
 ### Train Set 2 ----
 T3 <- Sys.time()
-train_set_2 <- sf::st_as_sf(train_set_2)
-train_set_2 <- as(train_set_2, "Spatial")
-points_train_2 <- sp::coordinates(train_set_2)
-Neighbor_train2 <- spdep::tri2nb(points_train_2)  #When calculate neighbor
+train_set_2_NP <- sf::st_as_sf(train_set_2_NP)
+train_set_2_NP <- as(train_set_2_NP, "Spatial")
+points_train_2_NP <- sp::coordinates(train_set_2_NP)
+Neighbor_train2_NP <- spdep::tri2nb(points_train_2_NP)  #When calculate neighbor
 T4 <- Sys.time() - T1 # 20 min
-save(Neighbor_train2, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2.Rdata")
-# load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2.Rdata")
+save(Neighbor_train2_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2_NP.Rdata")
+# load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_NP.Rdata")
+load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2.Rdata")
 
 
 ### Test Set 1  ----
 T5 <- Sys.time()
-test_set_1 <- sf::st_as_sf(test_set_1)
-test_set_1 <- as(test_set_1, "Spatial")
-points_test_1 <- sp::coordinates(test_set_1)
-Neighbor_test1 <- spdep::tri2nb(points_test_1)  #When calculate neighbor
+test_set_1_NP <- sf::st_as_sf(test_set_1_NP)
+test_set_1_NP <- as(test_set_1_NP, "Spatial")
+points_test_1_NP <- sp::coordinates(test_set_1_NP)
+Neighbor_test1_NP <- spdep::tri2nb(points_test_1_NP)  #When calculate neighbor
 T6 <- Sys.time() - T1 # 20 min
-save(Neighbor_test1, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1.Rdata")
+save(Neighbor_test1_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1_NP.Rdata")
 # load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1.Rdata")
 
 ### Test Set 2 ----
 T7 <- Sys.time()
-test_set_2 <- sf::st_as_sf(test_set_2)
-test_set_2 <- as(test_set_2, "Spatial")
-points_test_2 <- sp::coordinates(test_set_2)
-Neighbor_test2 <- spdep::tri2nb(points_test_2)  #When calculate neighbor
+test_set_2_NP <- sf::st_as_sf(test_set_2_NP)
+test_set_2_NP <- as(test_set_2_NP, "Spatial")
+points_test_2_NP <- sp::coordinates(test_set_2_NP)
+Neighbor_test2_NP <- spdep::tri2nb(points_test_2_NP)  #When calculate neighbor
 T8 <- Sys.time() - T1 # 20 min
-save(Neighbor_test2, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2.Rdata")
+save(Neighbor_test2_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2_NP.Rdata")
 # load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2.Rdata")
 
 ### Moran and geary test ----
