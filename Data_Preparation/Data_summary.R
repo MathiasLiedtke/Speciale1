@@ -681,8 +681,239 @@ load("~/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024
       
       
       
+      ###############
+      ## Plot mean pay out and total for zip code
+      ###############
+      # hent postnr 
+      library(leaflet)
+      API_GEO <- "https://api.dataforsyningen.dk/DAGI_10MULTIGEOM_GMLSFP_DAF?service=WFS&request=GetCapabilities&token="
+      token <- readline(prompt="Please enter token: ")
+      url <- paste0(API_GEO,token)
+      response <- httr::GET(url)
+      httr::status_code(response)
       
-      # Plot for coefficients for linear regression with market area
+      # Define the typename for the feature you want to load
+      typename <- "Postnummerinddeling"
+      
+      wfs_client <- ows4R::WFSClient$new(url, serviceVersion = "2.0.0")
+      
+      # Build the URL for the GetFeature request
+      request_url <- httr::parse_url(wfs_client$url)
+      request_url$query <- list(
+        service = "wfs",
+        version = "2.0.0",
+        request = "GetFeature",
+        typenames = typename,
+        srsName = "EPSG:25832",
+        token = "043c0c7bbb4086890a5c6ef6dd2075e4"
+      )
+      
+      # Make the GetFeature request and read the response into a simple feature object
+      feature <- sf::read_sf(httr::build_url(request_url))
+      
+      postnr <- subset(feature, select = c(navn, postnummer, geometri))
+      postnr$centroid <- sf::st_centroid(postnr$geometri)
+      postnr$coords <- sf::st_coordinates(postnr$centroid)
+      postnr1 <- sf::st_drop_geometry(postnr)
+      
+      library(dplyr)
+      mean_postnr <- Total_df_18_v2 %>%
+        group_by(postnr) %>%
+        summarise(mean_payout = mean(Udbetaling, na.rm = TRUE))
+      mean_postnr <- sf::st_drop_geometry(mean_postnr)
+      
+      summary_postnr <- merge(postnr1, mean_postnr, by.x = "postnummer", by.y = "postnr")
+      # merge back with sfc point to get multipolygon of postnr 
+      summary_postnr <- sf::st_as_sf(summary_postnr)
+      intersect_postnr <- sf::st_join(postnr, summary_postnr)
+      intersect_postnr <- intersect_postnr[!is.na(intersect_postnr$postnummer.y),]
+      intersect_postnr <- subset(intersect_postnr, select = c(navn.x, postnummer.x, geometri, mean_payout))
+      intersect_postnr$geometri <- sf::st_transform(intersect_postnr$geometri, crs = "EPSG:4326") # Change coordinates to same of map of Denmark
+      
+      #Get polygon of Denmark
+      # Define the typename for the feature you want to load
+      API_GEO <- "https://api.dataforsyningen.dk/DAGI_10MULTIGEOM_GMLSFP_DAF?service=WFS&request=GetCapabilities&token="
+      token <- readline(prompt="Please enter token: ")
+      url <- paste0(API_GEO,token)
+      response <- httr::GET(url)
+      httr::status_code(response)
+      typename <- "Landsdel"
+      
+      wfs_client <- ows4R::WFSClient$new(url, serviceVersion = "2.0.0")
+      
+      # Build the URL for the GetFeature request
+      request_url <- httr::parse_url(wfs_client$url)
+      request_url$query <- list(
+        service = "wfs",
+        version = "2.0.0",
+        request = "GetFeature",
+        typenames = typename,
+        srsName = "EPSG:25832",
+        token = "043c0c7bbb4086890a5c6ef6dd2075e4"
+      )
+      
+      Denmark <- sf::read_sf(httr::build_url(request_url))
+      Denmark <- sf::st_zm(Denmark)
+      Denmark <- sf::st_union(Denmark)
+      Denmark <- sf::st_transform(Denmark, crs = "EPSG:4326")
+      
+      #Intersect border of Denmark with postnr
+      intersect_postnr1 <- sf::st_intersection(intersect_postnr,Denmark)
+      intersect_postnr1 <- subset(intersect_postnr1, postnummer.x != 4682)
       
       
       
+      library(leaflet)
+      API_GEO <- "https://api.dataforsyningen.dk/topo_skaermkort_DAF?service=WMS&request=GetCapabilities&token="
+      token <- readline(prompt="Please enter token: ")
+      url <- paste0(API_GEO,token)
+      response <- httr::GET(url)
+      httr::status_code(response)
+      
+      # Add to maps 
+      m <- leaflet() %>%
+        setView(lng = 12.6, lat = 55.7, zoom = 6) %>%
+        addWMSTiles(
+          baseUrl = url,
+          layers = "dtk_skaermkort",
+          options = WMSTileOptions(format = "image/png", transparent = TRUE, opacity = 0.70)
+        ) %>%
+        addPolygons(
+          data = intersect_postnr1,
+          fillColor = ~colorQuantile("YlOrRd", mean_payout)(mean_payout),
+          weight = 2,
+          opacity = 1,
+          color = "white",
+          dashArray = "3",
+          fillOpacity = 0.7,
+          highlight = highlightOptions(
+            weight = 5,
+            color = "#666",
+            dashArray = "",
+            fillOpacity = 1,
+            bringToFront = TRUE
+          ),
+          label = ~paste0("Municipality: ", intersect_postnr$postnummer.x, "<br/>", "Mean Price: ", intersect_postnr$mean_payout)
+        )
+      
+
+      ###############
+      ## Plot Total pay out and total for zip code
+      ###############
+      # hent postnr 
+      library(leaflet)
+      API_GEO <- "https://api.dataforsyningen.dk/DAGI_10MULTIGEOM_GMLSFP_DAF?service=WFS&request=GetCapabilities&token="
+      # token <- readline(prompt="Please enter token: ")
+      url <- paste0(API_GEO,token)
+      response <- httr::GET(url)
+      httr::status_code(response)
+      
+      # Define the typename for the feature you want to load
+      typename <- "Postnummerinddeling"
+      url <- "https://api.dataforsyningen.dk/GeoDanmark60_NOHIST_GML3_DAF?service=WFS&request=GetCapabilities&token="
+      
+      wfs_client <- ows4R::WFSClient$new(url, serviceVersion = "2.0.0")
+      
+      # Build the URL for the GetFeature request
+      request_url <- httr::parse_url(wfs_client$url)
+      request_url$query <- list(
+        service = "wfs",
+        version = "2.0.0",
+        request = "GetFeature",
+        typenames = typename,
+        srsName = "EPSG:25832",
+        token = "043c0c7bbb4086890a5c6ef6dd2075e4"
+      )
+      
+      # Make the GetFeature request and read the response into a simple feature object
+      streams <- sf::read_sf(httr::build_url(request_url))
+      https://api.dataforsyningen.dk/GeoDanmark60_NOHIST_GML3_DAF?service=wfs&version=2.0.0&request=GetFeature&typenames=vandloebsmidte&srsName=EPSG%3A25832&token=043c0c7bbb4086890a5c6ef6dd2075e4
+      https://api.dataforsyningen.dk/DAGI_10MULTIGEOM_GMLSFP_DAF?service=wfs&version=2.0.0&request=GetFeature&typenames=Postnummerinddeling&srsName=EPSG%3A25832&token=043c0c7bbb4086890a5c6ef6dd2075e4
+      
+      postnr <- subset(feature, select = c(navn, postnummer, geometri))
+      postnr$centroid <- sf::st_centroid(postnr$geometri)
+      postnr$coords <- sf::st_coordinates(postnr$centroid)
+      postnr1 <- sf::st_drop_geometry(postnr)
+      
+      library(dplyr)
+      Total_postnr <- Total_df_18_v2 %>%
+        group_by(postnr) %>%
+        summarise(Total_payout = sum(Udbetaling, na.rm = TRUE))
+      Total_postnr <- sf::st_drop_geometry(Total_postnr)
+      
+      summary_postnr <- merge(postnr1, Total_postnr, by.x = "postnummer", by.y = "postnr")
+      # merge back with sfc point to get multipolygon of postnr 
+      summary_postnr <- sf::st_as_sf(summary_postnr)
+      intersect_postnr <- sf::st_join(postnr, summary_postnr)
+      intersect_postnr <- intersect_postnr[!is.na(intersect_postnr$postnummer.y),]
+      intersect_postnr <- subset(intersect_postnr, select = c(navn.x, postnummer.x, geometri, Total_payout))
+      intersect_postnr$geometri <- sf::st_transform(intersect_postnr$geometri, crs = "EPSG:4326") # Change coordinates to same of map of Denmark
+      
+      #Get polygon of Denmark
+      # Define the typename for the feature you want to load
+      API_GEO <- "https://api.dataforsyningen.dk/DAGI_10MULTIGEOM_GMLSFP_DAF?service=WFS&request=GetCapabilities&token="
+      # token <- readline(prompt="Please enter token: ")
+      url <- paste0(API_GEO,token)
+      response <- httr::GET(url)
+      httr::status_code(response)
+      typename <- "Landsdel"
+      
+      wfs_client <- ows4R::WFSClient$new(url, serviceVersion = "2.0.0")
+      
+      # Build the URL for the GetFeature request
+      request_url <- httr::parse_url(wfs_client$url)
+      request_url$query <- list(
+        service = "wfs",
+        version = "2.0.0",
+        request = "GetFeature",
+        typenames = typename,
+        srsName = "EPSG:25832",
+        token = "043c0c7bbb4086890a5c6ef6dd2075e4"
+      )
+      
+      Denmark <- sf::read_sf(httr::build_url(request_url))
+      Denmark <- sf::st_zm(Denmark)
+      Denmark <- sf::st_union(Denmark)
+      Denmark <- sf::st_transform(Denmark, crs = "EPSG:4326")
+      
+      #Intersect border of Denmark with postnr
+      intersect_postnr1 <- sf::st_intersection(intersect_postnr,Denmark)
+      intersect_postnr1 <- subset(intersect_postnr1, postnummer.x != 4682)
+      
+      
+      
+      library(leaflet)
+      API_GEO <- "https://api.dataforsyningen.dk/topo_skaermkort_DAF?service=WMS&request=GetCapabilities&token="
+      # token <- readline(prompt="Please enter token: ")
+      url <- paste0(API_GEO,token)
+      response <- httr::GET(url)
+      httr::status_code(response)
+      
+      # Add to maps 
+      m <- leaflet() %>%
+        setView(lng = 12.6, lat = 55.7, zoom = 6) %>%
+        addWMSTiles(
+          baseUrl = url,
+          layers = "dtk_skaermkort",
+          options = WMSTileOptions(format = "image/png", transparent = TRUE, opacity = 0.70)
+        ) %>%
+        addPolygons(
+          data = intersect_postnr1,
+          fillColor = ~colorQuantile("YlOrRd", Total_payout)(Total_payout),
+          weight = 2,
+          opacity = 1,
+          color = "white",
+          dashArray = "3",
+          fillOpacity = 0.7,
+          highlight = highlightOptions(
+            weight = 5,
+            color = "#666",
+            dashArray = "",
+            fillOpacity = 1,
+            bringToFront = TRUE
+          ),
+          label = ~paste0("Municipality: ", intersect_postnr$postnummer.x, "<br/>", "Mean Price: ", intersect_postnr$Total_payout)
+        )
+      
+      
+     
