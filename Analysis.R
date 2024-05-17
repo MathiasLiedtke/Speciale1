@@ -492,7 +492,7 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             # Importance matrix 
             importance_matrix <- xgb.importance(
               feature_names = colnames(xgb_train), 
-              model = XGB_1_AREA
+              model = XGB_1_Lagprice
             )
             importance_matrix
             xgb.plot.importance(importance_matrix)

@@ -499,7 +499,7 @@ XG_ERROR_Moran <- moran.test(pred_xg_lag-test_set_1_xg$sales_price, listw=spdep:
 # Importance matrix 
 importance_matrix <- xgb.importance(
   feature_names = colnames(xgb_train), 
-  model = XGB_1_AREA
+  model = XGB_LAGPRRICE_ZEALAND_NP
 )
 importance_matrix
 xgb.plot.importance(importance_matrix)
@@ -595,6 +595,7 @@ train_y = train_set_2_xg[,"sales_price"]
 
 # For test set 
 test_x = data.matrix(test_set_2_xg[, PredictorVariables_Areas])
+test_x = data.matrix(test_set_2_xg[, PredictorVariables_Lag_price]) # for one with lag price
 test_y = test_set_2_xg[,"sales_price"]
 
 # Define training and test sets 
@@ -605,8 +606,10 @@ xgb_test = xgb.DMatrix(data = test_x, label = test_y)
 watchlist = list(train=xgb_train, test=xgb_test)
 
 # Fit model 
-XGB_2 <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
-save(XGB_2, file = load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_2.RData"))
+XGB_AREA_ZEALAND_NP_t2 <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
+XGB_LAGPRRICE_ZEALAND_NP_t2 <- xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
+save(XGB_AREA_ZEALAND_NP_t2, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_ZEALAND_NP_t2.RData")
+save(XGB_LAGPRRICE_ZEALAND_NP_t2, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAGPRRICE_ZEALAND_NP_t2.RData")
 
 
 # Importance matrix 
