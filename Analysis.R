@@ -157,8 +157,12 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             #### Test set 1 ----          
             test_set_1$yhat <- stats::predict.lm(lm_areas_lm_t1, newdata = test_set_1) 
             RMSE_LM <- sqrt(sum(test_set_1$yhat-test_set_1$sales_price)^2/nrow(test_set_1))
+            MSE_LM <- sum(test_set_1$yhat-test_set_1$sales_price)^2/nrow(test_set_1)
+            MAE_LM <- sum((abs(test_set_1$yhat-test_set_1$sales_price)))/nrow(test_set_1)
             # 0.3913504
-                
+              
+            lm_resid_spc <- spdep::moran.test(lm_areas_lm_t1$residuals, listw = Neighbor_train1_weight)
+              
             #### Train set 2 ----
              pred_lm <- colnames(subset(Total_df, 
                         select = - c(rowname, nominal_price, sales_price, 
@@ -233,6 +237,8 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             Stoptime <- Sys.time() - Time
             summary_sar_t1 <- summary(SAR_DF_t1_het)
             
+            sar_resid_spc <- spdep::moran.test(SAR_DF_t1_het$residuals, listw = Neighbor_train1_weight)
+            
             #### Test set 1 ----
             # A stupid way, but cannot think of something else. Manually doing the prediction
             test_SAR <- Total_df[-train_seq_1, , drop = FALSE]
@@ -284,6 +290,8 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             
             # RMSE 
             RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR))
+            MSE_SAR <- sum((test_SAR$yhat-test_SAR$sales_price)^2/nrow(test_SAR))
+            MAE_SAR <- sum(abs(test_SAR$yhat-test_SAR$sales_price))/nrow(test_SAR)
             # 4.181894
             
                                   
@@ -468,9 +476,19 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             XGB_1_AREA <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
             XGB_1_Lagprice <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
             save(XGB_1_AREA, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_1_Area.RData")
-            save(XGB_1_Lagprice, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_1_Area.RData")
+            save(XGB_1_Lagprice, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_1_LAG.RData")
             load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_1_LAG.RData")
             load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_1_AREA.RData")
+            library(xgboost)
+            pred_xg_area <- predict(XGB_1_AREA, test_x)
+            mae_xg_area <- sum(abs(pred_xg_area-test_set_1_xg$sales_price))/length(pred_xg_area) #0.6140223
+            pred_xg_lag <- predict(XGB_1_Lagprice, test_x)
+            mae_xg_lag <- sum(abs(pred_xg_lag-test_set_1_xg$sales_price))/length(pred_xg_lag) #0.6203172
+            
+            # Test on errors
+            XG_ERROR_Moran <- moran.test(pred_xg_area-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
+            XG_ERROR_Moran <- moran.test(pred_xg_lag-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
+            
             # Importance matrix 
             importance_matrix <- xgb.importance(
               feature_names = colnames(xgb_train), 
@@ -478,6 +496,9 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             )
             importance_matrix
             xgb.plot.importance(importance_matrix)
+            library(Ckmeans.1d.dp)
+            (gg <- xgb.ggplot.importance(importance_matrix, measure = "Importance", rel_to_first = TRUE))
+            gg + ggplot2::ylab("Importance")
             
         ## Train set 2 ----
             # The data frame is not suitable as data for xgbosting, remove attributes from df
@@ -566,6 +587,7 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             
             # For test set 
             test_x = data.matrix(test_set_2_xg[, PredictorVariables_Areas])
+            test_x = data.matrix(test_set_2_xg[, PredictorVariables_Lag_price])
             test_y = test_set_2_xg[,"sales_price"]
             
             # Define training and test sets 
@@ -576,17 +598,23 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             watchlist = list(train=xgb_train, test=xgb_test)
             
             # Fit model 
-            XGB_2 <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
+            XGB_AREA_train2 <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
+            XGB_LAG_train2 <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
             save(XGB_2, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_2.RData")
             load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_2.RData")
             
             # Importance matrix 
             importance_matrix <- xgb.importance(
-              feature_names = colnames(xgb_train), 
-              model = XGB_2
+              feature_names = colnames(XGB_LAG_train2), 
+              model = XGB_LAG_train2
             )
+            
             importance_matrix
             xgb.plot.importance(importance_matrix)
+            library(Ckmeans.1d.dp)
+            (gg <- xgb.ggplot.importance(importance_matrix, measure = "Importance", rel_to_first = TRUE))
+            gg + ggplot2::ylab("Importance")
+            
 
       
 # Train 1

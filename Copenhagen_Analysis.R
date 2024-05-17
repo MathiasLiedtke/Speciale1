@@ -164,7 +164,9 @@ moran_lm_zealand <- spdep::moran.test(lm_areas_lm_t1$residuals, listw = Neighbor
 
 #### Test ----
 test_set_1$yhat <- stats::predict.lm(lm_areas_lm_t1, newdata = test_set_1) 
-RMSE_LM <- sqrt(sum(test_set_1$yhat-test_set_1$sales_price)^2/nrow(test_set_1))
+RMSE_LM <- sqrt(sum((test_set_1$yhat-test_set_1$sales_price)^2)/nrow(test_set_1)) #0.6914937
+MSE_LM <- sum((test_set_1$yhat-test_set_1$sales_price)^2)/nrow(test_set_1) #0.4781635
+MAE_LM <- sum(abs(test_set_1$yhat-test_set_1$sales_price))/nrow(test_set_1) #0.5263211
 # 0.3422699
 
 #### Train set 2 ----
@@ -294,8 +296,9 @@ test_SAR <- test_SAR %>%
            5.6918e-01 * log(Lag_price))
 
           # RMSE 
-          RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR))
-          # 4.445861
+          RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR)) # 4.445861
+          MSE_LM <- sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR) #19.76568
+          MAE_LM <- sum(abs(test_SAR$yhat-test_SAR$sales_price))/nrow(test_SAR) #4.341016
 
 
 #### Train set 2 ----
@@ -458,12 +461,14 @@ PredictorVariables_Areas <- colnames(subset(train_set_1_xg, select = - c(nominal
 PredictorVariables_Lag_price <- colnames(subset(train_set_1_xg, select = - c(nominal_price, sales_price, rowname, postnr, 
                                                                              Hændelsesdato, Dato, Areas, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5)))
 
+
 train_x = data.matrix(train_set_1_xg[, PredictorVariables_Areas]) # for one with areas
 train_x = data.matrix(train_set_1_xg[, PredictorVariables_Lag_price]) # for one with lag price
 train_y = train_set_1_xg[,"sales_price"]
 
 # For test set 
 test_x = data.matrix(test_set_1_xg[, PredictorVariables_Areas])
+test_x = data.matrix(test_set_1_xg[, PredictorVariables_Lag_price])
 test_y = test_set_1_xg[,"sales_price"]
 
 # Define training and test sets 
@@ -474,17 +479,34 @@ xgb_test = xgb.DMatrix(data = test_x, label = test_y)
 watchlist = list(train=xgb_train, test=xgb_test)
 
 # Fit model 
-XGB_1 <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
-save(XGB_1, file = load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_1.RData"))
+XGB_AREA_ZEALAND <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
+XGB_LAGPRRICE_ZEALAND <- xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
+save(XGB_AREA_ZEALAND, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_ZEALAND.RData")
+save(XGB_LAGPRRICE_ZEALAND, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAGPRRICE_ZEALAND.RData")
 
+library(xgboost)
+pred_xg_area <- predict(XGB_AREA_ZEALAND, test_x)
+mae_xg_area <- sum(abs(pred_xg_area-test_set_1_xg$sales_price))/length(pred_xg_area) # 0.6117743
+pred_xg_lag <- predict(XGB_LAGPRRICE_ZEALAND, test_x)
+mae_xg_lag <- sum(abs(pred_xg_lag-test_set_1_xg$sales_price))/length(pred_xg_lag) #0.6173684
+
+# Test on errors
+XG_ERROR_Moran <- moran.test(pred_xg_area-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
+XG_ERROR_Moran <- moran.test(pred_xg_lag-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
 
 # Importance matrix 
 importance_matrix <- xgb.importance(
   feature_names = colnames(xgb_train), 
-  model = XGB_1
+  model = XGB_1_AREA
 )
 importance_matrix
 xgb.plot.importance(importance_matrix)
+library(Ckmeans.1d.dp)
+(gg <- xgb.ggplot.importance(importance_matrix, measure = "Importance", rel_to_first = TRUE))
+gg + ggplot2::ylab("Importance")
+
+
+
 
 ## Train set 2 ----
 # The data frame is not suitable as data for xgbosting, remove attributes from df

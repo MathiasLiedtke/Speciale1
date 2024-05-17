@@ -153,8 +153,10 @@ summary_lm_t1_robust <- lmtest::coeftest(lm_areas_NP_t1,
 
 #### Test set 1 ----          
 test_set_1_NP$yhat <- stats::predict.lm(lm_areas_NP_t1, newdata = test_set_1_NP) 
-RMSE_LM <- sqrt(sum(test_set_1_NP$yhat-test_set_1_NP$sales_price)^2/nrow(test_set_1_NP))
-# 0.4100609
+RMSE_LM <- sqrt(sum((test_set_1_NP$yhat-test_set_1_NP$sales_price)^2)/nrow(test_set_1_NP)) # 0.722349
+MSE_LM <- sum((test_set_1_NP$yhat-test_set_1_NP$sales_price)^2)/nrow(test_set_1_NP) # 0.521788
+MAE_LM <- sum(abs(test_set_1_NP$yhat-test_set_1_NP$sales_price))/nrow(test_set_1_NP) # 0.5510442
+
 
 #### Train set 2 ----
 pred_lm <- colnames(subset(Total_df, 
@@ -276,8 +278,10 @@ test_SAR <- test_SAR %>%
            5.8067e-01 * log(Lag_price))
 
 # RMSE 
-RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR))
-# 0.9054654
+RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR)) # 0.9054654
+MSE_SAR <- sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR) #0.8198677
+MAE_SAR <- sum(abs(test_SAR$yhat-test_SAR$sales_price))/nrow(test_SAR) #0.6456845
+
 
 
 #### Train set 2 ----
@@ -416,13 +420,27 @@ XGB_LAG <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nro
 
 save(XGB_AREA, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_NP.RData")
 save(XGB_LAG, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAG_NP.RData")
+
+library(xgboost)
+pred_xg_area <- predict(XGB_AREA, test_x)
+mae_xg_area <- sum(abs(pred_xg_area-test_set_1_xg$sales_price))/length(pred_xg_area) #0.6142142
+pred_xg_lag <- predict(XGB_LAG, test_x)
+mae_xg_lag <- sum(abs(pred_xg_lag-test_set_1_xg$sales_price))/length(pred_xg_lag) #0.6212424
+
+# Test on errors
+XG_ERROR_Moran <- moran.test(pred_xg_area-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
+XG_ERROR_Moran <- moran.test(pred_xg_lag-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
+
 # Importance matrix 
 importance_matrix <- xgb.importance(
   feature_names = colnames(xgb_train), 
-  model = model_26_Lagprice
+  model = XGB_1_AREA
 )
 importance_matrix
 xgb.plot.importance(importance_matrix)
+library(Ckmeans.1d.dp)
+(gg <- xgb.ggplot.importance(importance_matrix, measure = "Importance", rel_to_first = TRUE))
+gg + ggplot2::ylab("Importance")
 
 ## Train set 2 ----    
 

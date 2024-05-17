@@ -32,6 +32,7 @@ postnr <- subset(Total_df, in_both == TRUE)
 table <- table(postnr$postnr)
 postnr <- c(2000,2100,2300,2400,2450,2500,2600,2605,2610,2625,2630,2635,2640,2650,2660,2665,2670,2680,2690,2700,2720,2730,2740,2750,2765,2770,2791,2800,2820,2830,2840,2860,2880,2900,2920,2930,2942,2950,2960,2970,2980,3400,3450,3460,3500,3520,3550,3600,3650,3660,4000,4040,4600)
 Total_df <- Total_df[Total_df$postnr %in% postnr, ]
+Total_df <- subset(Total_df, in_both == FALSE)
 rm(Total_df_18_v2)
 ------------------------------------------------------------------------
   
@@ -68,20 +69,20 @@ T1 <- Sys.time()
 train_set_1 <- sf::st_as_sf(train_set_1)
 train_set_1 <- as(train_set_1, "Spatial")
 points_train_1 <- sp::coordinates(train_set_1)
-# Neighbor_train1_CPH <- spdep::tri2nb(points_train_1)  #When calculate neighbor
+# Neighbor_train1_CPH_NP <- spdep::tri2nb(points_train_1)  #When calculate neighbor
 T2 <- Sys.time() - T1 # 20 min
-# save(Neighbor_train1_CPH, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_CPH.Rdata")
-load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_CPH.Rdata")
+# save(Neighbor_train1_CPH_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_CPH_NP.Rdata")
+load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_CPH_NP.Rdata")
 
 ### Train Set 2 ----
 T3 <- Sys.time()
 train_set_2 <- sf::st_as_sf(train_set_2)
 train_set_2 <- as(train_set_2, "Spatial")
 points_train_2 <- sp::coordinates(train_set_2)
-# Neighbor_train2_CPH <- spdep::tri2nb(points_train_2)  #When calculate neighbor
+# Neighbor_train2_CPH_NP <- spdep::tri2nb(points_train_2)  #When calculate neighbor
 T4 <- Sys.time() - T3 # 20 min
-# save(Neighbor_train2_CPH, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2_CPH.Rdata")
-load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2_CPH.Rdata")
+# save(Neighbor_train2_CPH_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2_CPH_NP.Rdata")
+load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2_CPH_NP.Rdata")
 
 
 ### Test Set 1  ----
@@ -89,20 +90,20 @@ T5 <- Sys.time()
 test_set_1 <- sf::st_as_sf(test_set_1)
 test_set_1 <- as(test_set_1, "Spatial")
 points_test_1 <- sp::coordinates(test_set_1)
-# Neighbor_test1_CPH <- spdep::tri2nb(points_test_1)  #When calculate neighbor
+# Neighbor_test1_CPH_NP <- spdep::tri2nb(points_test_1)  #When calculate neighbor
 T6 <- Sys.time() - T5 # 20 min
-# save(Neighbor_test1_CPH, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1_CPH.Rdata")
-load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1_CPH.Rdata")
+# save(Neighbor_test1_CPH_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1_CPH_NP.Rdata")
+load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1_CPH_NP.Rdata")
 
 ### Test Set 2 ----
 T7 <- Sys.time()
 test_set_2 <- sf::st_as_sf(test_set_2)
 test_set_2 <- as(test_set_2, "Spatial")
 points_test_2 <- sp::coordinates(test_set_2)
-# Neighbor_test2_CPH <- spdep::tri2nb(points_test_2)  #When calculate neighbor
+# Neighbor_test2_CPH_NP <- spdep::tri2nb(points_test_2)  #When calculate neighbor
 T8 <- Sys.time() - T7 # 20 min
-# save(Neighbor_test2_CPH, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2_CPH.Rdata")
-load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2_CPH.Rdata")
+# save(Neighbor_test2_CPH_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2_CPH_NP.Rdata")
+load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2_CPH_NP.Rdata")
 
 ### Moran and geary test ----
 #### Neighbor_train1_CPH ----
@@ -114,7 +115,7 @@ qqnorm(data, main = 'Q-Q Plot for Normality (Train set 1)', xlab = 'Theoretical 
 qqline(data, col = 'red', lwd = 2, lty = 2)
 
 # Seems fairly normal in distribution, continue to tests 
-Neighbor_train1_weight <- spdep::nb2listw(Neighbor_train1_CPH) # Define nb2listw object 
+Neighbor_train1_weight <- spdep::nb2listw(Neighbor_train1_CPH_NP) # Define nb2listw object 
 Moran <- spdep::moran.test(train_set_1$sales_price, listw = Neighbor_train1_weight)
 Geary <- spdep::geary.test(train_set_1$sales_price, Neighbor_train1_weight)    
 # Sign of auto-correlation 
@@ -126,7 +127,7 @@ qqnorm(data, main = 'Q-Q Plot for Normality (Train set 2)', xlab = 'Theoretical 
 qqline(data, col = 'red', lwd = 2, lty = 2)
 
 # Seems fairly normal in distribution, continue to tests 
-Neighbor_train2_weight <- spdep::nb2listw(Neighbor_train2_CPH) # Define nb2listw object 
+Neighbor_train2_weight <- spdep::nb2listw(Neighbor_train2_CPH_NP) # Define nb2listw object 
 Moran <- spdep::moran.test(train_set_2$sales_price, listw = Neighbor_train2_weight)
 Geary <- spdep::geary.test(train_set_2$sales_price, Neighbor_train2_weight)    
 # Sign of auto-correlation 
@@ -164,8 +165,10 @@ moran_lm_zealand <- spdep::moran.test(lm_areas_lm_t1$residuals, listw = Neighbor
 
 #### Test ----
 test_set_1$yhat <- stats::predict.lm(lm_areas_lm_t1, newdata = test_set_1) 
-RMSE_LM <- sqrt(sum(test_set_1$yhat-test_set_1$sales_price)^2/nrow(test_set_1))
-# 0.3422699
+RMSE_LM <- sqrt(sum(test_set_1$yhat-test_set_1$sales_price)^2/nrow(test_set_1)) # 0.4531836
+MSE_LM <- sum(test_set_1$yhat-test_set_1$sales_price)^2/nrow(test_set_1) # 0.2053754
+MAE_LM <- sum(abs(test_set_1$yhat-test_set_1$sales_price))/nrow(test_set_1) # 0.4472288
+
 
 #### Train set 2 ----
 pred_lm <- colnames(subset(Total_df, 
@@ -213,7 +216,7 @@ Formula <- as.formula(paste("sales_price ~",
 # Model Estimation
 Time <- Sys.time()
 SAR_DF_t1 <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
-                                  listw = Neighbor_train1_weight, model = "lag")
+                                  listw = Neighbor_train1_weight)
 Stoptime <- Sys.time() - Time  # 1.346548 hours
 save(SAR_DF_t1, file ="/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/SAR_DF_t1_ZEALAND.Rdata")
 load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/SAR_DF_t1_ZEALAND.Rdata")
@@ -252,50 +255,52 @@ summary_sar_t1 <- summary(SAR_DF_t1_het)
 test_SAR <- Total_df[-train_seq_1, , drop = FALSE]
 test_SAR <- test_SAR %>%
   rowwise() %>%
-  mutate(yhat = 1.1829e-03 * Height +
-           2.9569e-03 * m2 -
-           -1.2152e-03 * Outbuilding +
-           1.3912e-01 * TerracedHouse +
-           2.6112e-02 * rooms +
-           1.2740e-02 * flooded +
-           1.5803e-05 * forest_distance -
-           -1.9804e-06 * coastline_distance +
-           1.6888e-05 * railway_distance +
-           8.4121e-05 * lake_distance -
-           -1.7598e-05 * Trainstation_distance -
-           -1.1784e-05 * Wateryarea_distance +
-           ifelse(Built == 2, 5.4811e-02,
-                  ifelse(Built == 3, 1.2713e-01,
-                         ifelse(Built == 4, 1.3125e-01,
-                                ifelse(Built == 5, 1.6429e-01,
-                                       ifelse(Built == 6, 2.4401e-01,
-                                              ifelse(Built == 7, 1.0202e-01,
-                                                     ifelse(Built == 8, 2.3657e-01,
-                                                            ifelse(Built == 9, -4.8492e-02, 0)))))))) +
-           ifelse(Renovated == 1, 6.2757e-02,
-                  ifelse(Renovated == 2, 6.8165e-02,
-                         ifelse(Renovated == 3, 4.2141e-02,
-                                ifelse(Renovated == 4, 7.9600e-03, 4.6719e-02)))) +
-           ifelse(Heating == 1, 1.2990e-01,
-                  ifelse(Heating == 2, 1.4494e-01, 1.8727e-02)) +
-           ifelse(Roof == 1, 4.6568e-02,
-                  ifelse(Roof == 2, 9.5169e-02 , -3.0261e-02)) +
-           ifelse(BMaterial == 1, 4.9803e-02,
-                  ifelse(BMaterial == 2, -2.1109e-02, -2.0030e-02)) +
-           2.8562e-05 * powerline_distance +
-           SA_EV1 * 4.3305e-01 +
-           SA_EV2 * 5.5533e-01 +
-           SA_EV4 * 6.5576e-01 +
-           SA_EV5 * 8.0283e-01 +
-           flooded * (SA_EV1 * 1.3974e-01 +
-                        SA_EV2 * 1.1850e-02 +
-                        SA_EV4 * -1.8701e-02 +
-                        SA_EV5 * 1.1531e-03) +
-           5.6918e-01 * log(Lag_price))
+  mutate(yhat = 9.4805e+00 +
+           2.6079e-03 * Height +
+           2.7813e-03 * m2 -
+           -4.1285e-03 * Outbuilding +
+           7.7151e-02 * TerracedHouse +
+           2.5265e-02 * rooms +
+           2.1071e-02 * flooded +
+           3.6594e-05 * forest_distance -
+           -4.0731e-06 * coastline_distance +
+           8.2319e-06 * railway_distance +
+           -3.2004e-05 * lake_distance -
+           -4.4154e-05 * Trainstation_distance -
+           -3.8463e-06 * Wateryarea_distance +
+           ifelse(Built == 2, -1.3213e-02,
+                  ifelse(Built == 3, 4.4336e-02,
+                         ifelse(Built == 4, 4.2838e-02,
+                                ifelse(Built == 5, 5.3797e-02,
+                                       ifelse(Built == 6, 1.0595e-01,
+                                              ifelse(Built == 7, -1.2788e-01,
+                                                     ifelse(Built == 8, 2.0515e-01,
+                                                            ifelse(Built == 9, -2.6862e-02, 0)))))))) +
+           ifelse(Renovated == 1, 4.5695e-02,
+                  ifelse(Renovated == 2, 7.3660e-02,
+                         ifelse(Renovated == 3, 5.1509e-02,
+                                ifelse(Renovated == 4, 4.5820e-02, 2.1305e-02)))) +
+           ifelse(Heating == 1, 7.3166e-02,
+                  ifelse(Heating == 2, 9.4155e-02, -1.1463e-02)) +
+           ifelse(Roof == 1, 3.2831e-02,
+                  ifelse(Roof == 2, 8.8378e-02 , -2.1261e-02)) +
+           ifelse(BMaterial == 1, 6.4191e-02,
+                  ifelse(BMaterial == 2, -5.2255e-02, 1.9469e-03)) +
+           2.8217e-05 * powerline_distance +
+           SA_EV1 * 5.8030e-01 +
+           SA_EV2 * 6.8535e-01 +
+           SA_EV4 * 8.0093e-01 +
+           SA_EV5 * 9.3625e-01 +
+           flooded * (SA_EV1 * 7.5791e-02 +
+                        SA_EV2 * 8.0126e-02 +
+                        SA_EV4 * -8.3844e-02 +
+                        SA_EV5 * 1.9235e-02) +
+           2.6398e-01 * log(Lag_price))
 
 # RMSE 
-RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR))
-# 4.445861
+RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR)) # 0.6643881
+MSE_SAR <- sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR) # 0.4414115
+MAE_SAR <- sum(abs(test_SAR$yhat-test_SAR$sales_price))/nrow(test_SAR) # 0.4756063
 
 
 #### Train set 2 ----
@@ -332,11 +337,11 @@ bptest.Sarlm(SAR_DF_t1)
 
 
 #Sign of heteroscedasticity 
-Formula <- as.formula(paste("sales_price ~ Height + m2 + Outbuilding + 
-            TerracedHouse + rooms + flooded + forest_distance + coastline_distance + railway_distance + 
-            lake_distance + Trainstation_distance + Wateryarea_distance + Car_Garage + Built + 
-            Renovated + Heating + Roof + BMaterial +
-            powerline_distance + flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5")) 
+Formula <- as.formula(paste("sales_price ~ Height + m2 + Outbuilding +
+                            TerracedHouse + rooms + flooded + forest_distance + coastline_distance + railway_distance +
+                            lake_distance + Trainstation_distance + Wateryarea_distance + Car_Garage + Built +
+                            Renovated + Heating + Roof + BMaterial + powerline_distance")) + 
+                              "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV4 + flooded*SA_EV5"))
 Time <- Sys.time()
 SAR_DF_t2_het <- sphet::spreg(formula = Formula, data = train_set_2_dataframe,
                               listw = Neighbor_train2_weight, model = "lag", het = TRUE)
@@ -476,18 +481,32 @@ xgb_test = xgb.DMatrix(data = test_x, label = test_y)
 watchlist = list(train=xgb_train, test=xgb_test)
 
 # Fit model 
-XGB_AREA_ZEALAND <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
-XGB_LAGPRRICE_ZEALAND <- xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
-save(XGB_AREA_ZEALAND, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_ZEALAND.RData")
-save(XGB_LAGPRRICE_ZEALAND, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAGPRRICE_ZEALAND.RData")
+XGB_AREA_ZEALAND_NP <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
+XGB_LAGPRRICE_ZEALAND_NP <- xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
+save(XGB_AREA_ZEALAND_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_ZEALAND_NP.RData")
+save(XGB_LAGPRRICE_ZEALAND_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAGPRRICE_ZEALAND_NP.RData")
+
+library(xgboost)
+pred_xg_area <- predict(XGB_AREA_ZEALAND_NP, test_x)
+mae_xg_area <- sum(abs(pred_xg_area-test_set_1_xg$sales_price))/length(pred_xg_area) #0.5907644
+pred_xg_lag <- predict(XGB_LAGPRRICE_ZEALAND_NP, test_x)
+mae_xg_lag <- sum(abs(pred_xg_lag-test_set_1_xg$sales_price))/length(pred_xg_lag) #0.586913
+
+# Test on errors
+XG_ERROR_Moran <- moran.test(pred_xg_area-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
+XG_ERROR_Moran <- moran.test(pred_xg_lag-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
 
 # Importance matrix 
 importance_matrix <- xgb.importance(
   feature_names = colnames(xgb_train), 
-  model = XGB_1
+  model = XGB_1_AREA
 )
 importance_matrix
 xgb.plot.importance(importance_matrix)
+library(Ckmeans.1d.dp)
+(gg <- xgb.ggplot.importance(importance_matrix, measure = "Importance", rel_to_first = TRUE))
+gg + ggplot2::ylab("Importance")
+
 
 ## Train set 2 ----
 # The data frame is not suitable as data for xgbosting, remove attributes from df
