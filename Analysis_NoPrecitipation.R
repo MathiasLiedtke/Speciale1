@@ -277,8 +277,11 @@ test_SAR <- test_SAR %>%
                         SA_EV5 * -1.0360e-02) +
            5.8067e-01 * log(Lag_price))
 
+test_SAR$yhat_price <- exp(test_SAR$yhat)
+test_SAR$sales_price_nominal <- exp(test_SAR$sales_price)
 # RMSE 
 RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR)) # 0.9054654
+RMSE_SAR_nominal <- sqrt(sum((test_SAR$yhat_price-test_SAR$sales_price_nominal)^2)/nrow(test_SAR)) # 0.9054654
 MSE_SAR <- sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR) #0.8198677
 MAE_SAR <- sum(abs(test_SAR$yhat-test_SAR$sales_price))/nrow(test_SAR) #0.6456845
 

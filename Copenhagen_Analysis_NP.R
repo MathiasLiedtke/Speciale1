@@ -615,7 +615,10 @@ save(XGB_LAGPRRICE_ZEALAND_NP_t2, file = "/Users/mathiasliedtke/Library/CloudSto
 # Importance matrix 
 importance_matrix <- xgb.importance(
   feature_names = colnames(xgb_train), 
-  model = XGB_2
+  model = XGB_LAGPRRICE_ZEALAND_NP_t2
 )
 importance_matrix
 xgb.plot.importance(importance_matrix)
+library(Ckmeans.1d.dp)
+(gg <- xgb.ggplot.importance(importance_matrix, measure = "Importance", rel_to_first = TRUE))
+gg + ggplot2::ylab("Importance")

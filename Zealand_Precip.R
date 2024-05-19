@@ -28,10 +28,7 @@ Total_df <-  Total_df_18_v2
 Total_df <- subset(Total_df, select = - `Tidligere udbetalt byg/løs/afgrd`)
 Total_df$sales_price <- log(Total_df$sales_price)
 Total_df <- subset(Total_df, postnr<5000)
-postnr <- subset(Total_df, in_both == TRUE)
-table <- table(postnr$postnr)
-postnr <- c(2000,2100,2300,2400,2450,2500,2600,2605,2610,2625,2630,2635,2640,2650,2660,2665,2670,2680,2690,2700,2720,2730,2740,2750,2765,2770,2791,2800,2820,2830,2840,2860,2880,2900,2920,2930,2942,2950,2960,2970,2980,3400,3450,3460,3500,3520,3550,3600,3650,3660,4000,4040,4600)
-Total_df <- Total_df[Total_df$postnr %in% postnr, ]
+Total_df <- subset(Total_df, in_both_skader == FALSE)
 rm(Total_df_18_v2)
 ------------------------------------------------------------------------
   
@@ -68,20 +65,16 @@ T1 <- Sys.time()
 train_set_1 <- sf::st_as_sf(train_set_1)
 train_set_1 <- as(train_set_1, "Spatial")
 points_train_1 <- sp::coordinates(train_set_1)
-# Neighbor_train1_CPH <- spdep::tri2nb(points_train_1)  #When calculate neighbor
+Neighbor_train1_CPH <- spdep::tri2nb(points_train_1)  #When calculate neighbor
 T2 <- Sys.time() - T1 # 20 min
-# save(Neighbor_train1_CPH, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_CPH.Rdata")
-load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_CPH.Rdata")
 
 ### Train Set 2 ----
 T3 <- Sys.time()
 train_set_2 <- sf::st_as_sf(train_set_2)
 train_set_2 <- as(train_set_2, "Spatial")
 points_train_2 <- sp::coordinates(train_set_2)
-# Neighbor_train2_CPH <- spdep::tri2nb(points_train_2)  #When calculate neighbor
+Neighbor_train2_CPH <- spdep::tri2nb(points_train_2)  #When calculate neighbor
 T4 <- Sys.time() - T3 # 20 min
-# save(Neighbor_train2_CPH, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2_CPH.Rdata")
-load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train2_CPH.Rdata")
 
 
 ### Test Set 1  ----
@@ -89,20 +82,19 @@ T5 <- Sys.time()
 test_set_1 <- sf::st_as_sf(test_set_1)
 test_set_1 <- as(test_set_1, "Spatial")
 points_test_1 <- sp::coordinates(test_set_1)
-# Neighbor_test1_CPH <- spdep::tri2nb(points_test_1)  #When calculate neighbor
+Neighbor_test1_CPH <- spdep::tri2nb(points_test_1)  #Not saved
 T6 <- Sys.time() - T5 # 20 min
-# save(Neighbor_test1_CPH, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1_CPH.Rdata")
-load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test1_CPH.Rdata")
+
+
 
 ### Test Set 2 ----
 T7 <- Sys.time()
 test_set_2 <- sf::st_as_sf(test_set_2)
 test_set_2 <- as(test_set_2, "Spatial")
 points_test_2 <- sp::coordinates(test_set_2)
-# Neighbor_test2_CPH <- spdep::tri2nb(points_test_2)  #When calculate neighbor
+Neighbor_test2_CPH <- spdep::tri2nb(points_test_2)  #When calculate neighbor
 T8 <- Sys.time() - T7 # 20 min
-# save(Neighbor_test2_CPH, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2_CPH.Rdata")
-load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_test2_CPH.Rdata")
+
 
 ### Moran and geary test ----
 #### Neighbor_train1_CPH ----
@@ -164,10 +156,10 @@ moran_lm_zealand <- spdep::moran.test(lm_areas_lm_t1$residuals, listw = Neighbor
 
 #### Test ----
 test_set_1$yhat <- stats::predict.lm(lm_areas_lm_t1, newdata = test_set_1) 
-RMSE_LM <- sqrt(sum((test_set_1$yhat-test_set_1$sales_price)^2)/nrow(test_set_1)) #0.6914937
-MSE_LM <- sum((test_set_1$yhat-test_set_1$sales_price)^2)/nrow(test_set_1) #0.4781635
-MAE_LM <- sum(abs(test_set_1$yhat-test_set_1$sales_price))/nrow(test_set_1) #0.5263211
-# 0.3422699
+RMSE_LM <- sqrt(sum((test_set_1$yhat-test_set_1$sales_price)^2)/nrow(test_set_1)) #0.6911556
+MSE_LM <- sum((test_set_1$yhat-test_set_1$sales_price)^2)/nrow(test_set_1) #0.4776961
+MAE_LM <- sum(abs(test_set_1$yhat-test_set_1$sales_price))/nrow(test_set_1) #0.5248531
+
 
 #### Train set 2 ----
 pred_lm <- colnames(subset(Total_df, 
@@ -203,19 +195,20 @@ train_set_1_dataframe$Udbetaling <- log(train_set_1_dataframe$Udbetaling)
 
 # Predictors
 pred_sar <- colnames(subset(Total_df, 
-                           select = - c(rowname, nominal_price, sales_price, 
-                                        addressID, enhed_id, flooded, SA_EV1, SA_EV2, 
-                                        SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, 
-                                        Coor, Lag_price, in_both, in_both_skader, Udbetaling)))
+                            select = - c(rowname, nominal_price, sales_price, 
+                                         addressID, enhed_id, flooded, SA_EV1, SA_EV2, Areas,
+                                         SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, 
+                                         Coor, Lag_price, in_both, in_both_skader, Udbetaling)))
+
 
 # Formula 
 Formula <- as.formula(paste("sales_price ~", 
-                            paste(c(pred_sar[1:19], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
+                            paste(c(pred_sar[1:18], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
 
 # Model Estimation
 Time <- Sys.time()
 SAR_DF_t1 <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_dataframe,
-                                  listw = Neighbor_train1_weight, model = "lag")
+                                  listw = Neighbor_train1_weight, method = "LU")
 Stoptime <- Sys.time() - Time  # 1.346548 hours
 save(SAR_DF_t1, file ="/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/SAR_DF_t1_ZEALAND.Rdata")
 load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/SAR_DF_t1_ZEALAND.Rdata")
@@ -236,12 +229,8 @@ Formula <- as.formula(paste("sales_price ~ Height + m2 + Outbuilding +
             TerracedHouse + rooms + flooded + forest_distance + coastline_distance + railway_distance + 
             lake_distance + Trainstation_distance + Wateryarea_distance + Car_Garage + Built + 
             Renovated + Heating + Roof + BMaterial + powerline_distance + 
-            flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5")) 
-Formula <- as.formula(paste("sales_price ~ Height + m2 + Outbuilding +
-                            TerracedHouse + rooms + flooded + forest_distance + coastline_distance + railway_distance +
-                            lake_distance + Trainstation_distance + Wateryarea_distance + Car_Garage + Built +
-                            Renovated + Heating + Roof + BMaterial + powerline_distance + 
-                              flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV4 + flooded*SA_EV5"))
+            udbe*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5")) 
+
 
 Time <- Sys.time()
 SAR_DF_t1_het <- sphet::spreg(formula = Formula, data = train_set_1_dataframe,
@@ -295,10 +284,10 @@ test_SAR <- test_SAR %>%
                         SA_EV5 * 1.1531e-03) +
            5.6918e-01 * log(Lag_price))
 
-          # RMSE 
-          RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR)) # 4.445861
-          MSE_LM <- sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR) #19.76568
-          MAE_LM <- sum(abs(test_SAR$yhat-test_SAR$sales_price))/nrow(test_SAR) #4.341016
+# RMSE 
+RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR)) # 4.445861
+MSE_LM <- sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR) #19.76568
+MAE_LM <- sum(abs(test_SAR$yhat-test_SAR$sales_price))/nrow(test_SAR) #4.341016
 
 
 #### Train set 2 ----
@@ -306,11 +295,11 @@ test_SAR <- test_SAR %>%
 train_set_2_dataframe <- sf::st_drop_geometry(train_set_2) 
 
 # Predictors
-  pred_sar <- colnames(subset(Total_df, 
-                              select = - c(rowname, nominal_price, sales_price, 
-                                           addressID, enhed_id, flooded, SA_EV1, SA_EV2, 
-                                           SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, 
-                                           Coor, Lag_price, in_both, in_both_skader, Udbetaling)))
+pred_sar <- colnames(subset(Total_df, 
+                            select = - c(rowname, nominal_price, sales_price, 
+                                         addressID, enhed_id, flooded, SA_EV1, SA_EV2, 
+                                         SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, 
+                                         Coor, Lag_price, in_both, in_both_skader, Udbetaling)))
 # Formula 
 Formula <- as.formula(paste("sales_price ~", 
                             paste(c(pred_sar[1:22], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
@@ -481,8 +470,6 @@ watchlist = list(train=xgb_train, test=xgb_test)
 # Fit model 
 XGB_AREA_ZEALAND <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
 XGB_LAGPRRICE_ZEALAND <- xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
-save(XGB_AREA_ZEALAND, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_ZEALAND.RData")
-save(XGB_LAGPRRICE_ZEALAND, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAGPRRICE_ZEALAND.RData")
 
 library(xgboost)
 pred_xg_area <- predict(XGB_AREA_ZEALAND, test_x)
@@ -491,13 +478,13 @@ pred_xg_lag <- predict(XGB_LAGPRRICE_ZEALAND, test_x)
 mae_xg_lag <- sum(abs(pred_xg_lag-test_set_1_xg$sales_price))/length(pred_xg_lag) #0.6173684
 
 # Test on errors
-XG_ERROR_Moran <- moran.test(pred_xg_area-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
-XG_ERROR_Moran <- moran.test(pred_xg_lag-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
+XG_ERROR_Moran <- moran.test(pred_xg_area-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1_CPH))
+XG_ERROR_Moran <- moran.test(pred_xg_lag-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1_CPH))
 
 # Importance matrix 
 importance_matrix <- xgb.importance(
   feature_names = colnames(xgb_train), 
-  model = XGB_LAGPRRICE_ZEALAND
+  model = XGB_AREA_ZEALAND
 )
 importance_matrix
 xgb.plot.importance(importance_matrix)
@@ -608,8 +595,6 @@ watchlist = list(train=xgb_train, test=xgb_test)
 # Fit model 
 XGB_AREA_ZEALAND_t2 <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
 XGB_LAGPRRICE_ZEALAND_t2 <- xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
-save(XGB_AREA_ZEALAND, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_ZEALAND_t2.RData")
-save(XGB_LAGPRRICE_ZEALAND_t2, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAGPRRICE_ZEALAND_t2.RData")
 
 
 # Importance matrix 
