@@ -159,6 +159,10 @@ bptest(lm_areas_lm_t1)
 summary_lm_t1_robust <- lmtest::coeftest(lm_areas_lm_t1, 
                                          vcov = vcovHC(lm_areas_lm_t1, type = 'HC0'))
 
+#RMSE on training data 
+rmse_training_Lm <- sqrt(sum((lm_areas_lm_t1$fitted.values-train_set_1$sales_price)^2)/nrow(train_set_1)) #0.6913023
+
+
 # Spatial autocorrelation in error terms? 
 moran_lm_zealand <- spdep::moran.test(lm_areas_lm_t1$residuals, listw = Neighbor_train1_weight)
 
@@ -457,9 +461,9 @@ test_set_1_xg$Heating <- as.factor(test_set_1_xg$Heating)
 ### Run model ----                
 # Define predictors 
 PredictorVariables_Areas <- colnames(subset(train_set_1_xg, select = - c(nominal_price, sales_price, rowname, postnr, 
-                                                                         Hændelsesdato, Dato, Lag_price, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5)))
+                                                                         Hændelsesdato, Dato, Lag_price, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, Udbetaling, in_both, in_both_skader)))
 PredictorVariables_Lag_price <- colnames(subset(train_set_1_xg, select = - c(nominal_price, sales_price, rowname, postnr, 
-                                                                             Hændelsesdato, Dato, Areas, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5)))
+                                                                             Hændelsesdato, Dato, Areas, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5,Udbetaling, in_both, in_both_skader)))
 
 
 train_x = data.matrix(train_set_1_xg[, PredictorVariables_Areas]) # for one with areas

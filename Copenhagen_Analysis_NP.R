@@ -459,9 +459,9 @@ test_set_1_xg$Heating <- as.factor(test_set_1_xg$Heating)
 ### Run model ----                
 # Define predictors 
 PredictorVariables_Areas <- colnames(subset(train_set_1_xg, select = - c(nominal_price, sales_price, rowname, postnr, 
-                                                                         Hændelsesdato, Dato, Lag_price, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5)))
+                                                                         Hændelsesdato, Dato, Lag_price, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, Udbetaling, in_both)))
 PredictorVariables_Lag_price <- colnames(subset(train_set_1_xg, select = - c(nominal_price, sales_price, rowname, postnr, 
-                                                                             Hændelsesdato, Dato, Areas, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5)))
+                                                                             Hændelsesdato, Dato, Areas, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, Udbetaling)))
 
 
 train_x = data.matrix(train_set_1_xg[, PredictorVariables_Areas]) # for one with areas
@@ -499,7 +499,7 @@ XG_ERROR_Moran <- moran.test(pred_xg_lag-test_set_1_xg$sales_price, listw=spdep:
 # Importance matrix 
 importance_matrix <- xgb.importance(
   feature_names = colnames(xgb_train), 
-  model = XGB_LAGPRRICE_ZEALAND_NP
+  model = XGB_AREA_ZEALAND_NP
 )
 importance_matrix
 xgb.plot.importance(importance_matrix)

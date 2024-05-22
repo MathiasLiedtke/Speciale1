@@ -36,7 +36,7 @@ rm(Total_df_18_v2)
   # Partition of training and data set ----
 # Create training sets ----
 # Partition 60% for training 
-p <- 0.6    
+p <- 0.8    
 iT <- p*nrow(Total_df)
 # iT <- 10000
 ## Train 1
@@ -229,7 +229,7 @@ Formula <- as.formula(paste("sales_price ~ Height + m2 + Outbuilding +
             TerracedHouse + rooms + flooded + forest_distance + coastline_distance + railway_distance + 
             lake_distance + Trainstation_distance + Wateryarea_distance + Car_Garage + Built + 
             Renovated + Heating + Roof + BMaterial + powerline_distance + 
-            udbe*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5")) 
+            flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5")) 
 
 
 Time <- Sys.time()
@@ -492,7 +492,7 @@ library(Ckmeans.1d.dp)
 (gg <- xgb.ggplot.importance(importance_matrix, measure = "Importance", rel_to_first = TRUE))
 gg + ggplot2::ylab("Importance")
 
-
+limetest <- lime(test_set_1_xg, XGB_AREA_ZEALAND)
 
 
 ## Train set 2 ----
