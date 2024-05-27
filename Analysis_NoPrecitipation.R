@@ -154,6 +154,9 @@ summary_lm_t1_robust <- lmtest::coeftest(lm_areas_NP_t1,
 #### Test set 1 ----          
 test_set_1_NP$yhat <- stats::predict.lm(lm_areas_NP_t1, newdata = test_set_1_NP) 
 RMSE_LM <- sqrt(sum((test_set_1_NP$yhat-test_set_1_NP$sales_price)^2)/nrow(test_set_1_NP)) # 0.722349
+            test_set_1_NP$yhat_price <- exp(test_set_1_NP$yhat)
+            test_set_1_NP$sales_price_nom <- exp(test_set_1_NP$sales_price)
+            RMSE_LM_Price <- sqrt(sum((test_set_1_NP$yhat_price-test_set_1_NP$sales_price_nom)^2)/nrow(test_set_1_NP))
 MSE_LM <- sum((test_set_1_NP$yhat-test_set_1_NP$sales_price)^2)/nrow(test_set_1_NP) # 0.521788
 MAE_LM <- sum(abs(test_set_1_NP$yhat-test_set_1_NP$sales_price))/nrow(test_set_1_NP) # 0.5510442
 

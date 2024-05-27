@@ -8,7 +8,7 @@ library(stats) # For linear regression estimation, functions as lm
 library(tidyverse) # use to arrange sf objects
 library(GWmodel) # For Geographically weighted models
 library(spgwr) # For Geographically weighted models
-library(rgdal)
+library(rgdal) 
 library(maptools)
 library(spdep) #SAR model
 library(spatialreg) #SAR model
@@ -138,7 +138,7 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
                                 Coor, Lag_price, in_both, in_both_skader, Udbetaling))) #Variables to not include as predictors
                 
                 Formula <- as.formula(paste("sales_price ~", 
-                          paste(c(pred_lm[1:20], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
+                          paste(c(pred_lm[1:19], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
                 
                 lm_areas_lm_t1 <- stats::lm(formula = Formula, train_set_1) # Estimate model
                 summary_lm_t1 <- summary(lm_areas_lm_t1)[["coefficients"]]
@@ -162,6 +162,12 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             # 0.3913504
               
             lm_resid_spc <- spdep::moran.test(lm_areas_lm_t1$residuals, listw = Neighbor_train1_weight)
+            # RMSE for nominal values
+            test_set_1$yhat_price <- exp(test_set_1$yhat) 
+            test_set_1$sales_price_price <- exp(test_set_1$sales_price)
+            RMSE_LM_price <- sqrt(sum((test_set_1$yhat_price-test_set_1$sales_price_price)^2)/nrow(test_set_1))
+            RMSE_LM_price <- sqrt((sum(test_set_1$yhat_price-test_set_1$sales_price_price))^2)/nrow(test_set_1)
+            
               
             #### Train set 2 ----
              pred_lm <- colnames(subset(Total_df, 
@@ -484,6 +490,10 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             mae_xg_area <- sum(abs(pred_xg_area-test_set_1_xg$sales_price))/length(pred_xg_area) #0.6140223
             pred_xg_lag <- predict(XGB_1_Lagprice, test_x)
             mae_xg_lag <- sum(abs(pred_xg_lag-test_set_1_xg$sales_price))/length(pred_xg_lag) #0.6203172
+            pred_xg_lag_nomPrice <- exp(pred_xg_lag)
+            price <- exp(test_y)
+            rmse_xg_price <- sqrt(sum((pred_xg_lag_nomPrice-price)^2)/length(price))
+            rmse_test <- sqrt(sum((pred_xg_lag-test_y)^2)/length(test_y))
             
             # Test on errors
             XG_ERROR_Moran <- moran.test(pred_xg_area-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
@@ -990,6 +1000,14 @@ model_5 = xgb.train(data = xgb_train, max.depth = 5, watchlist=watchlist, nround
 model_51 = xgb.train(data = xgb_train, max.depth = 51, watchlist=watchlist, nrounds = 50) # 379630.054265
 model_7 = xgb.train(data = xgb_train, max.depth = 10, watchlist=watchlist, nrounds = 50) # 379630.054265
 
+
+
+# tree to visualize ----
+tree.train <-  tree(formula = sales_price ~ Height + m2 + Built + flooded, data = train_set_1_xg[1:50,])
+summary(tree.train)
+
+plot(tree.train)
+text(tree.train ,pretty = 2)
 
 
 
