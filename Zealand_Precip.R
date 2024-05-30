@@ -66,7 +66,7 @@ train_set_1 <- sf::st_as_sf(train_set_1)
 train_set_1 <- as(train_set_1, "Spatial")
 points_train_1 <- sp::coordinates(train_set_1)
 Neighbor_train1_CPH <- spdep::tri2nb(points_train_1)  #When calculate neighbor
-T2 <- Sys.time() - T1 # 20 min
+T2 <- Sys.time() - T1 # 14.25543 mins
 
 ### Train Set 2 ----
 T3 <- Sys.time()
@@ -160,6 +160,9 @@ RMSE_LM <- sqrt(sum((test_set_1$yhat-test_set_1$sales_price)^2)/nrow(test_set_1)
 MSE_LM <- sum((test_set_1$yhat-test_set_1$sales_price)^2)/nrow(test_set_1) #0.4776961
 MAE_LM <- sum(abs(test_set_1$yhat-test_set_1$sales_price))/nrow(test_set_1) #0.5248531
 
+
+  # RMSE train 
+  rmse_LM_train <- sqrt(sum((lm_areas_lm_t1$residuals)^2)/length(lm_areas_lm_t1$residuals))
 
 #### Train set 2 ----
 pred_lm <- colnames(subset(Total_df, 
@@ -480,6 +483,14 @@ mae_xg_lag <- sum(abs(pred_xg_lag-test_set_1_xg$sales_price))/length(pred_xg_lag
 # Test on errors
 XG_ERROR_Moran <- moran.test(pred_xg_area-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1_CPH))
 XG_ERROR_Moran <- moran.test(pred_xg_lag-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1_CPH))
+
+# train moran
+pred_xg_area <- predict(XGB_AREA_ZEALAND, train_x)
+pred_xg_lag <- predict(XGB_LAGPRRICE_ZEALAND, train_x)
+XG_ERROR_Moran <- moran.test((pred_xg_area-train_y), listw=Neighbor_train1_weight)
+XG_ERROR_Moran <- moran.test((pred_xg_lag-train_y), listw=Neighbor_train1_weight)
+
+
 
 # Importance matrix 
 importance_matrix <- xgb.importance(

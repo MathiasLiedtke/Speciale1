@@ -160,6 +160,8 @@ RMSE_LM <- sqrt(sum((test_set_1_NP$yhat-test_set_1_NP$sales_price)^2)/nrow(test_
 MSE_LM <- sum((test_set_1_NP$yhat-test_set_1_NP$sales_price)^2)/nrow(test_set_1_NP) # 0.521788
 MAE_LM <- sum(abs(test_set_1_NP$yhat-test_set_1_NP$sales_price))/nrow(test_set_1_NP) # 0.5510442
 
+# train RMSE 
+LM_RMSE_Train <- sqrt(sum((lm_areas_NP_t1$residuals)^2)/length(lm_areas_NP_t1$residuals))
 
 #### Train set 2 ----
 pred_lm <- colnames(subset(Total_df, 
@@ -238,17 +240,18 @@ test_SAR <- test_SAR %>%
   rowwise() %>%
   mutate(yhat = 4.7144e+00 +
            4.1892e-04 * Height +
-           3.1007e-03 * m2 -
+           3.1007e-03 * m2 +
            -1.3442e-03 * Outbuilding +
            1.9202e-01 * TerracedHouse +
            1.9125e-02 * rooms +
            1.9601e-02 * flooded +
            6.4626e-05 * forest_distance -
-           -2.7848e-06 * coastline_distance +
+           2.7848e-06 * coastline_distance +
            9.4682e-06 * railway_distance +
            4.0552e-05 * lake_distance -
-           -1.1153e-05 * Trainstation_distance -
-           -5.8325e-06 * Wateryarea_distance +
+           1.1153e-05 * Trainstation_distance -
+           5.8325e-06 * Wateryarea_distance -
+           3.5536e-02 * Car_Garage + 
            ifelse(Built == 2, 2.0988e-02,
                   ifelse(Built == 3, 1.0362e-01,
                          ifelse(Built == 4, 1.2930e-01,
@@ -288,7 +291,8 @@ RMSE_SAR_nominal <- sqrt(sum((test_SAR$yhat_price-test_SAR$sales_price_nominal)^
 MSE_SAR <- sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR) #0.8198677
 MAE_SAR <- sum(abs(test_SAR$yhat-test_SAR$sales_price))/nrow(test_SAR) #0.6456845
 
-
+# Train rmse
+SAR_RMSE_Train <- sqrt(sum((SAR_DF_t1_het$residuals)^2)/length(SAR_DF_t1_het$residuals))
 
 #### Train set 2 ----
 train_set_2_dataframe <- sf::st_drop_geometry(train_set_2_NP) 
@@ -425,7 +429,9 @@ XGB_LAG <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nro
 
 
 save(XGB_AREA, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_NP.RData")
+load(file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_NP.RData")
 save(XGB_LAG, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAG_NP.RData")
+load(file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAG_NP.RData")
 
 library(xgboost)
 pred_xg_area <- predict(XGB_AREA, test_x)

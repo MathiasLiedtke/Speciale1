@@ -30,8 +30,8 @@ Total_df$sales_price <- log(Total_df$sales_price)
 Total_df <- subset(Total_df, postnr<5000)
 postnr <- subset(Total_df, in_both == TRUE)
 table <- table(postnr$postnr)
-postnr <- c(2000,2100,2300,2400,2450,2500,2600,2605,2610,2625,2630,2635,2640,2650,2660,2665,2670,2680,2690,2700,2720,2730,2740,2750,2765,2770,2791,2800,2820,2830,2840,2860,2880,2900,2920,2930,2942,2950,2960,2970,2980,3400,3450,3460,3500,3520,3550,3600,3650,3660,4000,4040,4600)
-Total_df <- Total_df[Total_df$postnr %in% postnr, ]
+# postnr <- c(2000,2100,2300,2400,2450,2500,2600,2605,2610,2625,2630,2635,2640,2650,2660,2665,2670,2680,2690,2700,2720,2730,2740,2750,2765,2770,2791,2800,2820,2830,2840,2860,2880,2900,2920,2930,2942,2950,2960,2970,2980,3400,3450,3460,3500,3520,3550,3600,3650,3660,4000,4040,4600)
+# Total_df <- Total_df[Total_df$postnr %in% postnr, ]
 Total_df <- subset(Total_df, in_both == FALSE)
 rm(Total_df_18_v2)
 ------------------------------------------------------------------------
@@ -69,7 +69,7 @@ T1 <- Sys.time()
 train_set_1 <- sf::st_as_sf(train_set_1)
 train_set_1 <- as(train_set_1, "Spatial")
 points_train_1 <- sp::coordinates(train_set_1)
-# Neighbor_train1_CPH_NP <- spdep::tri2nb(points_train_1)  #When calculate neighbor
+Neighbor_train1_CPH_NP <- spdep::tri2nb(points_train_1)  #When calculate neighbor
 T2 <- Sys.time() - T1 # 20 min
 # save(Neighbor_train1_CPH_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_CPH_NP.Rdata")
 load("/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/Neighbor_train1_CPH_NP.Rdata")
@@ -165,9 +165,12 @@ moran_lm_zealand <- spdep::moran.test(lm_areas_lm_t1$residuals, listw = Neighbor
 
 #### Test ----
 test_set_1$yhat <- stats::predict.lm(lm_areas_lm_t1, newdata = test_set_1) 
-RMSE_LM <- sqrt(sum(test_set_1$yhat-test_set_1$sales_price)^2/nrow(test_set_1)) # 0.4531836
-MSE_LM <- sum(test_set_1$yhat-test_set_1$sales_price)^2/nrow(test_set_1) # 0.2053754
+RMSE_LM <- sqrt(sum((test_set_1$yhat-test_set_1$sales_price)^2)/nrow(test_set_1)) # 0.4531836
+MSE_LM <- RMSE_LM^2
 MAE_LM <- sum(abs(test_set_1$yhat-test_set_1$sales_price))/nrow(test_set_1) # 0.4472288
+
+# Train set RMSE
+trainset_RMSE <- sqrt(sum((lm_areas_lm_t1$residuals)^2)/length(lm_areas_lm_t1$residuals))
 
 
 #### Train set 2 ----
@@ -255,52 +258,61 @@ summary_sar_t1 <- summary(SAR_DF_t1_het)
 test_SAR <- Total_df[-train_seq_1, , drop = FALSE]
 test_SAR <- test_SAR %>%
   rowwise() %>%
-  mutate(yhat = 9.4805e+00 +
-           2.6079e-03 * Height +
-           2.7813e-03 * m2 -
-           -4.1285e-03 * Outbuilding +
-           7.7151e-02 * TerracedHouse +
-           2.5265e-02 * rooms +
-           2.1071e-02 * flooded +
-           3.6594e-05 * forest_distance -
-           -4.0731e-06 * coastline_distance +
-           8.2319e-06 * railway_distance +
-           -3.2004e-05 * lake_distance -
-           -4.4154e-05 * Trainstation_distance -
-           -3.8463e-06 * Wateryarea_distance +
-           ifelse(Built == 2, -1.3213e-02,
-                  ifelse(Built == 3, 4.4336e-02,
-                         ifelse(Built == 4, 4.2838e-02,
-                                ifelse(Built == 5, 5.3797e-02,
-                                       ifelse(Built == 6, 1.0595e-01,
-                                              ifelse(Built == 7, -1.2788e-01,
-                                                     ifelse(Built == 8, 2.0515e-01,
-                                                            ifelse(Built == 9, -2.6862e-02, 0)))))))) +
-           ifelse(Renovated == 1, 4.5695e-02,
-                  ifelse(Renovated == 2, 7.3660e-02,
-                         ifelse(Renovated == 3, 5.1509e-02,
-                                ifelse(Renovated == 4, 4.5820e-02, 2.1305e-02)))) +
-           ifelse(Heating == 1, 7.3166e-02,
-                  ifelse(Heating == 2, 9.4155e-02, -1.1463e-02)) +
-           ifelse(Roof == 1, 3.2831e-02,
-                  ifelse(Roof == 2, 8.8378e-02 , -2.1261e-02)) +
-           ifelse(BMaterial == 1, 6.4191e-02,
-                  ifelse(BMaterial == 2, -5.2255e-02, 1.9469e-03)) +
-           2.8217e-05 * powerline_distance +
-           SA_EV1 * 5.8030e-01 +
-           SA_EV2 * 6.8535e-01 +
-           SA_EV4 * 8.0093e-01 +
-           SA_EV5 * 9.3625e-01 +
-           flooded * (SA_EV1 * 7.5791e-02 +
-                        SA_EV2 * 8.0126e-02 +
-                        SA_EV4 * -8.3844e-02 +
-                        SA_EV5 * 1.9235e-02) +
-           2.6398e-01 * log(Lag_price))
+  mutate(yhat = 4.8911e+00 +
+           1.2763e-03 * Height +
+           3.1307e-03 * m2 -
+           8.8659e-04 * Outbuilding +
+           1.4720e-01 * TerracedHouse +
+           2.2840e-02 * rooms -
+           1.4821e-03 * flooded +
+           8.5730e-06 * forest_distance -
+           1.8372e-06 * coastline_distance +
+           1.6648e-05 * railway_distance +
+           7.8616e-05 * lake_distance -
+           1.7382e-05 * Trainstation_distance -
+           1.0758e-05 * Wateryarea_distance -
+           1.6978e-01 * Car_Garage + 
+           ifelse(Built == 2, 6.3025e-0,
+                  ifelse(Built == 3, 1.3805e-01,
+                         ifelse(Built == 4, 1.4315e-01,
+                                ifelse(Built == 5, 1.7017e-01,
+                                       ifelse(Built == 6, 2.4404e-01,
+                                              ifelse(Built == 7, 1.0769e-01,
+                                                     ifelse(Built == 8, 2.3426e-01,
+                                                            ifelse(Built == 9, -3.9679e-02, 0)))))))) +
+           ifelse(Renovated == 1, 1.1654e-01,
+                  ifelse(Renovated == 2, 5.9344e-02,
+                         ifelse(Renovated == 3, 3.5344e-02,
+                                ifelse(Renovated == 4, 1.5163e-02, 2.8222e-02)))) +
+           ifelse(Heating == 1, 1.2777e-01,
+                  ifelse(Heating == 2, 1.4594e-01, 2.2246e-02)) +
+           ifelse(Roof == 1, 4.2261e-02,
+                  ifelse(Roof == 2, 9.7341e-02 , -3.3183e-02)) +
+           ifelse(BMaterial == 1, 3.7555e-02,
+                  ifelse(BMaterial == 2, -2.7574e-02, 1-3.4113e-02)) +
+           2.8941e-05 * powerline_distance +
+           SA_EV1 * 4.3169e-01 +
+           SA_EV2 * 5.5212e-01 +
+           SA_EV4 * 6.4203e-01 +
+           SA_EV5 * 8.0846e-01 +
+           flooded * (SA_EV1 * 6.6190e-02 +
+                        SA_EV2 * 3.5171e-03 +
+                        SA_EV4 * 4.4305e-02 +
+                        SA_EV5 * 1.1000e-02) +
+           5.6350e-01 * log(Lag_price))
 
 # RMSE 
 RMSE_SAR <- sqrt(sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR)) # 0.6643881
 MSE_SAR <- sum((test_SAR$yhat-test_SAR$sales_price)^2)/nrow(test_SAR) # 0.4414115
 MAE_SAR <- sum(abs(test_SAR$yhat-test_SAR$sales_price))/nrow(test_SAR) # 0.4756063
+
+# Train RMSE
+RMSE_SAR_traing <- sqrt(sum((SAR_DF_t1_het$residuals)^2)/length(SAR_DF_t1_het$residuals))
+
+# Spatial autocorrelation in error terms? 
+moran_sar_zealand <- spdep::moran.test(SAR_DF_t1_het$residuals, listw = Neighbor_train1_weight)
+
+
 
 
 #### Train set 2 ----
@@ -484,7 +496,9 @@ watchlist = list(train=xgb_train, test=xgb_test)
 XGB_AREA_ZEALAND_NP <-  xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
 XGB_LAGPRRICE_ZEALAND_NP <- xgb.train(data = xgb_train, max.depth = 25, watchlist=watchlist, nrounds = 250) # 59902.649660
 save(XGB_AREA_ZEALAND_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_ZEALAND_NP.RData")
+load(file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_AREA_ZEALAND_NP.RData")
 save(XGB_LAGPRRICE_ZEALAND_NP, file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAGPRRICE_ZEALAND_NP.RData")
+load(file = "/Users/mathiasliedtke/Library/CloudStorage/OneDrive-Aarhusuniversitet/10. semester forår 2024/Data/Clean Data/XGB_LAGPRRICE_ZEALAND_NP.RData")
 
 library(xgboost)
 pred_xg_area <- predict(XGB_AREA_ZEALAND_NP, test_x)
@@ -496,6 +510,13 @@ mae_xg_lag <- sum(abs(pred_xg_lag-test_set_1_xg$sales_price))/length(pred_xg_lag
 XG_ERROR_Moran <- moran.test(pred_xg_area-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
 XG_ERROR_Moran <- moran.test(pred_xg_lag-test_set_1_xg$sales_price, listw=spdep::nb2listw(Neighbor_test1))
 
+pred_xg_lag <- predict(XGB_LAGPRRICE_ZEALAND_NP, train_x)
+XG_error_train_moran <- moran.test((pred_xg_lag-train_y), listw=Neighbor_train1_weight)
+
+pred_xg_area <- predict(XGB_AREA_ZEALAND_NP, train_x)
+XG_error_train_moran <- moran.test((pred_xg_area-train_y), listw=Neighbor_train1_weight)
+
+  
 # Importance matrix 
 importance_matrix <- xgb.importance(
   feature_names = colnames(xgb_train), 

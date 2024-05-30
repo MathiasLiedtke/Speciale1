@@ -17,6 +17,7 @@ library(tree) # visualize trees
 library(dplyr) # for practical functions
 library(lmtest) # test for heteroscedasticity
 library(sandwich)
+library(lime) # 
 
 ------------------------------------------------------------------------
 
@@ -28,6 +29,8 @@ Total_df <-  Total_df_18_v2
 Total_df <- subset(Total_df, select = - `Tidligere udbetalt byg/løs/afgrd`)
 Total_df$sales_price <- log(Total_df$sales_price)
 rm(Total_df_18_v2)
+
+
 ------------------------------------------------------------------------
 
 
@@ -154,9 +157,12 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
                       summary_lm_t1_robust <- lmtest::coeftest(lm_areas_lm_t1, 
                                vcov = vcovHC(lm_areas_lm_t1, type = 'HC0'))
 
+            # RMSE train          
+            train_set_RSME <- sqrt(sum((lm_areas_lm_t1$residuals)^2)/length(lm_areas_lm_t1$residuals))         
+                      
             #### Test set 1 ----          
             test_set_1$yhat <- stats::predict.lm(lm_areas_lm_t1, newdata = test_set_1) 
-            RMSE_LM <- sqrt(sum(test_set_1$yhat-test_set_1$sales_price)^2/nrow(test_set_1))
+            RMSE_LM <- sqrt(sum((test_set_1$yhat-test_set_1$sales_price)^2)/nrow(test_set_1))
             MSE_LM <- sum(test_set_1$yhat-test_set_1$sales_price)^2/nrow(test_set_1)
             MAE_LM <- sum((abs(test_set_1$yhat-test_set_1$sales_price)))/nrow(test_set_1)
             # 0.3913504
@@ -165,16 +171,17 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             # RMSE for nominal values
             test_set_1$yhat_price <- exp(test_set_1$yhat) 
             test_set_1$sales_price_price <- exp(test_set_1$sales_price)
+            test_set_1$resid <- test_set_1$yhat_price-test_set_1$sales_price_price
             RMSE_LM_price <- sqrt(sum((test_set_1$yhat_price-test_set_1$sales_price_price)^2)/nrow(test_set_1))
             RMSE_LM_price <- sqrt((sum(test_set_1$yhat_price-test_set_1$sales_price_price))^2)/nrow(test_set_1)
             
               
             #### Train set 2 ----
-             pred_lm <- colnames(subset(Total_df, 
-                        select = - c(rowname, nominal_price, sales_price, 
-                                     addressID, enhed_id, flooded, SA_EV1, SA_EV2, 
-                                     SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, 
-                                     Coor, Lag_price, in_both, in_both_skader, Udbetaling))) #Variables to not include as predictors
+              pred_lm <- colnames(subset(Total_df, 
+                                       select = - c(rowname, nominal_price, sales_price, 
+                                                    addressID, enhed_id, flooded, SA_EV1, SA_EV2, 
+                                                    SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato, 
+                                                    Coor, Lag_price, in_both, in_both_skader, Udbetaling))) #Variables to not include as predictors
               
               Formula <- as.formula(paste("sales_price ~", 
                           paste(c(pred_lm[1:22], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
@@ -193,7 +200,23 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
               summary_lm_t2_robust <- coeftest(lm_areas_lm_t2, 
                                                vcov = vcovHC(lm_areas_lm_t2, type = 'HC0'))
               
-                              
+              # RMSE train          
+              train_set_RSME <- sqrt(sum((lm_areas_lm_t2$residuals)^2)/length(lm_areas_lm_t2$residuals))         
+              
+              #### Test set 2 ----          
+              test_set_2$yhat <- stats::predict.lm(lm_areas_lm_t2, newdata = test_set_2) 
+              RMSE_LM <- sqrt(sum((test_set_2$yhat-test_set_2$sales_price)^2)/nrow(test_set_2))
+              MSE_LM <- sum(test_set_2$yhat-test_set_2$sales_price)^2/nrow(test_set_2)
+              MAE_LM <- sum((abs(test_set_2$yhat-test_set_2$sales_price)))/nrow(test_set_2)
+              # 0.3923504
+              
+              lm_resid_spc <- spdep::moran.test(lm_areas_lm_t2$residuals, listw = Neighbor_train2_weight)
+              # RMSE for nominal values
+              test_set_2$yhat_price <- exp(test_set_2$yhat) 
+              test_set_2$sales_price_price <- exp(test_set_2$sales_price)
+              test_set_2$resid <- test_set_2$yhat_price-test_set_2$sales_price_price
+              RMSE_LM_price <- sqrt(sum((test_set_2$yhat_price-test_set_2$sales_price_price)^2)/nrow(test_set_2))
+              RMSE_LM_price <- sqrt((sum(test_set_2$yhat_price-test_set_2$sales_price_price))^2)/nrow(test_set_2)                              
                                   
         ### SAR ----
             #### Train set 1 ----  
@@ -251,7 +274,7 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             test_SAR <- test_SAR %>%
               rowwise() %>%
               mutate(yhat = 4.6039e+00 +
-                       4.6039e-04 * Height +
+                       4.7802e-04 * Height +
                        3.0047e-03 * m2 -
                        1.3361e-03 * Outbuilding +
                        1.8970e-01 * TerracedHouse +
@@ -262,19 +285,20 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
                        9.2966e-06 * railway_distance +
                        4.3862e-05 * lake_distance -
                        1.0972e-05 * Trainstation_distance -
-                       5.7147e-06 * Wateryarea_distance +
+                       5.7147e-06 * Wateryarea_distance -
+                       7.9775e-02 * Car_Garage +
                        ifelse(Built == 2, 2.4676e-02,
                               ifelse(Built == 3, 9.9700e-02,
                                      ifelse(Built == 4, 1.2557e-01,
                                             ifelse(Built == 5, 1.5575e-01,
                                                    ifelse(Built == 6, 2.3217e-01,
                                                           ifelse(Built == 7, 6.4849e-02,
-                                                                 ifelse(Built == 8, 2.1461e-01,
-                                                                        ifelse(Built == 9, -1.2688e-01, 4.1058e-02)))))))) +
+                                                                 ifelse(Built == 8, 2.1461e-01, 
+                                                                        ifelse(Built == 9, -1.2688e-01, 0)))))))) +
                        ifelse(Renovated == 1, 5.0247e-02,
                               ifelse(Renovated == 2, 4.7953e-02,
                                      ifelse(Renovated == 3, 3.5703e-02,
-                                            ifelse(Renovated == 4, 1.8809e-02, 0)))) +
+                                            ifelse(Renovated == 4, 1.8809e-02, 4.1058e-02)))) +
                        ifelse(Heating == 1, 9.4962e-02,
                               ifelse(Heating == 2, 9.6121e-02, 1.9115e-02)) +
                        ifelse(Roof == 1, 8.1039e-02,
@@ -299,6 +323,9 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             MSE_SAR <- sum((test_SAR$yhat-test_SAR$sales_price)^2/nrow(test_SAR))
             MAE_SAR <- sum(abs(test_SAR$yhat-test_SAR$sales_price))/nrow(test_SAR)
             # 4.181894
+            
+            # RMSE for train
+            RMSE_SAR_train <- sqrt(sum((SAR_DF_t1_het$residuals)^2)/length(SAR_DF_t1_het$residuals))
             
                                   
             #### Train set 2 ----
@@ -509,6 +536,10 @@ test_set_2 <- Total_df[-train_seq_2, , drop = FALSE]
             library(Ckmeans.1d.dp)
             (gg <- xgb.ggplot.importance(importance_matrix, measure = "Importance", rel_to_first = TRUE))
             gg + ggplot2::ylab("Importance")
+            
+            # Lime test 
+            
+            explainer <- lime(xgb_train, model = bst, bin_continuous = FALSE)
             
         ## Train set 2 ----
             # The data frame is not suitable as data for xgbosting, remove attributes from df
@@ -1218,116 +1249,53 @@ importance_matrix
 xgb.plot.importance(importance_matrix)
 
 
+# Analysis afterwards 
+Map_events_x_flooded <- subset(Total_df, flooded == 1 & SA_EV1 == 1 | SA_EV2 == 1 | SA_EV3 == 1 | SA_EV4 == 1 | SA_EV5 == 1)
+Map_events_x_flooded <- subset(Map_events_x_flooded, Udbetaling !=0)
+Map_events_x_flooded <- subset(Map_events_x_flooded, select = c(Hændelsesdato, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, sales_price))
+Map_events_x_flooded$Coor <- sf::st_transform(Map_events_x_flooded$Coor, crs = "EPSG:4326")
+Map_events_x_flooded <- subset(Map_events_x_flooded, Dato >= as.Date("2012-12-31"))
 
-# DO DELETE ----
-# SAR 
-# Model not working because multicollinearity
-test <- subset(train_set_1_dataframe, select = c(railway_distance, Trainstation_distance))
-det(cov(test)) # No problem 
+Coor <- sf::st_coordinates(Map_events_x_flooded$Coor)
+Map_events_x_flooded$lat <- Coor[,2]
+Map_events_x_flooded$lng <- Coor[,1]
 
-# Use multicoll to detect 
-test <- train_set_1_dataframe[sapply(train_set_1_dataframe, is.numeric)]
-# add interaction terms 
-multiCol(test)
-
-
-det(cov(test))
-plm::detect.lindep(test)
-
-
-cov <- cov(subset(train_set_1_dataframe, 
-                  select = - c(addressID, postnr, enhed_id, Lag_price, Areas))) #Cannot take cov of factor
-result <- plm::detect.lindep(subset(train_set_1_dataframe, 
-                                    select = - c(rowname, nominal_price, sales_price, addressID, enhed_id, Lag_price, Areas,
-                                                 flooded, SA_EV1, SA_EV2, SA_EV3, SA_EV4, SA_EV5, postnr, Dato, Hændelsesdato)))
-
-det(cov) # Large determinant no problem of changing
-result <- plm::detect.lindep(subset(train_set_1_dataframe, 
-                                    select = - c(nominal_price, postnr, addressID, enhed_id,
-                                                 Areas, built_1970_1980, lag_price, Car_Grg, Trainstation)))
+Map_events_x_flooded <- Map_events_x_flooded %>%
+                        mutate(series = case_when(
+                          SA_EV1 == 1 ~ 1,
+                          SA_EV2 == 1 ~ 2,
+                          SA_EV3 == 1 ~ 3,
+                          SA_EV4 == 1 ~ 4,
+                          SA_EV5 == 1 ~ 5))
 
 
-PredictorVariables <- colnames(subset(train_set_1_dataframe, 
-                                      select = - c(nominal_price, postnr, addressID, enhed_id,
-                                                   Areas, Car_Grg)))
-
-Formula <- formula(paste("sales_price ~", 
-                         paste(PredictorVariables, collapse=" + ")))
-Formula <- formula(nominal_price ~ m2 + Outbuilding + TerracedHouse + rooms + Udbetalt + flooded + forest_distance +
-                     coastline_distance + powerline_distance + railway_distance + lake_distance + Trainstation_distance)
-NA_DF <- subset(train_set_1_dataframe, is.na(train_set_1_dataframe$nominal_price))
-
-# Outbuilding, built_1950_1960
+colorPalette <- colorFactor(palette = c("red", "blue", "green", "yellow", "purple"), domain = Map_events_x_flooded$series)
 
 
+library(leaflet)
+API_GEO <- "https://api.dataforsyningen.dk/topo_skaermkort_DAF?service=WMS&request=GetCapabilities&token="
+token <- readline(prompt="Please enter token: ")
+url <- paste0(API_GEO,token)
+response <- httr::GET(url)
+httr::status_code(response)
+
+# Add to maps 
+m <- leaflet() %>%
+  setView(lng = 12.6, lat = 55.7, zoom = 6) %>%
+  addWMSTiles(
+    baseUrl = url,
+    layers = "dtk_skaermkort",
+    options = WMSTileOptions(format = "image/png", transparent = TRUE, opacity = 0.70)
+  ) %>% addCircleMarkers(
+    data = Map_events_x_flooded[,-3:7],
+    ~lng,
+    ~lat,
+    color = ~colorPalette(series),
+    fillOpacity = 0.8,
+    stroke = FALSE,
+    radius = 3
+  )
 
 
-cov <- cov(train_set_1_TEST_Sub)
-det(cov)
-library(plm)
-result <- plm::detect.lindep(train_set_1_TEST_Sub)
 
-PredictorVariables <- colnames(subset(Total_df, 
-                                      select = - c(nominal_price, addressID, enhed_id, postnr,
-                                                   Areas, built_1970_1980)))
-Formula <- formula(paste("nominal_price ~", 
-                         paste(PredictorVariables[1:44], collapse=" + ")))
-Formula_SAR <- formula(nominal_price ~ m2)
-Formula <- as.formula(paste("nominal_price ~", 
-                            paste(c(PredictorVariables[1:19], "flooded*SA_EV1 + flooded*SA_EV2 + flooded*SA_EV3 + flooded*SA_EV4 + flooded*SA_EV5"), collapse=" + ")))
-
-
-SAR_DF <- spatialreg::spautolm(formula = Formula, data = train_set_1_df, 
-                               listw = Neighbor_train_weight, method = "Matrix_J") # Took some hours, about 2
-Time <- Sys.time()
-SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_df,
-                               listw = Neighbor_train_weight, method = "Matrix_J", interval = c(-1, 1))
-# Try with LU
-# SAR_DF <- spatialreg::lagsarlm(formula = Formula, data = train_set_1_df,
-#           listw = Neighbor_train_weight, method = "LU", interval = c(-1, 1))
-Stoptime <- Sys.time() - Time
-
-# Matrix 
-mat <- as.matrix(subset(train_set_1_df, select = PredictorVariables))
-
-lm_SPAUTO <- stats::lm(formula = Formula, train_set_1_df)
-
-Total_df_SAR <- Total_df
-Total_df_SAR_ds <- Total_df_SAR %>%
-  distinct(geometry, .keep_all = TRUE)
-Total_df_SAR_ds <- sf::st_as_sf(Total_df_SAR_ds)
-Total_df_SAR_ds <- as(Total_df_SAR_ds, "Spatial")
-Neighbor <- spdep::tri2nb(coordinates(Total_df_SAR_ds[1:1000,]))
-
-Starttime <- Sys.time()
-Neighbor <- spdep::knearneigh(coordinates(Total_df_SAR), longlat = TRUE)
-Neighbor <- spdep::tri2nb(coordinates(Total_df_SAR[1:1000,]))
-HowLongdidIttake <- Sys.time()-Starttime 
-HowLongdidIttake
-
-PredictorVariables_SAR <- colnames(subset(Total_df, select = - c(nominal_price, lag_price, addressID, enhed_id, postnr, geometry, Areas)))
-Formula_SAR <- formula(paste("nominal_price ~", 
-                             paste(PredictorVariables_SAR, collapse=" + ")))
-Formula_SAR <- formula(nominal_price ~ forest_distance, coastline_distance)
-
-SAR_listwW <- spdep::nb2listw(Neighbor, style = "W")
-SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_SAR_ds[1:1000,], 
-                                listw = SAR_listwW, method = "LU")
-SAR_Lag <- spatialreg::lagsarlm(Formula_SAR, data = Total_df_GWR)
-summary(SAR_Lag)
-
-install.packages("unix") 
-library(unix)
-rlimit_as(1e12)  #increases to ~12GB
-rlimit_all()
-
-# Load necessary libraries
-library(spatialreg)
-library(parallel)
-
-Total_df_SAR_ds <- Total_df_SAR_ds[1:100000,]
-# Define a function to fit lagsarlm to each subset
-fit_lagsarlm <- function(subset) {
-  lagsarlm(Formula_SAR, data = Total_df_SAR_ds, listw = SAR_listwW)
-}
 
